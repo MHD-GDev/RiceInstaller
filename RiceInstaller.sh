@@ -138,7 +138,7 @@ function copy_zshrc() {
     echo -e "${YELLOW}Copying .zshrc into user's directory...${RESET}"
     sleep 1
 
-    if [[ -f .zshrc .fonts plugins ]]; then
+    if [[ -f .zshrc ]]; then
         cp .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
         echo -e "${GREEN}.zshrc copied successfully!${RESET}"
     else
