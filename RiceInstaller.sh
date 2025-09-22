@@ -75,7 +75,7 @@ function install_packages() {
     sleep 1
 
     read -rp "Which operating system is this? (Arch/Gentoo): " current_os
-    read -rp "Which GPU do you have? (AMD/Intel/Nvidia): " selected_gpu
+    read -rp "Which GPU do you have? (AMD/Intel/Nvidia/Hybrid): " selected_gpu
 
     if [[ "$current_os" =~ ^[Aa]rch$ ]]; then
         sudo pacman -Syu --noconfirm && sudo pacman -S --noconfirm git
