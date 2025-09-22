@@ -1,0 +1,78 @@
+* {
+    font-family: Meslo LG M;
+    font-size: 16px;
+}
+
+window#waybar {
+    background-color: transparent;
+}
+
+#window label {
+    font-weight: bold;
+}
+
+#workspaces {
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 15px;
+}
+
+#workspaces button {
+    color: #89b4fa;
+    background: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+}
+
+#workspaces button.active {
+    background: #89b4fa;
+    color: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+}
+
+/* Try multiple selectors for occupied workspaces */
+#workspaces button.occupied {
+    background: #232330;
+    color: #ebcb8b;
+}
+
+#window,
+#tray,
+#cpu,
+#memory,
+#wireplumber,
+#clock,
+#custom-music,
+#custom-launcher,
+#custom-battery {
+    color: #89b4fa;
+    background: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+    margin-top: 10px;
+}
+
+#clock {
+    margin-right: 25px;
+}
+
+#custom-launcher {
+    background: radial-gradient(circle, #eeade8 0%, #bf616a 12%, #ebcb8b 19%, #81a1c1 20%, #bf616a 24%, #ebcb8b 36%, #81a1c1 37%, #eeade8 48%, #eeade8 52%, #81a1c1 52%, #ebcb8b 66%, #81a1c1 67%, #eeade8 68%, #eeade8 77%, #81a1c1 78%, #eeade8 83%, #bf616a 90%, #81a1c1 100%);
+    background-size: 200% 500%;
+    color: #2e3440;
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 25px;
+    font-size: 31px;
+}

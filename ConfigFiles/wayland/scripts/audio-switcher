@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Get list of all audio sinks with simplified names
+sinks=$(wpctl status | awk '/Sinks:/{flag=1; next} /Sources:/{flag=0} flag' | grep -v "Sinks:" | grep -v "^\s*$" | sed -e 's/[│├─└┬]//g' -e 's/^[[:space:]]*//' -e 's/^\*//' | sed -E 's/^([0-9]+)\. (.*)/\1 \2/' | while read -r id desc; do
+    # Simplify the names
+    simplified_desc=$(echo "$desc" | sed \
+        -e 's/.*HDMI.*/HDMI Output/' \
+        -e 's/.*DP.*/DisplayPort Output/' \
+        -e 's/.*Analog Stereo.*/Built-in Audio/' \
+        -e 's/.*Digital Stereo.*/Digital Output/' \
+        -e 's/.*Controller.*//' \
+        -e 's/\[.*\]//' \
+        | xargs)
+    
+    # Mark default sink with an asterisk
+    if [[ "$desc" == *"*"* ]]; then
+        echo "$id: ★ $simplified_desc"
+    else
+        echo "$id: $simplified_desc"
+    fi
+done)
+
+# Let user select a sink
+selected_sink=$(echo "$sinks" | rofi -theme ~/.config/wayland/scripts/rofi-themes/audio-switcher.rasi -dmenu -p "Select Audio Output:" -no-show-icons -kb-cancel 'q')
+
+if [ -n "$selected_sink" ]; then
+    # Extract just the numeric sink ID
+    sink_id=$(echo "$selected_sink" | awk -F':' '{print $1}' | tr -d '[:space:]')
+    
+    # Verify it's a number
+    if [[ "$sink_id" =~ ^[0-9]+$ ]]; then
+        wpctl set-default "$sink_id"
+        # Get the simplified name without the star for notification
+        sink_name=$(echo "$selected_sink" | cut -d':' -f2- | sed 's/★ //' | xargs)
+        notify-send "Audio Output Changed" "Set default to: $sink_name"
+    else
+        notify-send "Error" "Invalid sink ID: $sink_id"
+    fi
+else
+    notify-send "Info" "No sink selected"
+fi

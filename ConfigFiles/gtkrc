@@ -1,0 +1,9 @@
+
+gtk-icon-theme-name = "Adwaita"
+gtk-theme-name = "Adwaita-dark"
+style "user-font"
+{
+	font_name = "Meslo LG M 14"
+}
+widget_class "*" style "user-font"
+gtk-font-name = "Meslo LG M 14"

@@ -1,0 +1,127 @@
+//     ______           __  ____     __       __  
+//    / ____/___ ______/ /_/ __/__  / /______/ /_ 
+//   / /_  / __ `/ ___/ __/ /_/ _ \/ __/ ___/ __ \
+//  / __/ / /_/ (__  ) /_/ __/  __/ /_/ /__/ / / /
+// /_/    \__,_/____/\__/_/  \___/\__/\___/_/ /_/ 
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "padding": {
+            "top": 8
+        }
+    },
+    "display": {
+        "separator": " ~> "
+    },
+    "modules": [
+        "break",
+        "break",
+        "break",
+        "break",
+        "break",
+        "break",
+        {
+            "type": "title",
+            "key": "╭─",
+            "format": "{user-name}@{host-name}",
+            "keyColor": "blue"
+        },
+        {
+            "type": "os",
+            "key": "├─󰣇",
+            "keyColor": "blue"
+        },
+        {
+            "type": "kernel",
+            "key": "├─",
+            "keyColor": "blue"
+        },
+        {
+            "type": "packages",
+            "key": "├─󰏖",
+            "keyColor": "blue"
+        },
+        {
+            "type": "battery",
+            "key": "├─󰁹",
+            "keyColor": "blue"
+        },
+        {
+            "type": "uptime",
+            "key": "╰─󰅐",
+            "keyColor": "blue"
+        },
+        "break",
+        {
+            "type": "host",
+            "key": "╭─󰌢",
+            "keyColor": "red"
+        },
+        {
+            "type": "display",
+            "key": "├─󰍹",
+            "keyColor": "red"
+        },
+        {
+            "type": "cpu",
+            "key": "├─󰻠",
+            "keyColor": "red"
+        },
+        {
+            "type": "memory",
+            "key": "├─󰍛",
+            "keyColor": "red"
+        },
+        {
+            "type": "gpu",
+            "key": "├─",
+            "keyColor": "red"
+        },
+        {
+            "type": "vulkan",
+            "key": "├─ Vulkan",
+            "keyColor": "red"
+        },
+        {
+            "type": "opengl",
+            "key": "╰─ OpenGL",
+            "keyColor": "red"
+        },
+        "break",
+        {
+            "type": "shell",
+            "key": "╭─",
+            "keyColor": "yellow"
+        },
+        {
+            "type": "terminal",
+            "key": "├─",
+            "keyColor": "yellow"
+        },
+        {
+            "type": "terminalfont",
+            "key": "├─",
+            "keyColor": "yellow"
+        },
+        {
+            "type": "lm",
+            "key": "├─󰧨",
+            "keyColor": "yellow"
+        },
+        {
+            "type": "wm",
+            "key": "├─",
+            "keyColor": "yellow"
+        },
+        {
+            "type": "theme",
+            "key": "╰─󰉼",
+            "keyColor": "yellow"
+        },
+        "break",
+        {
+            "type": "colors"
+        },
+        "break"
+    ]
+}

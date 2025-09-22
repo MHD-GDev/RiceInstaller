@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Log file for debugging
+LOG_FILE="$HOME/.cache/rice-init.log"
+echo "$(date): Rice init started" >> "$LOG_FILE"
+
+# Wait for essential services
+wait_for_service() {
+    local service="$1"
+    local timeout=10
+    local count=0
+    
+    echo "$(date): Waiting for $service..." >> "$LOG_FILE"
+    
+    while ! pgrep -x "$service" > /dev/null && [ $count -lt $timeout ]; do
+        sleep 1
+        ((count++))
+    done
+    
+    if [ $count -eq $timeout ]; then
+        echo "$(date): Timeout waiting for $service" >> "$LOG_FILE"
+        return 1
+    fi
+    echo "$(date): $service is running" >> "$LOG_FILE"
+    return 0
+}
+
+# Wait for Hyprland and essential services
+wait_for_service "Hyprland"
+wait_for_service "pipewire"
+
+# Additional wait for compositor to stabilize
+sleep 2
+
+# Initialize rice system
+RICE_SCRIPT="$HOME/.config/wayland/scripts/rice-selector"
+echo "$(date): Checking rice selector at $RICE_SCRIPT" >> "$LOG_FILE"
+
+if [[ -x "$RICE_SCRIPT" ]]; then
+    # Get the current rice that will be initialized
+    CURRENT_RICE=$("$RICE_SCRIPT" current 2>/dev/null)
+    echo "$(date): Initializing rice: $CURRENT_RICE" >> "$LOG_FILE"
+    
+    "$RICE_SCRIPT" init > /dev/null 2>&1
+    echo "$(date): Rice selector init completed for: $CURRENT_RICE" >> "$LOG_FILE"
+else
+    echo "$(date): Rice selector script not found or not executable" >> "$LOG_FILE"
+    notify-send "Rice Init Error" "Rice selector script not found or not executable" > /dev/null 2>&1
+fi

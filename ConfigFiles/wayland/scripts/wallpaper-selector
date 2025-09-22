@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+#  _       __      ____
+# | |     / /___ _/ / /___  ____ _____  ___  _____
+# | | /| / / __ `/ / / __ \/ __ `/ __ \/ _ \/ ___/
+# | |/ |/ / /_/ / / / /_/ / /_/ / /_/ /  __/ /
+# |__/|__/\__,_/_/_/ .___/\__,_/ .___/\___/_/
+#    _____      __/_/       __/_/
+#   / ___/___  / /__  _____/ /_____  _____
+#   \__ \/ _ \/ / _ \/ ___/ __/ __ \/ ___/
+#  ___/ /  __/ /  __/ /__/ /_/ /_/ / /
+# /____/\___/_/\___/\___/\__/\____/_/
+#
+#   AUTHOR: MHD
+#
+# A script that generates a rofi menu that uses swaybg to set wallpapers
+
+# Verifies if required packages are installed
+for app in magick rofi; do
+    if ! command -v $(echo $app | cut -d'-' -f1) &>/dev/null; then
+        notify-send "Missing package" "Please install the $app package to continue" -u critical
+        exit 1
+    fi
+done
+
+# Function to get current rice (same as rice-selector)
+get_current_rice() {
+    local state_file="$HOME/.config/wayland/.current_rice"
+    if [[ -f "$state_file" ]]; then
+        cat "$state_file"
+    else
+        echo "Gentooey"
+    fi
+}
+
+# Set some variables
+current_rice=$(get_current_rice)
+read -r previous_rice <"$HOME/.cache/current_rice" 2>/dev/null || previous_rice="$current_rice"
+wall_dir="$HOME/.config/wayland/rices/$current_rice/walls"
+cacheDir="$HOME/.cache/$USER/$current_rice"
+
+# Update the stored rice if it changed
+if [ "$current_rice" != "$previous_rice" ]; then
+    echo "$current_rice" >"$HOME/.cache/current_rice"
+    cacheDir="$HOME/.cache/$USER/$current_rice"
+    wall_dir="$HOME/.config/wayland/rices/$current_rice/walls"
+
+    # Clear old cache when rice changes
+    if [[ -d "$HOME/.cache/$USER/$previous_rice" ]]; then
+        notify-send "Rice Changed" "Switched to '$current_rice' rice - updating wallpaper cache"
+    fi
+fi
+
+# Create cache dir if not exists
+mkdir -p "${cacheDir}"
+
+# Create walls directory if it doesn't exist
+mkdir -p "$wall_dir"
+
+# Convert webp images to png
+for webp_file in "$wall_dir"/*.webp; do
+    [ -f "$webp_file" ] || continue
+    png_file="${webp_file%.webp}.png"
+    magick "$webp_file" "$png_file"
+    rm "$webp_file"
+done
+
+# Trying to adapt the images and menu to your screen resolution.
+monitor_res=$(($(xrandr | grep -w "connected" | grep -o '[0-9]*x[0-9]*+[0-9]*+[0-9]*' | head -n1 | cut -d'x' -f1) * 17 / 96))
+rofi_override="element-icon { size: $(($monitor_res))px; }"
+
+# Convert images in directory and save to cache dir
+for imagen in "$wall_dir"/*.{jpg,jpeg,png}; do
+    [ -f "$imagen" ] || continue
+    nombre_archivo=$(basename "$imagen")
+    cache_file="${cacheDir}/${nombre_archivo}"
+    md5_file="${cacheDir}/.${nombre_archivo}.md5"
+
+    # Generate MD5 of original file
+    current_md5=$(md5sum "$imagen" | cut -d' ' -f1)
+
+    # Check if cache file exists and if content has changed
+    if [ ! -f "$cache_file" ] || [ ! -f "$md5_file" ] || [ "$current_md5" != "$(cat "$md5_file")" ]; then
+        magick "$imagen" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
+        echo "$current_md5" >"$md5_file"
+    fi
+done
+
+# Check if wallpapers exist
+if ! find "${wall_dir}" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) -print -quit | grep -q .; then
+    notify-send "No Wallpapers" "No wallpapers found for rice '$current_rice' in $wall_dir"
+    exit 1
+fi
+
+# Set wallpaper using swaybg
+set_wallpaper() {
+    local wallpaper_path="$1"
+
+    # Kill existing swaybg and start new one
+    killall swaybg 2>/dev/null
+    sleep 0.5
+    swaybg -i "$wallpaper_path" -m fill >/dev/null 2>&1 &
+
+    notify-send "Wallpaper Changed" "Applied: $(basename "$wallpaper_path")"
+}
+
+# Random wallpaper function
+set_random_wallpaper() {
+    local wallpaper=$(find "${wall_dir}" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | shuf -n 1)
+    if [[ -n "$wallpaper" ]]; then
+        set_wallpaper "$wallpaper"
+        notify-send "Random Wallpaper" "Applied: $(basename "$wallpaper")"
+    else
+        notify-send "No Wallpapers" "No wallpapers found in $wall_dir"
+    fi
+}
+
+# Handle command line arguments
+case "${1:-menu}" in
+"random")
+    set_random_wallpaper
+    exit 0
+    ;;
+"menu" | "")
+    # Continue to menu selection
+    ;;
+*)
+    echo "Usage: $0 {menu|random}"
+    exit 1
+    ;;
+esac
+
+# Launch rofi with image previews (exactly like rice-selector)
+wall_selection=$(
+    for wallpaper_path in "${wall_dir}"/*.{jpg,jpeg,png}; do
+        [ -f "$wallpaper_path" ] || continue
+        wallpaper_name=$(basename "$wallpaper_path")
+        cache_file="${cacheDir}/${wallpaper_name}"
+
+        # Use cached thumbnail if available, otherwise use original
+        if [[ -f "$cache_file" ]]; then
+            echo -e "$wallpaper_name\0icon\x1f$cache_file"
+        else
+            echo -e "$wallpaper_name\0icon\x1f$wallpaper_path"
+        fi
+    done | rofi -dmenu \
+        -p "Select Wallpaper for $current_rice:" \
+        -theme ~/.config/wayland/scripts/rofi-themes/wallpaper-selector.rasi \
+        -theme-str "$rofi_override" \
+        -no-custom \
+        -kb-row-left "h" \
+        -kb-row-right "l" \
+        -kb-cancel "q"
+)
+
+# Set wallpaper
+[[ -n "$wall_selection" ]] && set_wallpaper "${wall_dir}/${wall_selection}"

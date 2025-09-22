@@ -1,0 +1,12 @@
+* {
+    bg-col:         #002b36;
+    bg-col-light:   #073642;
+    border-col:     #268bd2;
+    selected-col:   #073642;
+    blue:           #268bd2;
+    fg-col:         #839496;
+    fg-col2:        #dc322f;
+    grey:           #586e75;
+    width:          600;
+    font:           "JetBrainsMono Nerd Font 14";
+}

@@ -1,0 +1,409 @@
+#!/bin/bash
+#
+#     ____  _                            
+#    / __ \(_)_______                    
+#   / /_/ / / ___/ _ \                   
+#  / _, _/ / /__/  __/                   
+# /_/_|_/_/\___/\___/      __            
+#   / ____/_______  ____ _/ /_____  _____
+#  / /   / ___/ _ \/ __ `/ __/ __ \/ ___/
+# / /___/ /  /  __/ /_/ / /_/ /_/ / /    
+# \____/_/   \___/\__,_/\__/\____/_/     
+#
+#   AUTHOR: MHD
+#
+#   A command that creates new rices.
+#
+
+RICE_DIR="$HOME/.config/wayland/rices"
+
+create_new_rice() {
+    local rice_name="$1"
+    local rice_path="$RICE_DIR/$rice_name"
+    
+    # Check for invalid rice names
+    if [[ "$rice_name" =~ ^[~.]|^-|/|\\$|^(cache|local|ai|config|script|CACHE|LOCAL|AI|CONFIG|SCRIPT)$ ]]; then
+        echo "Invalid rice name. Names cannot start with '~', '.', '-' or contain '/' or '\', 'cache', 'local', 'ai', 'config', 'script', 'CACHE', 'LOCAL', 'AI', 'CONFIG', or 'SCRIPT'."
+        return 1
+    fi
+    
+    if [[ -d "$rice_path" ]]; then
+        echo "Rice '$rice_name' already exists!"
+        return 1
+    fi
+    
+    # Create directory structure
+    mkdir -p "$rice_path"/{hypr,kitty,mako,rofi,walls,waybar}
+    
+    # Create template configs
+    cat > "$rice_path/kitty/kitty.conf" << 'EOF'
+# Example Rice - Kitty Configuration
+font_family      Meslo LG M
+font_size        14
+
+# Gentoo Purple Theme
+foreground       #ffffff
+background       #000
+cursor           #54487a
+
+# Black
+color0           #2d1b69
+color8           #54487a
+
+# Red
+color1           #ff6b6b
+color9           #ff8e8e
+
+# Green
+color2           #51cf66
+color10          #69db7c
+
+# Yellow
+color3           #ffd43b
+color11          #ffe066
+
+# Blue
+color4           #339af0
+color12          #74c0fc
+
+# Magenta
+color5           #845ef7
+color13          #9775fa
+
+# Cyan
+color6           #22b8cf
+color14          #3bc9db
+
+# White
+color7           #ffffff
+color15          #ffffff
+
+# Window settings
+window_padding_width 10
+confirm_os_window_close 0
+
+# opacity
+background_opacity 0.6
+EOF
+    
+    cat > "$rice_path/mako/config.ini" << 'EOF'
+# Rice Example - Mako Configuration
+
+# [ Global Config ]
+# max no of notification in buffer
+max-history=5
+
+# arrange notification ( +/- time or +/- priority )
+sort=+time
+
+# [ BINDING OPTIONS ]
+# Supported values: none, dismiss, dismiss-all, 
+# dismiss-group, invoke-default-action & exec <command>
+
+on-button-left=invoke-default-action
+on-button-middle=dismiss-group
+on-button-right=dismiss
+on-touch=invoke-default-action
+on-notify=exec mpv /usr/share/sounds/freedesktop/stereo/message.oga
+
+# [ STYLE OPTIONS ]
+font= Meslo LG M 12
+
+# background color of notification( #RRGGBB | #RRGGBBAA )
+background-color=#073642cc
+
+# Text color inside the notification( #RRGGBB | #RRGGBBAA )
+text-color=#fdf6e3
+
+# Set width of notification popup.( value in px )
+width=299
+
+# maximum height of notification( value in px )
+height=99
+
+# margin of notification which is margin for the list of notification block( value in px ).
+outer-margin=1
+# Margin of each individual notification
+margin=10
+
+# Set padding on each side to the size specified by directional( value in px )
+padding=10
+
+#Set popup border size to px pixels.(value in px )
+border-size=2
+
+# color of border of each notification( #RRGGBB | #RRGGBBAA )
+border-color=#fdf6e3cc
+
+# bordear radious of each notification(value in px )
+border-radius=14
+
+# Set popup progress indicator color to color.( value [over|source] ( #RRGGBB | #RRGGBBAA ))
+progress-color=over #657b83
+
+# Show icons in notifications.( value: -1 | 1 )
+icons=1
+
+#  Set maximum icon size to px pixels.(value in px)
+max-icon-size=34
+
+# Paths to search for icons when a notification specifies a name instead of a full path.(value path[:path...] )
+
+#  Position of the icon relative to the displayed text.(value: left | right | top | bottom )
+icon-location=left
+
+# enable pango - format notification( value 0|1 )
+# markup=1
+
+#  Applications may request an action( value 0|1 )
+actions=0
+
+# mako will save notifications that have reached their timeout into the history buffer in‐
+# stead of immediately deleting them.
+history=1
+
+#  Set notification text alignment.( value: left|right|center )
+text-alignment=center
+
+# Set the default timeout to timeout in milliseconds.
+default-timeout=3500
+
+# Set maximum number of visible notifications 
+max-visible=5
+
+# Arrange mako at the specified layer, relative to normal windows.(value: background, bottom, top, overlay )
+layer=top
+
+# Show notifications at the specified position on the output.
+anchor=top-right
+
+EOF
+    
+    cat > "$rice_path/waybar/config.jsonc" << 'EOF'
+{
+    "include": "~/.config/wayland/waybar/waybar-modules.jsonc",
+    // Example configs
+    "layer": "top",
+    "position": "top",
+    "margin-top": 10,
+    "margin-left": 400,
+    "margin-right": 400,
+    "margin-bottom": 5,
+    "height": 30,
+    "spacing": 10,
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/workspaces",
+        "gamemode",
+        "tray"
+    ],
+    "modules-center": [
+        "hyprland/window"
+    ],
+    "modules-right": [
+        "custom/music",
+        "custom/battery",
+        "cpu",
+        "memory",
+        "clock"
+    ]
+}
+EOF
+    
+    cat > "$rice_path/waybar/style.css" << 'EOF'
+/* Rice Template - Waybar Style */
+* {
+    font-family: "Meslo LG M";
+    font-size: 13px;
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+}
+
+window#waybar {
+    background: #1a1a1a;
+    color: #ffffff;
+    border-bottom: 2px solid #666666;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    background: transparent;
+    color: #ffffff;
+    border-bottom: 2px solid transparent;
+}
+
+#workspaces button.active {
+    background: #666666;
+    border-bottom: 2px solid #bd93f9;
+}
+
+#workspaces button:hover {
+    background: rgba(102, 102, 102, 0.5);
+}
+
+#clock, #battery, #network, #wireplumber {
+    padding: 0 10px;
+    margin: 0 2px;
+    background: #666666;
+    border-radius: 5px;
+}
+
+#window {
+    padding: 0 10px;
+    color: #ffffff;
+}
+EOF
+
+
+    cat > "$rice_path/waybar/waybar-modules.jsonc" << 'EOF'
+/* Rice Template - Waybar modules */
+{
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "on-click": "activate",
+        "format-icons": {
+            "1": "I",
+            "2": "II",
+            "3": "III",
+            "4": "IV",
+            "5": "V",
+            "6": "VI"
+        },
+        "sort-by-number": true,
+        "all-outputs": false,
+        "active-only": false, // Keep this as false
+        "persistent-workspaces": {
+            "*": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ]
+        },
+        "tooltip": false
+    },
+    "hyprland/window": {
+        "format": "{title}",
+        "separate-outputs": true,
+        "max-length": 25,
+        "rewrite": {
+            "(.*) - Vivaldi": "󰖟 $1",
+            "(.*) - Visual Studio Code": "󰨞 $1",
+            "(.*)Steam": "󰓓 Steam",
+            "(.*) - PCSX2": "󰊖 $1"
+        },
+        "tooltip": false
+    },
+    "clock": {
+        "format": "| {:%I:%M %p}",
+        "format-alt": "| {:%Y/%m/%d}",
+        "tooltip": false
+    },
+    "custom/battery": {
+        "exec": "/home/mhd/.config/wayland/scripts/battery-animation.sh",
+        "return-type": "json",
+        "interval": 1,
+        "format": "{} |",
+        "tooltip": false
+    },
+    "cpu": {
+        "format": "CPU {usage}% |",
+        "interval": 1,
+        "tooltip": false
+    },
+    "custom/launcher": {
+        "format": " 󰣨 ",
+        // "format": " 󰣇 ", //arch linux
+        // "format": " 󰓓 ", //Steam os
+        "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+        "tooltip": false
+    },
+    "memory": {
+        "format": " MEM {used:0.1f}GB",
+        "interval": 1,
+        "tooltip": false
+    },
+    "disk": {
+        "format": " {used} ",
+        "path": "/",
+        "tooltip": false
+    },
+    "network": {
+        "format-wifi": "{essid} ({signalStrength}%) ",
+        "format-ethernet": " Ethernet-connected ",
+        "format-disconnected": "Disconnected ⚠",
+        "tooltip": false
+    },
+    "custom/music": {
+        "format": "   |",
+        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
+        "tooltip": false
+    },
+    "tray": {
+        "spacing": 10,
+        "tooltip": false
+    },
+    "wireplumber": {
+        "format": " {volume}% |",
+        "format-muted": "Muted",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip": false
+    },
+    "gamemode": {
+        "format": "{icon}",
+        "format-alt": "{icon} {count}",
+        "icon": "gamemode",
+        "hide-not-running": true,
+        "use-icon": true,
+        "icon-name": "input-gaming-symbolic",
+        "tooltip": false
+    }
+}
+EOF
+    
+    cat > "$rice_path/rofi/shared-colors.rasi" << 'EOF'
+# Rice Template - rofi Configuration
+* {
+    bg-col:         #002b36;
+    bg-col-light:   #073642;
+    border-col:     #268bd2;
+    selected-col:   #073642;
+    blue:           #268bd2;
+    fg-col:         #839496;
+    fg-col2:        #dc322f;
+    grey:           #586e75;
+    width:          600;
+    font:           "Meslo LG M 14";
+}
+EOF
+
+    cat > "$rice_path/hypr/borders.conf" << 'EOF'
+# Rice Template - Hyprland Borders Configuration
+general {
+    layout = dwindle
+    border_size = 3
+    gaps_in = 4
+    gaps_out = 4
+    col.inactive_border = 0xff073642 # Example inactive
+    col.active_border = 0xff93a1a1    # Example active
+    allow_tearing = true
+}
+
+decoration {
+    rounding = 0
+}
+EOF
+    
+    echo "Rice '$rice_name' created successfully at $rice_path"
+    echo "Don't forget to add wallpapers to $rice_path/walls/"
+}
+
+if [[ -n "$1" ]]; then
+    create_new_rice "$1"
+else
+    echo "Usage: $0 <rice_name>"
+    echo "Example: $0 MyCustomRice"
+fi
