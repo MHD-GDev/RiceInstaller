@@ -100,6 +100,8 @@ function install_packages() {
             [Aa][Mm][Dd])
                 paru -S --noconfirm amdsmi amdvlk radeontop radeontool
                 ;;
+            [Hh][ybrid])
+                paru -S --noconfirm amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda
         esac
 
         echo -e "${GREEN}Packages installed successfully!${RESET}"
@@ -139,7 +141,7 @@ function copy_zshrc() {
     sleep 1
 
     if [[ -f .zshrc ]]; then
-        cp .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
+        cp -r .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
         echo -e "${GREEN}.zshrc copied successfully!${RESET}"
     else
         echo -e "${RED}.zshrc file missing!${RESET}"
@@ -178,14 +180,14 @@ function install_grub_theme() {
     read -rp "Install GRUB theme? (Y/n): " grub_theme
 
     if [[ "$grub_theme" =~ ^[Yy]$ ]]; then
-        if [[ -d grub2-theme-shodan/Shodan ]]; then
-            sudo cp -r grub2-theme-shodan/Shodan /boot/grub/themes
-            sudo sed -i 's|#GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/Shodan/theme.txt"|' /etc/default/grub
+        if [[ -d yorha-1920x1080 ]]; then
+            sudo cp -r yorha-1920x1080 /boot/grub/themes
+            sudo sed -i 's|#GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/yorha-1920x1080/theme.txt"|' /etc/default/grub
             sudo grub-mkconfig -o /boot/grub/grub.cfg
             echo -e "${GREEN}GRUB theme installed successfully!${RESET}"
-        else
-            echo -e "${RED}GRUB theme skipped!${RESET}"
         fi
+    else
+        echo -e "${RED}GRUB theme skipped!${RESET}"
     fi
     sleep 3
     clear
