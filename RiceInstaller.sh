@@ -182,7 +182,8 @@ function install_grub_theme() {
     if [[ "$grub_theme" =~ ^[Yy]$ ]]; then
         if [[ -d yorha-1920x1080 ]]; then
             sudo cp -r yorha-1920x1080 /boot/grub/themes
-            sudo sed -i 's|#GRUB_THEME=.*|GRUB_THEME="/boot/grub/themes/yorha-1920x1080/theme.txt"|' /etc/default/grub
+            sudo sed -i '/^#*GRUB_THEME=/d' /etc/default/grub
+            echo 'GRUB_THEME="/boot/grub/themes/yorha-1920x1080/theme.txt"' | sudo tee -a /etc/default/grub > /dev/null
             sudo grub-mkconfig -o /boot/grub/grub.cfg
             echo -e "${GREEN}GRUB theme installed successfully!${RESET}"
         fi
