@@ -43,6 +43,8 @@ dolphin
 telegram-desktop
 firefox
 bluez
+blueman
+jq
 ranger
 eza
 bat
