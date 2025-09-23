@@ -1,3 +1,5 @@
+awesome-terminal-fonts
+ttf-meslo-nerd
 xorg-xrandr
 wl-clipboard
 slurp
