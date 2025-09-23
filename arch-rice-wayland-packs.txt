@@ -1,3 +1,4 @@
+xorg-xrandr
 wl-clipboard
 slurp
 imagemagick

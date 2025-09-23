@@ -75,7 +75,6 @@ function install_packages() {
     sleep 1
 
     read -rp "Which operating system is this? (Arch/Gentoo): " current_os
-    read -rp "Which GPU do you have? (AMD/Intel/Nvidia/Hybrid): " selected_gpu
 
     if [[ "$current_os" =~ ^[Aa]rch$ ]]; then
         sudo pacman -Syu --noconfirm && sudo pacman -S --noconfirm git
@@ -90,6 +89,7 @@ function install_packages() {
             exit 1
         fi
 
+        read -rp "Which GPU do you have? (AMD/Intel/Nvidia/Hybrid): " selected_gpu
         case "$selected_gpu" in
             [Nn]vidia)
                 paru -S --noconfirm nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda
@@ -100,8 +100,9 @@ function install_packages() {
             [Aa][Mm][Dd])
                 paru -S --noconfirm amdsmi amdvlk radeontop radeontool
                 ;;
-            [Hh][ybrid])
+            [Hh]ybrid)
                 paru -S --noconfirm amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda
+                ;;
         esac
 
         echo -e "${GREEN}Packages installed successfully!${RESET}"
@@ -123,7 +124,7 @@ function copy_configs() {
     sleep 1
 
     if [[ -d ConfigFiles ]]; then
-        cp -r ConfigFiles/* ~/.config
+        rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
         echo -e "${GREEN}Config directories copied!${RESET}"
     else
         echo -e "${RED}Missing ConfigFiles directory!${RESET}"
@@ -142,6 +143,8 @@ function copy_zshrc() {
 
     if [[ -f .zshrc ]]; then
         cp -r .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
+        mkdir .bash && mv .bash_history .bash_logout .bashrc .bash_profile .bash
+        chsh -s $(which zsh)
         echo -e "${GREEN}.zshrc copied successfully!${RESET}"
     else
         echo -e "${RED}.zshrc file missing!${RESET}"
@@ -287,7 +290,7 @@ function fix_permissions() {
 # ENABLE SDDM           #
 #-----------------------#
 function enable_sddm() {
-    if sudo systemctl enable --now sddm; then
+    if sudo systemctl enable sddm && reboot; then
         echo -e "${GREEN}sddm enabled successfully!${RESET}"
     else
         echo -e "${RED}Failed to enable sddm!${RESET}"
