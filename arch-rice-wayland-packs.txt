@@ -1,4 +1,5 @@
 awesome-terminal-fonts
+ttf-noto-cjk-vf
 ttf-meslo-nerd
 xorg-xrandr
 wl-clipboard
