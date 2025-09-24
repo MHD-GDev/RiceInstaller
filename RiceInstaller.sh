@@ -225,7 +225,7 @@ function build_llama() {
                 ;;
             2)
                 echo -e "${GREEN}CPU build selected.${RESET}"
-                cmake -B build && cmake --build build --config Release
+                cmake -B build -DBUILD_SHARED_LIBS=off && cmake --build build --config Release
                 break
                 ;;
             3)
