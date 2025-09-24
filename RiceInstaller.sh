@@ -243,6 +243,7 @@ function build_llama() {
     mkdir -p ~/.config/AI
     mv ~/RiceInstaller/LlamaUI-vMHD.html ~/.config/AI
     mv ~/Templates/llama.cpp ~/.config/AI
+    mkdir -p ~/.local/bin/
     mv ~/.config/AI/llama.cpp/build/bin/{llama-cli,llama-server} ~/.local/bin/
     echo -e "${GREEN}llama.cpp build complete!${RESET}"
     sleep 3
