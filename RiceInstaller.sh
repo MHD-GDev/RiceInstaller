@@ -241,7 +241,6 @@ function build_llama() {
     done
 
     mkdir -p ~/.config/AI
-    mv ~/RiceInstaller/LlamaUI-vMHD.html ~/.config/AI
     mv ~/Templates/llama.cpp ~/.config/AI
     mkdir -p ~/.local/bin/
     mv ~/.config/AI/llama.cpp/build/bin/{llama-cli,llama-server} ~/.local/bin/
