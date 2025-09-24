@@ -245,6 +245,7 @@ function build_llama() {
     mv ~/Templates/llama.cpp ~/.config/AI
     mkdir -p ~/.local/bin/
     mv ~/.config/AI/llama.cpp/build/bin/{llama-cli,llama-server} ~/.local/bin/
+    mkdir -p ~/.local/share/AI-Models
     echo -e "${GREEN}llama.cpp build complete!${RESET}"
     sleep 3
     clear
