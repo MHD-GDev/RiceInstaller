@@ -1,3 +1,5 @@
+nodejs
+cmake
 zsh-completions
 awesome-terminal-fonts
 ttf-noto-cjk-vf
