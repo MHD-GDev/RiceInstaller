@@ -10,6 +10,7 @@
     "modules-left": [
         "custom/launcher",
         "hyprland/workspaces",
+        "custom/music",
         "tray"
     ],
 
@@ -19,7 +20,6 @@
 
     "modules-right": [
         "wireplumber", 
-        "custom/music",
         "cpu",
         "memory",
         "custom/battery",

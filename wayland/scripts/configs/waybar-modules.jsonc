@@ -55,9 +55,9 @@
         "tooltip": false
     },
     "custom/launcher": {
-        "format": " 󰣨 ",
-        // "format": " 󰣇 ", //arch linux
-        // "format": " 󰓓 ", //Steam os
+        //"format": " 󰣨 ",
+        "format": " 󰣇 ",
+        // "format": " 󰓓 ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
     },
