@@ -1,0 +1,32 @@
+{
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+  "layer": "top",
+  "position": "top",
+  "height": 55,
+    "margin-left": 6,
+    "margin-right": 6,
+  "spacing": 15,
+
+  // Module placement
+  "modules-left": [
+    "custom/launcher",
+    "hyprland/workspaces",
+    "custom/separator",
+    "hyprland/window"
+  ],
+  "modules-center": [
+    "clock"
+  ],
+  "modules-right": [
+    "tray",
+    "custom/music",
+    "cpu",
+    "memory",
+    "disk",
+    "wireplumber",
+    "custom/battery",
+  ],
+
+  }
+}
+

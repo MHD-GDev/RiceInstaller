@@ -1,0 +1,37 @@
+/* Waybar Style - Yellow Rice */
+
+* {
+    font-family: "Meslo LG M", monospace;
+    font-size: 14px;
+    border: none;
+    min-height: 0;
+}
+
+window#waybar {
+    background: rgba(0, 0, 0, 0.5);
+    color: #fcc000;
+    border-bottom: 2px solid #c4a000;
+    border-top: 2px solid #c4a000;
+    border-left: 2px solid #c4a000;
+    border-right: 2px solid #c4a000;
+}
+
+#workspaces button {
+    padding: 4px 10px;
+    margin: 2px;
+    border-radius: 6px;
+    background: transparent;
+    color: #ffd11a;
+}
+
+#workspaces button:hover {
+    background: rgba(0,0,0,0.6);
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid #c4a000;
+}
+
+#custom-launcher {
+    margin-left: 5px;
+    font-size: 30px;
+}
