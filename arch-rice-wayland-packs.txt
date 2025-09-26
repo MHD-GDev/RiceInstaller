@@ -1,3 +1,4 @@
+python-pillow
 nodejs
 cmake
 zsh-completions
