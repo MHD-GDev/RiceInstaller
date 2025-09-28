@@ -2,11 +2,11 @@
     "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
     "layer": "top",
     "position": "top",
-    "height": 55,
+    "height": 58,
     "spacing": 8,
     "margin-top": 5,
-    "margin-left": 5,
-    "margin-right": 5,
+    "margin-left": 8,
+    "margin-right": 8,
     "modules-left": [
         "hyprland/workspaces",
         "hyprland/window",
@@ -20,6 +20,7 @@
     "modules-right": [
         "custom/music",
         "wireplumber",
+        "disk",
         "custom/battery",
         "clock"
     ]

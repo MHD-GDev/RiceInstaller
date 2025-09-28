@@ -10,10 +10,7 @@
 window#waybar {
     background: rgba(0, 0, 0, 0.5);
     color: #fcc000;
-    border-bottom: 2px solid #c4a000;
-    border-top: 2px solid #c4a000;
-    border-left: 2px solid #c4a000;
-    border-right: 2px solid #c4a000;
+    border : 3px solid #c4a000;
 }
 
 #workspaces button {
@@ -22,6 +19,18 @@ window#waybar {
     border-radius: 6px;
     background: transparent;
     color: #ffd11a;
+}
+
+#workspaces button.active {
+    background: linear-gradient(45deg, #fcc000, #ffd11a);
+    color: #1A1F2B;
+    border: 1px solid #fcc000;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 0 10px rgba(252, 192, 0, 0.8); /* glow in theme color */
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 #workspaces button:hover {
@@ -34,4 +43,8 @@ window#waybar {
 #custom-launcher {
     margin-left: 5px;
     font-size: 30px;
+}
+
+#custom-battery {
+    margin-right: 5px;
 }
