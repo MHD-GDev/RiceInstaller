@@ -60,6 +60,7 @@
         // "format": " 󰓓 ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
+    "on-click": "nm-connection-editor"
     },
     "memory": {
         "format": " MEM {used:0.1f}GB",
@@ -88,18 +89,18 @@
         "tooltip": false
     },
     "wireplumber": {
-        "format": " {volume}% ",
-        "format-muted": "Muted",
+        "format": "{icon}   {volume}%",
+        "format-icons": {
+        "default": ["", "", ""]
+        },
+        "format-muted": "  Muted",
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
         "tooltip": false
     },
-    "gamemode": {
-        "format": "{icon}",
-        "format-alt": "{icon} {count}",
-        "icon": "gamemode",
-        "hide-not-running": true,
-        "use-icon": true,
-        "icon-name": "input-gaming-symbolic",
+    "custom/logout": {
+        "format": "  ",
+        "tooltip": "Logout",
+        "on-click": "wlogout",
         "tooltip": false
     },
     "custom/separator": {
