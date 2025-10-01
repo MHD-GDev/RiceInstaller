@@ -67,6 +67,7 @@ wayland-protocols
 wireplumber
 wl-clipboard
 wget
+wlogout
 xorg-xrandr
 xwayland-run
 zsh
