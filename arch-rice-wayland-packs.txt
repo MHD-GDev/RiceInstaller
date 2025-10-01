@@ -37,7 +37,6 @@ mpd
 mpv
 neovim
 nodejs
-npm
 openssh
 pavucontrol
 pipewire
@@ -67,6 +66,7 @@ wayland
 wayland-protocols
 wireplumber
 wl-clipboard
+wget
 xorg-xrandr
 xwayland-run
 zsh
