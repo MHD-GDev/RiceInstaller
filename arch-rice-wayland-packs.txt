@@ -37,6 +37,7 @@ mpd
 mpv
 neovim
 nodejs
+npm
 openssh
 pavucontrol
 pipewire
