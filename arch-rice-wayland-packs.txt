@@ -1,3 +1,4 @@
+libnotify
 flatpak
 python-pillow
 nodejs
