@@ -36,7 +36,7 @@ window#waybar {
 
 #workspaces button {
     padding: 0 8px;
-    color: #7AA2F7;
+    color: #B8D0FA;
     background: transparent;
     border: 1px solid transparent;
 }
@@ -54,6 +54,9 @@ window#waybar {
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
+#workspaces button.empty {
+    color: #7AA2F7;
+}
 #window {
     padding: 0 15px;
     margin: 5px 2px;

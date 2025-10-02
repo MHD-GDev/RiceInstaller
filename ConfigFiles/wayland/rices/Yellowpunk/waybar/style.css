@@ -18,7 +18,7 @@ window#waybar {
     margin: 2px;
     border-radius: 6px;
     background: transparent;
-    color: #ffd11a;
+    color: #808080;
 }
 
 #workspaces button.active {
@@ -40,6 +40,9 @@ window#waybar {
     border: 1px solid #c4a000;
 }
 
+#workspaces button.empty {
+    color: #ffd11a;
+}
 #custom-launcher {
     margin-left: 5px;
     font-size: 30px;

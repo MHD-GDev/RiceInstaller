@@ -18,7 +18,7 @@ window#waybar {
 }
 
 #workspaces button {
-    color: #89b4fa;
+    color: #ebcb8b;
     background: #232330;
     margin-right: 10px;
     border-radius: 15px;
@@ -36,10 +36,8 @@ window#waybar {
     border-radius: 15px;
 }
 
-/* Try multiple selectors for occupied workspaces */
-#workspaces button.occupied {
-    background: #232330;
-    color: #ebcb8b;
+#workspaces button.empty{
+    color: #89b4fa;
 }
 
 #window,
