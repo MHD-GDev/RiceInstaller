@@ -31,7 +31,7 @@
         "max-length": 25,
         "rewrite": {
             "(.*) - Vivaldi": "󰖟 $1",
-            "(.*) - Visual Studio Code": "󰨞 $1",
+            "(.*) - Code - OSS": "󰨞 $1",
             "(.*)Steam": "󰓓 Steam",
             "(.*) - PCSX2": "󰊖 $1"
         },
@@ -51,7 +51,7 @@
     },
     "cpu": {
         "format": "CPU {usage}% ",
-        "interval": 1,
+        "interval": 30,
         "tooltip": false
     },
     "custom/launcher": {
@@ -60,11 +60,10 @@
         // "format": " 󰓓 ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
-    "on-click": "nm-connection-editor"
     },
     "memory": {
         "format": " MEM {used:0.1f}GB",
-        "interval": 1,
+        "interval": 30,
         "tooltip": false
     },
     "disk": {
@@ -99,7 +98,6 @@
     },
     "custom/logout": {
         "format": "  ",
-        "tooltip": "Logout",
         "on-click": "wlogout",
         "tooltip": false
     },

@@ -1,0 +1,74 @@
+* {
+    font-family: Meslo LG M;
+    font-size: 18px;
+    font-weight: 500;
+    color: #41EC55;
+    border-radius: 0px;
+}
+
+.topbar {
+    background: transparent;
+    border-top: 4px solid #41ec55;
+}
+
+.bottombar {
+    background: transparent;
+    border-bottom: 4px solid #41ec55;
+}
+
+#pipewire,
+#clock,
+#cpu,
+#memory,
+#custom-battery,
+#network {
+    padding: 2px 12px;
+    padding-top: 2px;
+}
+
+#custom-stats,
+#custom-skills {
+    color: #41EC55;
+    padding-left: 2px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+#custom-separator,
+#custom-separator-left,
+#custom-separator-right {
+    color: #41EC55;
+    margin-top: -14px;
+    font-size: 38px;
+    font-weight: bold;
+}
+
+#custom-separator-left {
+    margin-left: -10px;
+    padding-right: 4px;
+}
+
+#custom-separator-right {
+    margin-right: -10px;
+    padding-left: 4px;
+}
+
+#custom-logout {
+    padding: 2px 4px;
+    padding-top: 2px;
+    padding-right: 4px;
+    font-size: 22px;
+}
+
+#workspaces button:hover {
+    border: 2px solid #41EC55;
+}
+
+#workspaces button.active {
+    background: transparent;
+    border-bottom: 3px solid #41EC55;
+}
+
+#workspaces button {
+    background: transparent;
+}

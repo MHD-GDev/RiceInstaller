@@ -23,7 +23,8 @@
         "cpu",
         "memory",
         "custom/battery",
-        "clock"
+        "clock",
+        "custom/logout"
     ]
 }
 
