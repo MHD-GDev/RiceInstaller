@@ -1,148 +1,45 @@
 /* Monochrome */
 * {
     font-family: "Meslo LG M";
-    font-size: 14px;
+    font-size: 18px;
     font-weight: bold;
-    border: none;
-    border-radius: 0;
-    min-height: 0;
-    text-shadow: 0 0 3px rgba(122, 162, 247, 0.5);
+    margin: 0;
 }
 
 window#waybar {
-    border: 3px solid #292929;
-    border-top: 3px solid #292929;
-    background: #858585;
-    background: radial-gradient(circle, rgba(133, 133, 133, 1) 20%, rgba(79, 79, 79, 1) 61%, rgba(43, 43, 43, 1) 87%);
-    border-radius: 5px;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
-}
-
-#custom-launcher {
-    background: linear-gradient(45deg, #7AA2F7, #A9C3F7);
-    color: #1A1F2B;
-    padding: 0 15px;
-    margin: 5px 2px;
-}
-
-#workspaces {
-    background: linear-gradient(90deg,
-            rgba(122, 162, 247, 0.1) 0%,
-            rgba(169, 195, 247, 0.1) 100%);
-    border: 1px solid rgba(122, 162, 247, 0.3);
-    margin: 5px 2px;
-    padding: 0 5px;
+    background: transparent;
+    color: #eeeeee;
 }
 
 #workspaces button {
-    padding: 0 8px;
-    color: #7AA2F7;
-    background: transparent;
-    border: 1px solid transparent;
+    color: #eeeeee;
+    padding-left: 0.7em;
 }
 
-#workspaces button:hover {
-    background: rgba(122, 162, 247, 0.2);
-    border: 1px solid #7AA2F7;
-    box-shadow: 0 0 8px rgba(122, 162, 247, 0.5);
+#workspaces button.empty{
+    color: #aaaaaa;
 }
 
 #workspaces button.active {
-    background: linear-gradient(45deg, #7AA2F7, #A9C3F7);
-    color: #1A1F2B;
     border: 1px solid #E6EEF3;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 10px rgba(122, 162, 247, 0.8);
-    text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
+        0 0 10px rgba(100, 100, 100, 0.8);
 }
 
 #window {
-    background: rgba(26, 31, 43, 0.5);
-    border: 1px solid rgba(122, 162, 247, 0.3);
     padding: 0 15px;
     margin: 5px 2px;
     color: #E6EEF3;
 }
 
+#custom-music,
+#wireplumber,
+#custom-battery,
+#disk,
+#custom-logout,
 #clock {
-    background: linear-gradient(45deg, #1A1F2B, #2F3442);
-    border: 2px solid #7AA2F7;
-    padding: 0 20px;
-    margin: 3px 5px;
-    color: #7AA2F7;
-    font-size: 14px;
-    font-weight: bold;
-    box-shadow:
-        inset 0 1px 0 rgba(122, 162, 247, 0.2),
-        0 0 15px rgba(122, 162, 247, 0.4);
+    padding-right: 1em;
 }
 
-#cpu,
-#memory {
-    background: rgba(169, 195, 247, 0.1);
-    border: 1px solid rgba(169, 195, 247, 0.3);
-    padding: 0 12px;
-    margin: 5px 2px;
-    color: #A9C3F7;
-}
 
-#custom-music {
-    background: linear-gradient(45deg, #A9C3F7, #B8D0FA);
-    color: #1A1F2B;
-    padding: 0 12px;
-    margin: 5px 2px;
-    border: 1px solid #E6EEF3;
-    box-shadow: 0 0 8px rgba(169, 195, 247, 0.5);
-}
-
-#wireplumber {
-    background: rgba(184, 208, 250, 0.1);
-    border: 1px solid rgba(184, 208, 250, 0.3);
-    padding: 0 12px;
-    margin: 5px 2px;
-    color: #B8D0FA;
-}
-
-#wireplumber.muted {
-    background: rgba(122, 162, 247, 0.2);
-    color: #7AA2F7;
-    border-color: #7AA2F7;
-    box-shadow: 0 0 8px rgba(122, 162, 247, 0.5);
-}
-
-#battery {
-    background: rgba(192, 212, 250, 0.1);
-    border: 1px solid rgba(192, 212, 250, 0.3);
-    padding: 0 12px;
-    margin: 5px 2px;
-    color: #C0D4FA;
-}
-
-#battery.charging {
-    background: rgba(169, 195, 247, 0.2);
-    color: #A9C3F7;
-    border-color: #A9C3F7;
-    box-shadow: 0 0 8px rgba(169, 195, 247, 0.5);
-}
-
-#battery.warning {
-    background: rgba(184, 208, 250, 0.2);
-    color: #B8D0FA;
-    border-color: #B8D0FA;
-    box-shadow: 0 0 8px rgba(184, 208, 250, 0.5);
-}
-
-#battery.critical {
-    background: rgba(122, 162, 247, 0.3);
-    color: #7AA2F7;
-    border-color: #7AA2F7;
-    box-shadow: 0 0 12px rgba(122, 162, 247, 0.8);
-}
-
-#tray {
-    background: rgba(26, 31, 43, 0.3);
-    border: 1px solid rgba(230, 238, 243, 0.2);
-    padding: 0 8px;
-    margin: 5px 2px;
-}

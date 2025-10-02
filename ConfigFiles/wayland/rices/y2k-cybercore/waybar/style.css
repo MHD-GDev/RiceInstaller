@@ -63,11 +63,11 @@ window#waybar {
     color: #E6EEF3;
 }
 
-#clock {
+#custom-logout{
     padding: 0 20px;
     margin: 3px 5px;
     color: #7AA2F7;
-    font-size: 14px;
+    font-size: 19px;
     font-weight: bold;
 }
 
@@ -90,7 +90,8 @@ window#waybar {
     color: #7AA2F7;
 }
 
-#custom-battery {
+#custom-battery,
+#clock{
     padding: 0 12px;
     margin: 5px 2px;
     color: #B8D0FA;

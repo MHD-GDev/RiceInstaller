@@ -2,7 +2,7 @@
 
 * {
     font-family: "Meslo LG M", monospace;
-    font-size: 14px;
+    font-size: 18px;
     border: none;
     min-height: 0;
 }
@@ -48,6 +48,7 @@ window#waybar {
     font-size: 30px;
 }
 
-#custom-battery {
+#custom-battery,
+#custom-logout{
     margin-right: 5px;
 }

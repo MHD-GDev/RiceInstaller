@@ -25,6 +25,7 @@
     "disk",
     "wireplumber",
     "custom/battery",
+    "custom/logout"
   ],
 
   }

@@ -20,7 +20,9 @@
     "modules-right": [
         "custom/music",
         "wireplumber",
+        "disk",
         "custom/battery",
-        "clock"
+        "clock",
+        "custom/logout",
     ]
 }
