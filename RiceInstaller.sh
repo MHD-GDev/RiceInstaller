@@ -124,6 +124,7 @@ function copy_configs() {
     sleep 1
 
     if [[ -d ConfigFiles ]]; then
+        sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
         rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
         echo -e "${GREEN}Config directories copied!${RESET}"
     else
