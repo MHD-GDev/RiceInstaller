@@ -42,4 +42,7 @@ window#waybar {
     padding-right: 1em;
 }
 
+#custom-launcher {
+    font-size: 38px;
+}
 
