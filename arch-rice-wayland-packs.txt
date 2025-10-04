@@ -38,6 +38,8 @@ mpv
 neovim
 nodejs
 openssh
+obfs4proxy-bin
+proxychains
 pavucontrol
 pipewire
 plasma-wayland-protocols
@@ -59,6 +61,7 @@ tmux
 ttf-meslo-nerd
 ttf-noto-cjk-vf
 ttf-noto-emoji-monochrome
+tor
 unrar
 unzip
 waybar
