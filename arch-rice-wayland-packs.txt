@@ -48,6 +48,7 @@ polkit-gnome
 polkit-kde-agent
 pulsemixer
 python-pillow
+qbittorrent
 ranger
 rofi
 rsync
