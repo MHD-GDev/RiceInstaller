@@ -12,8 +12,8 @@
 window#waybar {
     border: 3px solid #7AA2F7;
     background: #858585;
-    background: radial-gradient(circle, rgba(133, 133, 133, 0.8) 20%, rgba(79, 79, 79, 0.8) 61%, rgba(43, 43, 43, 0.8) 87%);
-    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 24px;
 }
 
 #custom-launcher {
@@ -90,7 +90,7 @@ window#waybar {
     color: #7AA2F7;
 }
 
-#custom-battery,
+#battery,
 #clock{
     padding: 0 12px;
     margin: 5px 2px;

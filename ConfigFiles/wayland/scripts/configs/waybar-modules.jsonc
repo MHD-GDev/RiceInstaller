@@ -33,7 +33,10 @@
             "(.*) - Vivaldi": "󰖟 $1",
             "(.*) - Code - OSS": "󰨞 $1",
             "(.*)Steam": "󰓓 Steam",
-            "(.*) - PCSX2": "󰊖 $1"
+            "(.*) - (Mozilla )?Firefox": "󰈹 $1",
+            "(.*) - PCSX2": "󰊖 $1",
+            "(vi|nvim) (.*)": "  $2",
+            "(.*) - Blender [0-9.]+.*": "󰂫 "
         },
         "tooltip": false
     },
@@ -42,16 +45,28 @@
         "format-alt": " {:%Y/%m/%d}",
         "tooltip": false
     },
-    "custom/battery": {
-        "exec": "~/.config/wayland/scripts/battery-animation.sh",
-        "return-type": "json",
-        "interval": 1,
-        "format": "{} ",
-        "tooltip": false
+    "battery": {
+      "states": { "warning": 20, "critical": 10 },
+      "format": "{icon} {capacity}%",
+      "format-time": "{H} hr {M} min",
+      "format-icons": [ "󰂎", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
+      "format-charging": "󰉁 {capacity}%",
+      "min-length": 7,
+      "max-length": 7,
+      "tooltip-format": "Discharging: {time}",
+      "tooltip-format-charging": "Charging: {time}",
+      "events": {
+        "on-discharging-warning": "notify-send 'Low Battery' '{capacity}% battery remaining'",
+        "on-discharging-critical": "notify-send 'Low Battery' '{capacity}% battery remaining' -u critical",
+        "on-charging-100": "notify-send 'Battery full' 'Battery is at {capacity}%'"
+      }
     },
     "cpu": {
         "format": "CPU {usage}% ",
-        "interval": 30,
+        "format-warning": " {usage}%",
+        "format-critical": " {usage}%",
+        "states": { "warning": 75, "critical": 90 },
+        "interval": 10,
         "tooltip": false
     },
     "custom/launcher": {
@@ -63,8 +78,11 @@
     },
     "memory": {
         "format": " MEM {used:0.1f}GB",
-        "interval": 30,
-        "tooltip": false
+        "format-warning": " {percentage}%",
+        "format-critical": " {percentage}%",
+        "states": { "warning": 75, "critical": 90 },
+        "interval": 10,
+        "tooltip-format": "Memory Used: {used:0.1f} GB / {total:0.1f} GB"
     },
     "disk": {
         "format": " {used} ",

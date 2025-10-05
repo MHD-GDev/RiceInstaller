@@ -20,7 +20,7 @@
     "modules-right": [
         "custom/music",
         "custom/separator",
-        "custom/battery",
+        "battery",
         "custom/separator",
         "cpu",
         "custom/separator",

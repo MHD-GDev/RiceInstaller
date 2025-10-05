@@ -22,7 +22,7 @@
         "wireplumber", 
         "cpu",
         "memory",
-        "custom/battery",
+        "battery",
         "clock",
         "custom/logout"
     ]

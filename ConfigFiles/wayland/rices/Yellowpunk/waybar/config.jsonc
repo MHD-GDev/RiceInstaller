@@ -24,7 +24,7 @@
     "memory",
     "disk",
     "wireplumber",
-    "custom/battery",
+    "battery",
     "custom/logout"
   ],
 

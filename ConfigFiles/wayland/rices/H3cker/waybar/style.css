@@ -1,8 +1,7 @@
 * {
-    font-family: Meslo LG M;
+    font-family: "Meslo LG M";
     font-size: 18px;
     font-weight: 500;
-    color: #41EC55;
     border-radius: 0px;
 }
 
@@ -16,6 +15,10 @@
     border-bottom: 4px solid #41ec55;
 }
 
+#custom-music,
+#wireplumber,
+#disk,
+#tray,
 #pipewire,
 #clock,
 #cpu,
@@ -24,6 +27,7 @@
 #network {
     padding: 2px 12px;
     padding-top: 2px;
+    color: #41EC55;
 }
 
 #custom-stats,
@@ -54,21 +58,21 @@
 }
 
 #custom-logout {
+    color: #41EC55;
     padding: 2px 4px;
     padding-top: 2px;
     padding-right: 4px;
     font-size: 22px;
 }
 
-#workspaces button:hover {
-    border: 2px solid #41EC55;
-}
-
 #workspaces button.active {
     background: transparent;
+    color: #41EC55;
     border-bottom: 3px solid #41EC55;
+    margin-bottom: 4px;
 }
 
 #workspaces button {
     background: transparent;
+    color: #41EC55;
 }

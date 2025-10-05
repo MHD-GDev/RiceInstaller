@@ -1,28 +1,31 @@
 {
-    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
-    "layer": "top",
-    "position": "top",
-    "height": 58,
-    "spacing": 8,
-    "margin-top": 5,
-    "margin-left": 8,
-    "margin-right": 8,
-    "modules-left": [
-        "hyprland/workspaces",
-        "hyprland/window",
-        "tray"
-    ],
-    "modules-center": [
-        "cpu",
-        "custom/launcher",
-        "memory"
-    ],
-    "modules-right": [
-        "custom/music",
-        "wireplumber",
-        "disk",
-        "custom/battery",
-        "clock",
-        "custom/logout"
-    ]
+  "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+  "layer": "top",
+  "position": "top",
+  "height": 35,
+  "spacing": 4,
+  "margin-top": 5,
+  "margin-bottom": 10,
+
+  "modules-left": [
+    "custom/launcher",
+    "hyprland/workspaces",
+    "tray"
+  ],
+
+  "modules-center": [
+    "hyprland/window",
+  ],
+
+  "modules-right": [
+    "custom/music",
+    "wireplumber",
+    "cpu",
+    "memory",
+    "disk",
+    "battery",
+    "clock",
+    "custom/logout"
+  ]
 }
+

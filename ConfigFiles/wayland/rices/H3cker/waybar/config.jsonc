@@ -15,6 +15,7 @@
       "memory",
       "disk",
       "cpu",
+      "tray",
       "custom/separator"
     ],
     "modules-center": [
@@ -141,6 +142,11 @@
     "custom/separator-left": {
       "format": "|"
     },
+    "tray": {
+        "spacing": 10,
+        "icon-size": 24,
+        "tooltip": false
+    },
     "hyprland/window": {
         "format": "{title}",
         "separate-outputs": true,
@@ -150,6 +156,8 @@
             "(.*) - Code - OSS": "󰨞 $1",
             "(.*)Steam": "󰓓 Steam",
             "(.*) - PCSX2": "󰊖 $1",
+            "(vi|nvim) (.*)": "  $2",
+            "(.*) - Blender [0-9.]+.*": "󰂫 "
         },
         "tooltip": false
     }

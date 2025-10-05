@@ -1,7 +1,7 @@
 /* Waybar Style - Yellow Rice */
 
 * {
-    font-family: "Meslo LG M", monospace;
+    font-family: "Meslo LG M";
     font-size: 18px;
     border: none;
     min-height: 0;
@@ -48,7 +48,7 @@ window#waybar {
     font-size: 30px;
 }
 
-#custom-battery,
+#battery,
 #custom-logout{
     margin-right: 5px;
 }

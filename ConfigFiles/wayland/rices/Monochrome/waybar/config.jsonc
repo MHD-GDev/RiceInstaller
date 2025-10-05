@@ -21,7 +21,7 @@
         "custom/music",
         "wireplumber",
         "disk",
-        "custom/battery",
+        "battery",
         "clock",
         "custom/logout",
     ]
