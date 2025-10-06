@@ -4,7 +4,6 @@ blueman
 bluez
 chrony
 cmake
-code
 curl
 dolphin
 egl-wayland
@@ -66,6 +65,7 @@ tor
 unrar
 unzip
 vimix-cursors
+visual-studio-code-bin
 waybar
 wayland
 wayland-protocols
