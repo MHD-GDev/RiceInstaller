@@ -39,7 +39,6 @@ neovim
 nodejs
 openssh
 obfs4proxy-bin
-python-huggingface-hub
 proxychains
 pavucontrol
 pipewire
