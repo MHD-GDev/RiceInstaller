@@ -65,6 +65,7 @@ ttf-noto-emoji-monochrome
 tor
 unrar
 unzip
+vimix-cursors
 waybar
 wayland
 wayland-protocols
