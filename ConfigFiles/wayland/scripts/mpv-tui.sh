@@ -79,17 +79,41 @@ show_file_browser() {
     
     # List media files with numbers
     declare -a media_files
+    media_files=()
     while IFS= read -r file; do
+        if [ -z "$file" ]; then
+            echo "${RED}Error: Null file reference!${RESET}"
+            continue
+        fi
+        
+        if [ ! -f "$file" ]; then
+            echo "${RED}Error: File not found: $file${RESET}"
+            continue
+        fi
+        
         media_files+=("$file")
     done < <(find "$current_dir" -maxdepth 1 -type f \( \
         -iname "*.mp3" -o -iname "*.flac" -o -iname "*.wav" -o \
         -iname "*.ogg" -o -iname "*.m4a" \) 2>/dev/null)
     
-    for i in "${!media_files[@]}"; do
+    if [ ${#media_files[@]} -eq 0 ]; then
+        echo "${RED}Error: No media files found!${RESET}"
+        return 1
+    fi
+    
+    for ((i=0; i<${#media_files[@]}; i++)); do
         local file="${media_files[$i]}"
         local basename_file=$(basename "$file")
-        center_text "  ${BLUE}[$((i+1))]${RESET} ${MUSIC_ICON} $basename_file" $(($TERM_WIDTH/2))
-    done    
+        local name_length=${#basename_file}
+        local padding=$(( (TERM_WIDTH - name_length) / 2 ))
+        if [ $name_length -gt $(($TERM_WIDTH/2)) ]; then
+            local short_name="${basename_file:0:$((TERM_WIDTH/2))}..."
+            center_text "  ${BLUE}[$((i+1))]${RESET} ${MUSIC_ICON} ${short_name}"
+        else
+            center_text "  ${BLUE}[$((i+1))]${RESET} ${MUSIC_ICON} ${basename_file}"
+        fi
+    done
+    
     echo
     center_text "$(draw_line "-" $(($TERM_WIDTH/2)))"
     
@@ -98,13 +122,17 @@ show_file_browser() {
 }
 # Function to show playback controls
 show_controls() {
+    local -r controls=(
+        " ${BLUE}Space${RESET}     - Play/Pause"
+        "  ${BLUE}q${RESET}         - Quit"
+        "  ${BLUE}←/→${RESET}       - Seek -/+ 10s"
+        "  ${BLUE}m${RESET}         - Mute"
+        "  ${BLUE}L${RESET}         - Inf Loop"
+    )
+
     echo
     echo "${BOLD}${MAGENTA}Controls:${RESET}"
-    echo "  ${BLUE}Space${RESET}     - Play/Pause"
-    echo "  ${BLUE}q${RESET}         - Quit"
-    echo "  ${BLUE}←/→${RESET}       - Seek -/+ 10s"
-    echo "  ${BLUE}m${RESET}         - Mute"
-    echo "  ${BLUE}L${RESET}         - Inf Loop"
+    printf '%s\n' "${controls[@]}"
     echo
 }
 
@@ -205,3 +233,5 @@ trap 'echo -e "\n${YELLOW}Goodbye!${RESET}"; exit 0' INT
 
 # Run main function
 main "$@"
+
+
