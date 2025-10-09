@@ -23,10 +23,14 @@
 #clock,
 #cpu,
 #memory,
-#custom-battery,
+#battery,
 #network {
     padding: 2px 12px;
     padding-top: 2px;
+    color: #41EC55;
+}
+
+#window {
     color: #41EC55;
 }
 
