@@ -80,7 +80,7 @@ main() {
         # Show notification with color preview
         notify-send -i "$preview_file" "Color at cursor" \
             "HEX: $hex_color\nRGB: $rgb_color" \
-            -t 1000 \
+            -t 5000 \
             -u normal
             
         # Copy hex color to clipboard
