@@ -13,7 +13,7 @@
 # IGNORE LIST (permanent)
 # -------------------------------
 # Arch: comma-space separated, e.g. "pkg1, pkg2-*, pkg3"
-IGNORE_LIST_ARCH=""
+IGNORE_LIST_ARCH="blender, haskell-*"
 
 # Gentoo: space-separated, e.g. "pkgcompany/pkg1 pkgcompany/pkg2"
 EXCLUDE_LIST_GENTOO=""
@@ -79,14 +79,28 @@ print_updates_gentoo() {
     local total excludes
     total=$(get_total_updates_gentoo)
     excludes="$EXCLUDE_LIST_GENTOO $EXCLUDE"
+
     if [[ "$total" -gt 0 ]]; then
         if [[ -n "$excludes" ]]; then
             echo -e "\033[1;31mIgnoring patterns:\033[0m $excludes\n"
         fi
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
-        emerge -puDN @world 2>/dev/null | grep "^
 
-\[ebuild" | gentoo_filter_updates "$excludes" | bat --paging=never --style=plain || cat
+        emerge -puDN @world 2>/dev/null \
+          | grep "^
+
+\[ebuild" \
+          | gentoo_filter_updates "$excludes" \
+          | sed -E \
+              -e "s/^(
+
+\[ebuild[^\]
+
+]*\]
+
+)/\033[35m\1\033[0m/" \
+              -e "s/([a-z0-9+_.-]+\/[a-z0-9+_.-]+)/\033[36m\1\033[0m/g" \
+              -e "s/([0-9]+\.[0-9]+[^\s]*)/\033[33m\1\033[0m/g"
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
     fi
@@ -135,23 +149,26 @@ print_updates_arch() {
     local patterns=$(normalize_arch_ignores "$IGNORE_LIST_ARCH")
     [[ -n "$EXCLUDE" ]] && patterns="${patterns:+$patterns,}$EXCLUDE"
 
-    # Build a combined output stream with headers + package list
-    {
-        if [[ -n "$patterns" ]]; then
-            echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns"
-            echo
-        fi
-        echo -e "\033[1m\033[33mAvailable updates:\033[0m"
-        echo
-        case "$mgr" in
-            paru)
-                paru -Qu | arch_filter_updates "$patterns"
-                ;;
-            pacman)
-                checkupdates | arch_filter_updates "$patterns"
-                ;;
-        esac
-    } | bat --paging=never --style=plain | bat || bat
+    case "$mgr" in
+        paru)
+            if [[ -n "$patterns" ]]; then
+                echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns\n"
+                echo -e "\033[1;33mAvailable Updates:\033[0m"
+                echo
+            fi
+            paru -Qu | arch_filter_updates "$patterns" \
+              | awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
+            ;;
+        pacman)
+            if [[ -n "$patterns" ]]; then
+                echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns"
+                echo -e "\033[1;33mAvailable Updates:\033[0m"
+                echo
+            fi
+            checkupdates | arch_filter_updates "$patterns" \
+              | awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
+            ;;
+    esac   | bat --paging=never --style=plain | bat || bat
 }
 
 
@@ -212,8 +229,8 @@ Options:
                         Exact names only, except patterns ending with -*.
 
 Permanent ignores:
-    Arch: set IGNORE_LIST_ARCH with comma-space separation, e.g. \"cuda, linux-*, haskell\"
-    Gentoo: set EXCLUDE_LIST_GENTOO with space separation, e.g. \"cuda linux-*\"
+    Arch: set IGNORE_LIST_ARCH with comma-space separation, e.g. \"pkg1, pkg2-*, pkg3\"
+    Gentoo: set EXCLUDE_LIST_GENTOO with space separation, e.g. \"pkgcompany/pkg1 pkgcompany/pkg2\"
 "
         ;;
 esac
