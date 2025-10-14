@@ -125,11 +125,16 @@ print_updates_arch() {
     local pkgmgr total
     pkgmgr=$(detect_arch_pkgmgr)
     total=$(get_total_updates_arch)
+
+    if [[ -n "$EXCLUDE" ]]; then
+        echo -e "\033[1m\033[31mExcluding packages matching: $EXCLUDE\033[0m\n"
+    fi
+
     if [[ "$total" -gt 0 ]]; then
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
         case "$pkgmgr" in
-            paru) paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } ;;
-            pacman) checkupdates | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } ;;
+            paru) paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || bat; } ;;
+            pacman) checkupdates | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || bat; } ;;
         esac
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
