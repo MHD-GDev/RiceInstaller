@@ -6,6 +6,7 @@
 # \____/ .___/\__,_/\__,_/\__/\___/____/  
 #     /_/                                 
 # Script to check for new updates in Gentoo or Arch Linux.
+# Supports one-shot exclusion of packages.
 # AUTHOR: MHD
 
 # -------------------------------
@@ -38,9 +39,12 @@ get_total_updates_gentoo() {
 
 get_list_updates_gentoo() {
     echo -e "\033[1m\033[34mAvailable updates:\033[0m"
-    emerge -puDN @world 2>/dev/null | grep "^
+    emerge -puDN @world 2>/dev/null \
+      | grep "^
 
-\[ebuild" | sed 's/
+\[ebuild" \
+      | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } \
+      | sed 's/
 
 \[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
 }
@@ -49,17 +53,23 @@ get_list_overlay_updates_gentoo() {
     if command -v layman >/dev/null 2>&1; then
         echo -e "\n\033[1m\033[34mOverlay updates:\033[0m"
         layman -S >/dev/null 2>&1
-        emerge -puDN @world 2>/dev/null | grep "^
+        emerge -puDN @world 2>/dev/null \
+          | grep "^
 
-\[ebuild.*::" | sed 's/
+\[ebuild.*::" \
+          | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } \
+          | sed 's/
 
 \[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
     elif command -v eselect >/dev/null 2>&1 && eselect repository list >/dev/null 2>&1; then
         echo -e "\n\033[1m\033[34mRepository updates:\033[0m"
         emerge --sync --quiet >/dev/null 2>&1
-        emerge -puDN @world 2>/dev/null | grep "^
+        emerge -puDN @world 2>/dev/null \
+          | grep "^
 
-\[ebuild.*::" | sed 's/
+\[ebuild.*::" \
+          | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } \
+          | sed 's/
 
 \[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
     fi
@@ -81,7 +91,11 @@ update_system_gentoo() {
     echo "Syncing portage tree..."
     emerge --sync
     echo "Updating system..."
-    emerge -uDN @world
+    if [[ -n "$EXCLUDE" ]]; then
+        emerge -uDN @world --exclude "$EXCLUDE"
+    else
+        emerge -uDN @world
+    fi
 }
 
 # -------------------------------
@@ -101,8 +115,8 @@ get_total_updates_arch() {
     local pkgmgr
     pkgmgr=$(detect_arch_pkgmgr)
     case "$pkgmgr" in
-        paru) paru -Qu 2>/dev/null | wc -l ;;
-        pacman) checkupdates 2>/dev/null | wc -l ;;
+        paru) paru -Qu 2>/dev/null | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } | wc -l ;;
+        pacman) checkupdates 2>/dev/null | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } | wc -l ;;
         *) echo 0 ;;
     esac
 }
@@ -114,8 +128,8 @@ print_updates_arch() {
     if [[ "$total" -gt 0 ]]; then
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
         case "$pkgmgr" in
-            paru) paru -Qu | bat;;
-            pacman) checkupdates | bat;;
+            paru) paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } ;;
+            pacman) checkupdates | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } ;;
         esac
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
@@ -127,18 +141,49 @@ update_system_arch() {
     pkgmgr=$(detect_arch_pkgmgr)
     echo "Updating system with $pkgmgr..."
     case "$pkgmgr" in
-        paru) paru -Syu ;;
-        pacman) sudo pacman -Syu ;;
+        paru)
+            if [[ -n "$EXCLUDE" ]]; then
+                paru -Syu --ignore "$EXCLUDE"
+            else
+                paru -Syu
+            fi
+            ;;
+        pacman)
+            if [[ -n "$EXCLUDE" ]]; then
+                sudo pacman -Syu --ignore "$EXCLUDE"
+            else
+                sudo pacman -Syu
+            fi
+            ;;
         *) echo "No supported package manager found." ;;
     esac
 }
 
 # -------------------------------
-# Dispatcher
+# Argument parsing
 # -------------------------------
+EXCLUDE=""
+ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --exclude)
+            shift
+            EXCLUDE="$1"
+            ;;
+        *)
+            ARGS+=("$1")
+            ;;
+    esac
+    shift
+done
+
 DISTRO=$(detect_distro)
 
-case "$1" in
+# -------------------------------
+# Dispatcher
+# -------------------------------
+case "${ARGS[0]}" in
     --total)
         if [[ "$DISTRO" == "gentoo" ]]; then
             get_total_updates_gentoo
@@ -173,6 +218,7 @@ Options:
     --total             Get the number of updates available.
     --list              Print the list of available packages to update.
     --update            Update your system.
+    --exclude <pkg>     Exclude a package (and its deps) just for this run.
 "
         ;;
 esac
