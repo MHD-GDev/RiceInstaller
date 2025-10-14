@@ -143,10 +143,10 @@ print_updates_arch() {
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
         case "$pkgmgr" in
         paru)
-            paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" || cat; }
+            paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" | bat || bat; }
             ;;
         pacman)
-            checkupdates | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" || cat; }
+            checkupdates | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" | bat || bat; }
             ;;
         esac
     else
