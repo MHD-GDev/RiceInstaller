@@ -28,7 +28,7 @@ get_current_rice() {
     if [[ -f "$state_file" ]]; then
         cat "$state_file"
     else
-        echo "Gentooey"
+        echo "Bubble"
     fi
 }
 

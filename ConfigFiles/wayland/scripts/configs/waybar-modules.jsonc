@@ -97,7 +97,8 @@
     },
     "custom/music": {
         "format": "   ",
-        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
+        // "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
+        "on-click": "~/.config/wayland/scripts/barscripts/mpv-bar.sh",
         "tooltip": false
     },
     "tray": {

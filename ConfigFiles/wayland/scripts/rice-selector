@@ -16,7 +16,6 @@
 
 RICE_DIR="$HOME/.config/wayland/rices"
 STATE_FILE="$HOME/.config/wayland/.current_rice"
-PREVIEW_SIZE="500x500"
 CACHE_DIR="$HOME/.cache/$USER/rice_previews"
 NVIM_COLORS_FILE="$HOME/.config/nvim/rice_colors.lua"
 
@@ -131,7 +130,7 @@ get_current_rice() {
     if [[ -f "$STATE_FILE" ]]; then
         cat "$STATE_FILE"
     else
-        echo "Gentooey"
+        echo "Bubble"
     fi
 }
 
@@ -299,9 +298,6 @@ init_rice_system() {
 case "${1:-menu}" in
 "menu")
     show_menu
-    ;;
-"init")
-    init_rice_system
     ;;
 "apply")
     if [[ -n "$2" ]]; then
