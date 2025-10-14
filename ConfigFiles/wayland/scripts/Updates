@@ -6,8 +6,25 @@
 # \____/ .___/\__,_/\__,_/\__/\___/____/
 #     /_/
 # Script to check for new updates in Gentoo or Arch Linux.
-# Supports one-shot exclusion of packages.
+# Name-specific ignore: exact matches only, except patterns ending with -*.
 # AUTHOR: MHD
+
+# -------------------------------
+# IGNORE LIST (permanent)
+# -------------------------------
+# Arch: comma-space separated, e.g. "pkg1, pkg2-*, pkg3"
+IGNORE_LIST_ARCH=""
+
+# Gentoo: space-separated, e.g. "pkgcompany/pkg1 pkgcompany/pkg2"
+EXCLUDE_LIST_GENTOO=""
+
+# -------------------------------
+# Helpers
+# -------------------------------
+normalize_arch_ignores() {
+    # Turn "pkg1, pkg2" into "pkg1,pkg2"
+    echo "$1" | sed 's/, */,/g'
+}
 
 # -------------------------------
 # Detect distribution
@@ -16,9 +33,9 @@ detect_distro() {
     if [[ -f /etc/os-release ]]; then
         . /etc/os-release
         case "$ID" in
-        gentoo) echo "gentoo" ;;
-        arch) echo "arch" ;;
-        *) echo "unknown" ;;
+            gentoo) echo "gentoo" ;;
+            arch) echo "arch" ;;
+            *) echo "unknown" ;;
         esac
     else
         echo "unknown"
@@ -29,59 +46,47 @@ detect_distro() {
 # Gentoo functions
 # -------------------------------
 get_total_updates_gentoo() {
-    local total_updates
     emerge --sync --quiet >/dev/null 2>&1
-    total_updates=$(emerge -puDN @world 2>/dev/null | grep -c "^
+    emerge -puDN @world 2>/dev/null | grep -c "^
 
-\[ebuild" || echo 0)
-    echo "${total_updates:-0}"
+\[ebuild"
 }
 
-get_list_updates_gentoo() {
-    echo -e "\033[1m\033[34mAvailable updates:\033[0m"
-    emerge -puDN @world 2>/dev/null |
-        grep "^
-
-\[ebuild" |
-        { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } |
-        sed 's/
-
-\[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
-}
-
-get_list_overlay_updates_gentoo() {
-    if command -v layman >/dev/null 2>&1; then
-        echo -e "\n\033[1m\033[34mOverlay updates:\033[0m"
-        layman -S >/dev/null 2>&1
-        emerge -puDN @world 2>/dev/null |
-            grep "^
-
-\[ebuild.*::" |
-            { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } |
-            sed 's/
-
-\[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
-    elif command -v eselect >/dev/null 2>&1 && eselect repository list >/dev/null 2>&1; then
-        echo -e "\n\033[1m\033[34mRepository updates:\033[0m"
-        emerge --sync --quiet >/dev/null 2>&1
-        emerge -puDN @world 2>/dev/null |
-            grep "^
-
-\[ebuild.*::" |
-            { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } |
-            sed 's/
-
-\[ebuild/\x1b[32;1m[ebuild\x1b[0m/g'
-    fi
+gentoo_filter_updates() {
+    local patterns="$1"
+    awk -v pats="$patterns" '
+        BEGIN{n=split(pats,a," ")}
+        {
+            line=$0
+            atom=""
+            for (i=1;i<=NF;i++) if ($i ~ /\//) {split($i,p,"::"); split(p[1],q,"-"); atom=q[1]; break}
+            skip=0
+            for (i=1;i<=n;i++) {
+                pat=a[i]
+                if(pat=="") continue
+                if(pat ~ /-\*$/) {
+                    base=substr(pat,1,length(pat)-1)
+                    if(index(atom,base)==1 && atom!=base) {skip=1; break}
+                } else {
+                    if(atom==pat) {skip=1; break}
+                }
+            }
+            if(!skip) print line
+        }'
 }
 
 print_updates_gentoo() {
-    local total
+    local total excludes
     total=$(get_total_updates_gentoo)
+    excludes="$EXCLUDE_LIST_GENTOO $EXCLUDE"
     if [[ "$total" -gt 0 ]]; then
+        if [[ -n "$excludes" ]]; then
+            echo -e "\033[1;31mIgnoring patterns:\033[0m $excludes\n"
+        fi
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
-        get_list_updates_gentoo
-        get_list_overlay_updates_gentoo
+        emerge -puDN @world 2>/dev/null | grep "^
+
+\[ebuild" | gentoo_filter_updates "$excludes" | bat --paging=never --style=plain || cat
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
     fi
@@ -91,93 +96,74 @@ update_system_gentoo() {
     echo "Syncing portage tree..."
     emerge --sync
     echo "Updating system..."
-    if [[ -n "$EXCLUDE" ]]; then
-        emerge -uDN @world --exclude "$EXCLUDE"
-    else
-        emerge -uDN @world
-    fi
+    local excludes="$EXCLUDE_LIST_GENTOO $EXCLUDE"
+    [[ -n "$excludes" ]] && emerge -uDN @world --exclude "$excludes" || emerge -uDN @world
 }
 
 # -------------------------------
-# Arch functions (paru preferred)
+# Arch functions
 # -------------------------------
 detect_arch_pkgmgr() {
-    if command -v paru >/dev/null 2>&1; then
-        echo "paru"
-    elif command -v pacman >/dev/null 2>&1; then
-        echo "pacman"
-    else
-        echo "none"
-    fi
+    if command -v paru >/dev/null 2>&1; then echo "paru"
+    elif command -v pacman >/dev/null 2>&1; then echo "pacman"
+    else echo "none"; fi
 }
 
-# Build a comma-separated list of packages matching a pattern from paru -Qu
-build_exclude_list_arch() {
-    local pattern="$1"
-    paru -Qu 2>/dev/null |
-        grep -i "$pattern" |
-        awk '{printf "%s%s", $1, (NR==NF ? "" : ",")}'
-}
-
-get_total_updates_arch() {
-    local pkgmgr
-    pkgmgr=$(detect_arch_pkgmgr)
-    case "$pkgmgr" in
-    paru) paru -Qu 2>/dev/null | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } | wc -l ;;
-    pacman) checkupdates 2>/dev/null | { [[ -n "$EXCLUDE" ]] && grep -v "$EXCLUDE" || cat; } | wc -l ;;
-    *) echo 0 ;;
-    esac
+arch_filter_updates() {
+    local patterns="$1"
+    awk -v pats="$patterns" '
+        BEGIN{n=split(pats,a,",")}
+        {
+            name=$1
+            skip=0
+            for(i=1;i<=n;i++){
+                pat=a[i]
+                if(pat=="") continue
+                if(pat ~ /-\*$/){
+                    base=substr(pat,1,length(pat)-1)
+                    if(index(name,base)==1 && name!=base){skip=1; break}
+                } else {
+                    if(name==pat){skip=1; break}
+                }
+            }
+            if(!skip) print
+        }'
 }
 
 print_updates_arch() {
-    local pkgmgr total expanded
-    pkgmgr=$(detect_arch_pkgmgr)
-    total=$(get_total_updates_arch)
+    local mgr=$(detect_arch_pkgmgr)
+    local patterns=$(normalize_arch_ignores "$IGNORE_LIST_ARCH")
+    [[ -n "$EXCLUDE" ]] && patterns="${patterns:+$patterns,}$EXCLUDE"
 
-    if [[ -n "$EXCLUDE" ]]; then
-        expanded=$(build_exclude_list_arch "$EXCLUDE")
-        echo -e "\033[1m\033[31mExcluding packages matching: $EXCLUDE → $expanded\033[0m\n"
-    fi
-
-    if [[ "$total" -gt 0 ]]; then
-        echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
-        case "$pkgmgr" in
-        paru)
-            paru -Qu | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" | bat || bat; }
-            ;;
-        pacman)
-            checkupdates | { [[ -n "$EXCLUDE" ]] && grep -vi "$EXCLUDE" | bat || bat; }
-            ;;
+    # Build a combined output stream with headers + package list
+    {
+        if [[ -n "$patterns" ]]; then
+            echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns"
+            echo
+        fi
+        echo -e "\033[1m\033[33mAvailable updates:\033[0m"
+        echo
+        case "$mgr" in
+            paru)
+                paru -Qu | arch_filter_updates "$patterns"
+                ;;
+            pacman)
+                checkupdates | arch_filter_updates "$patterns"
+                ;;
         esac
-    else
-        echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
-    fi
+    } | bat --paging=never --style=plain | bat || bat
 }
 
+
 update_system_arch() {
-    local pkgmgr expanded
-    pkgmgr=$(detect_arch_pkgmgr)
-    echo "Updating system with $pkgmgr..."
-    case "$pkgmgr" in
-    paru)
-        if [[ -n "$EXCLUDE" ]]; then
-            expanded=$(build_exclude_list_arch "$EXCLUDE")
-            echo "Excluding: $expanded"
-            paru -Syu --ignore "$expanded"
-        else
-            paru -Syu
-        fi
-        ;;
-    pacman)
-        if [[ -n "$EXCLUDE" ]]; then
-            # pacman doesn't have AUR, so just ignore literal or glob
-            echo "Excluding: $EXCLUDE"
-            sudo pacman -Syu --ignore "$EXCLUDE"
-        else
-            sudo pacman -Syu
-        fi
-        ;;
-    *) echo "No supported package manager found." ;;
+    local mgr=$(detect_arch_pkgmgr)
+    local patterns=$(normalize_arch_ignores "$IGNORE_LIST_ARCH")
+    [[ -n "$EXCLUDE" ]] && patterns="${patterns:+$patterns,}$EXCLUDE"
+
+    echo "Updating system with $mgr..."
+    case "$mgr" in
+        paru) [[ -n "$patterns" ]] && paru -Syu --ignore "$patterns" || paru -Syu ;;
+        pacman) [[ -n "$patterns" ]] && sudo pacman -Syu --ignore "$patterns" || sudo pacman -Syu ;;
     esac
 }
 
@@ -186,16 +172,10 @@ update_system_arch() {
 # -------------------------------
 EXCLUDE=""
 ARGS=()
-
 while [[ $# -gt 0 ]]; do
     case "$1" in
-    --exclude)
-        shift
-        EXCLUDE="$1"
-        ;;
-    *)
-        ARGS+=("$1")
-        ;;
+        --exclude) shift; EXCLUDE="$1" ;;
+        *) ARGS+=("$1") ;;
     esac
     shift
 done
@@ -206,41 +186,34 @@ DISTRO=$(detect_distro)
 # Dispatcher
 # -------------------------------
 case "${ARGS[0]}" in
---total)
-    if [[ "$DISTRO" == "gentoo" ]]; then
-        get_total_updates_gentoo
-    elif [[ "$DISTRO" == "arch" ]]; then
-        get_total_updates_arch
-    else
-        echo "Unsupported distribution."
-    fi
-    ;;
---list)
-    if [[ "$DISTRO" == "gentoo" ]]; then
-        print_updates_gentoo
-    elif [[ "$DISTRO" == "arch" ]]; then
-        print_updates_arch
-    else
-        echo "Unsupported distribution."
-    fi
-    ;;
---update)
-    if [[ "$DISTRO" == "gentoo" ]]; then
-        update_system_gentoo
-    elif [[ "$DISTRO" == "arch" ]]; then
-        update_system_arch
-    else
-        echo "Unsupported distribution."
-    fi
-    ;;
---help | *)
-    echo -e "Updates [options]
+    --total)
+        [[ "$DISTRO" == "gentoo" ]] && get_total_updates_gentoo \
+        || [[ "$DISTRO" == "arch" ]] && print_updates_arch | wc -l \
+        || echo "Unsupported distribution."
+        ;;
+    --list)
+        [[ "$DISTRO" == "gentoo" ]] && print_updates_gentoo \
+        || [[ "$DISTRO" == "arch" ]] && print_updates_arch \
+        || echo "Unsupported distribution."
+        ;;
+    --update)
+        [[ "$DISTRO" == "gentoo" ]] && update_system_gentoo \
+        || [[ "$DISTRO" == "arch" ]] && update_system_arch \
+        || echo "Unsupported distribution."
+        ;;
+    --help|*)
+        echo -e "Updates [options]
 
 Options:
     --total             Get the number of updates available.
     --list              Print the list of available packages to update.
     --update            Update your system.
-    --exclude <pkg>     Exclude a package (and its deps) just for this run.
+    --exclude <pkg>     Exclude a package just for this run.
+                        Exact names only, except patterns ending with -*.
+
+Permanent ignores:
+    Arch: set IGNORE_LIST_ARCH with comma-space separation, e.g. \"cuda, linux-*, haskell\"
+    Gentoo: set EXCLUDE_LIST_GENTOO with space separation, e.g. \"cuda linux-*\"
 "
-    ;;
+        ;;
 esac
