@@ -117,6 +117,7 @@ command_not_found_handler() {
 #  / ___ |/ / / /_/ (__  ) 
 # /_/  |_/_/_/\__,_/____/  
 
+alias update="~/.config/wayland/scripts/Updates"
 alias grub-update="sudo grub-mkconfig -o /boot/grub/grub.cfg"
 alias cat="bat --theme=base16"
 alias ls='eza --icons=always --color=always -a'

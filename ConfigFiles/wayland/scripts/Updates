@@ -101,7 +101,7 @@ get_total_updates_arch() {
     local pkgmgr
     pkgmgr=$(detect_arch_pkgmgr)
     case "$pkgmgr" in
-        paru) paru -Qua 2>/dev/null | wc -l ;;
+        paru) paru -Qu 2>/dev/null | wc -l ;;
         pacman) checkupdates 2>/dev/null | wc -l ;;
         *) echo 0 ;;
     esac
@@ -114,8 +114,8 @@ print_updates_arch() {
     if [[ "$total" -gt 0 ]]; then
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
         case "$pkgmgr" in
-            paru) paru -Qua ;;
-            pacman) checkupdates ;;
+            paru) paru -Qu | bat;;
+            pacman) checkupdates | bat;;
         esac
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
@@ -139,7 +139,7 @@ update_system_arch() {
 DISTRO=$(detect_distro)
 
 case "$1" in
-    --get-updates)
+    --total)
         if [[ "$DISTRO" == "gentoo" ]]; then
             get_total_updates_gentoo
         elif [[ "$DISTRO" == "arch" ]]; then
@@ -148,7 +148,7 @@ case "$1" in
             echo "Unsupported distribution."
         fi
         ;;
-    --print-updates)
+    --list)
         if [[ "$DISTRO" == "gentoo" ]]; then
             print_updates_gentoo
         elif [[ "$DISTRO" == "arch" ]]; then
@@ -157,7 +157,7 @@ case "$1" in
             echo "Unsupported distribution."
         fi
         ;;
-    --update-system)
+    --update)
         if [[ "$DISTRO" == "gentoo" ]]; then
             update_system_gentoo
         elif [[ "$DISTRO" == "arch" ]]; then
@@ -170,9 +170,9 @@ case "$1" in
         echo -e "Updates [options]
 
 Options:
-    --get-updates       Get the number of updates available.
-    --print-updates     Print the list of available packages to update.
-    --update-system     Update your system.
+    --total             Get the number of updates available.
+    --list              Print the list of available packages to update.
+    --update            Update your system.
 "
         ;;
 esac
