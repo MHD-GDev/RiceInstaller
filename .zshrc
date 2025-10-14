@@ -5,7 +5,6 @@
 # /___/____/_/ /_/_/   \___/  
 #
 # AUTHOR = MHD
-# WIKI = https://github.com/ohmyzsh/wiki
 
 # llama.cpp
 
@@ -123,8 +122,9 @@ alias cat="bat --theme=base16"
 alias ls='eza --icons=always --color=always -a'
 alias vi='nvim'
 alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
-alias mpv='sh ~/.config/wayland/scripts/mpv-tui.sh'
+alias mpv='sh ~/.config/wayland/scripts/mpv-tui'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
+alias reflector='sudo reflector --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
 
 #     ___         __       _____ __             __ 
 #    /   | __  __/ /_____ / ___// /_____ ______/ /_
