@@ -16,7 +16,7 @@ eval "$(starship init zsh)"
 export VISUAL="${EDITOR}"
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
-export BROWSER='vivaldi'
+export BROWSER='firefox'
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export SUDO_PROMPT="Password: "
 export BAT_THEME="base16"
@@ -125,7 +125,7 @@ alias vi='nvim'
 alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
 alias mpv='sh ~/.config/wayland/scripts/mpv-tui'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
-alias reflector='sudo reflector --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
+alias reflector='sudo reflector --latest 5 --sort rate --country London --save /etc/pacman.d/mirrorlist'
 
 #     ___         __       _____ __             __ 
 #    /   | __  __/ /_____ / ___// /_____ ______/ /_
