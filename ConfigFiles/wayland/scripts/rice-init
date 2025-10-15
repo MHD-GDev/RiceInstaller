@@ -25,7 +25,7 @@ wait_for_service() {
     return 0
 }
 
-# Wait for Hyprland
+# Wait for Hyprland and essential services
 wait_for_service "Hyprland"
 wait_for_service "pipewire"
 

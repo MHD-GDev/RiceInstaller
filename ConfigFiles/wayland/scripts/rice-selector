@@ -229,7 +229,7 @@ apply_rice() {
         find "$new_cache_dir" -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" | head -5 | xargs -I {} rm -f {}
     fi
 
-    notify-send "Rice Applied" "Successfully switched to '$rice_name' rice!"
+    notify-send "Rice Changed" "Applied: $rice_name rice!"
 }
 
 # Show rice selection menu with preview
