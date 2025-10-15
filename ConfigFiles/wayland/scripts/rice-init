@@ -27,6 +27,7 @@ wait_for_service() {
 
 # Wait for Hyprland
 wait_for_service "Hyprland"
+wait_for_service "pipewire"
 
 # Additional wait for compositor to stabilize
 sleep 2
