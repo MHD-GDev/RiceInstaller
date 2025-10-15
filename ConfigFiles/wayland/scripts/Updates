@@ -23,7 +23,7 @@ EXCLUDE_LIST_GENTOO=""
 # -------------------------------
 normalize_arch_ignores() {
     # Turn "pkg1, pkg2" into "pkg1,pkg2"
-    echo "$1" | sed 's/, */,/g'
+    echo "$1" | sed -E 's/[[:space:]]*([,!?$#])?[[:space:]]*$//; s/[[:space:]]*,[[:space:]]*/,/g'
 }
 
 # -------------------------------
@@ -33,9 +33,9 @@ detect_distro() {
     if [[ -f /etc/os-release ]]; then
         . /etc/os-release
         case "$ID" in
-            gentoo) echo "gentoo" ;;
-            arch) echo "arch" ;;
-            *) echo "unknown" ;;
+        gentoo) echo "gentoo" ;;
+        arch) echo "arch" ;;
+        *) echo "unknown" ;;
         esac
     else
         echo "unknown"
@@ -86,21 +86,21 @@ print_updates_gentoo() {
         fi
         echo -e "\033[1m\033[33mThere are $total updates available:\033[0m\n"
 
-        emerge -puDN @world 2>/dev/null \
-          | grep "^
+        emerge -puDN @world 2>/dev/null |
+            grep "^
 
-\[ebuild" \
-          | gentoo_filter_updates "$excludes" \
-          | sed -E \
-              -e "s/^(
+\[ebuild" |
+            gentoo_filter_updates "$excludes" |
+            sed -E \
+                -e "s/^(
 
 \[ebuild[^\]
 
 ]*\]
 
 )/\033[35m\1\033[0m/" \
-              -e "s/([a-z0-9+_.-]+\/[a-z0-9+_.-]+)/\033[36m\1\033[0m/g" \
-              -e "s/([0-9]+\.[0-9]+[^\s]*)/\033[33m\1\033[0m/g"
+                -e "s/([a-z0-9+_.-]+\/[a-z0-9+_.-]+)/\033[36m\1\033[0m/g" \
+                -e "s/([0-9]+\.[0-9]+[^\s]*)/\033[33m\1\033[0m/g"
     else
         echo -e "\033[1m\033[32mYour system is already updated!\033[0m"
     fi
@@ -118,8 +118,10 @@ update_system_gentoo() {
 # Arch functions
 # -------------------------------
 detect_arch_pkgmgr() {
-    if command -v paru >/dev/null 2>&1; then echo "paru"
-    elif command -v pacman >/dev/null 2>&1; then echo "pacman"
+    if command -v paru >/dev/null 2>&1; then
+        echo "paru"
+    elif command -v pacman >/dev/null 2>&1; then
+        echo "pacman"
     else echo "none"; fi
 }
 
@@ -150,27 +152,26 @@ print_updates_arch() {
     [[ -n "$EXCLUDE" ]] && patterns="${patterns:+$patterns,}$EXCLUDE"
 
     case "$mgr" in
-        paru)
-            if [[ -n "$patterns" ]]; then
-                echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns\n"
-                echo -e "\033[1;33mAvailable Updates:\033[0m"
-                echo
-            fi
-            paru -Qu | arch_filter_updates "$patterns" \
-              | awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
-            ;;
-        pacman)
-            if [[ -n "$patterns" ]]; then
-                echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns"
-                echo -e "\033[1;33mAvailable Updates:\033[0m"
-                echo
-            fi
-            checkupdates | arch_filter_updates "$patterns" \
-              | awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
-            ;;
-    esac   | bat --paging=never --style=plain | bat || bat
+    paru)
+        if [[ -n "$patterns" ]]; then
+            echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns\n"
+            echo -e "\033[1;33mAvailable Updates:\033[0m"
+            echo
+        fi
+        paru -Qu | arch_filter_updates "$patterns" |
+            awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
+        ;;
+    pacman)
+        if [[ -n "$patterns" ]]; then
+            echo -e "\033[1;31mIgnoring patterns:\033[0m $patterns"
+            echo -e "\033[1;33mAvailable Updates:\033[0m"
+            echo
+        fi
+        checkupdates | arch_filter_updates "$patterns" |
+            awk '{printf "\033[36m%-30s\033[0m \033[32m%s\033[0m → \033[33m%s\033[0m\n",$1,$2,$4}'
+        ;;
+    esac | bat --paging=never --style=plain | bat || bat
 }
-
 
 update_system_arch() {
     local mgr=$(detect_arch_pkgmgr)
@@ -179,8 +180,8 @@ update_system_arch() {
 
     echo "Updating system with $mgr..."
     case "$mgr" in
-        paru) [[ -n "$patterns" ]] && paru -Syu --ignore "$patterns" || paru -Syu ;;
-        pacman) [[ -n "$patterns" ]] && sudo pacman -Syu --ignore "$patterns" || sudo pacman -Syu ;;
+    paru) [[ -n "$patterns" ]] && paru -Syu --ignore "$patterns" ;;
+    pacman) [[ -n "$patterns" ]] && sudo pacman -Syu --ignore "$patterns" ;;
     esac
 }
 
@@ -191,8 +192,11 @@ EXCLUDE=""
 ARGS=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --exclude) shift; EXCLUDE="$1" ;;
-        *) ARGS+=("$1") ;;
+    --exclude)
+        shift
+        EXCLUDE="$1"
+        ;;
+    *) ARGS+=("$1") ;;
     esac
     shift
 done
@@ -203,23 +207,23 @@ DISTRO=$(detect_distro)
 # Dispatcher
 # -------------------------------
 case "${ARGS[0]}" in
-    --total)
-        [[ "$DISTRO" == "gentoo" ]] && get_total_updates_gentoo \
-        || [[ "$DISTRO" == "arch" ]] && print_updates_arch | wc -l \
-        || echo "Unsupported distribution."
-        ;;
-    --list)
-        [[ "$DISTRO" == "gentoo" ]] && print_updates_gentoo \
-        || [[ "$DISTRO" == "arch" ]] && print_updates_arch \
-        || echo "Unsupported distribution."
-        ;;
-    --update)
-        [[ "$DISTRO" == "gentoo" ]] && update_system_gentoo \
-        || [[ "$DISTRO" == "arch" ]] && update_system_arch \
-        || echo "Unsupported distribution."
-        ;;
-    --help|*)
-        echo -e "Updates [options]
+--total)
+    [[ "$DISTRO" == "gentoo" ]] && get_total_updates_gentoo ||
+        [[ "$DISTRO" == "arch" ]] && print_updates_arch | wc -l ||
+        echo "Unsupported distribution."
+    ;;
+--list)
+    [[ "$DISTRO" == "gentoo" ]] && print_updates_gentoo ||
+        [[ "$DISTRO" == "arch" ]] && print_updates_arch ||
+        echo "Unsupported distribution."
+    ;;
+--update)
+    [[ "$DISTRO" == "gentoo" ]] && update_system_gentoo ||
+        [[ "$DISTRO" == "arch" ]] && update_system_arch ||
+        echo "Unsupported distribution."
+    ;;
+--help | *)
+    echo -e "Updates [options]
 
 Options:
     --total             Get the number of updates available.
@@ -232,5 +236,5 @@ Permanent ignores:
     Arch: set IGNORE_LIST_ARCH with comma-space separation, e.g. \"pkg1, pkg2-*, pkg3\"
     Gentoo: set EXCLUDE_LIST_GENTOO with space separation, e.g. \"pkgcompany/pkg1 pkgcompany/pkg2\"
 "
-        ;;
+    ;;
 esac
