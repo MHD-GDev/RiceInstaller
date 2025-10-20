@@ -13,7 +13,7 @@
 # IGNORE LIST (permanent)
 # -------------------------------
 # Arch: comma-space separated, e.g. "pkg1, pkg2-*, pkg3"
-IGNORE_LIST_ARCH="blender, krita"
+IGNORE_LIST_ARCH=""
 
 # Gentoo: space-separated, e.g. "pkgcompany/pkg1 pkgcompany/pkg2"
 EXCLUDE_LIST_GENTOO=""
@@ -174,14 +174,40 @@ print_updates_arch() {
 }
 
 update_system_arch() {
-    local mgr=$(detect_arch_pkgmgr)
-    local patterns=$(normalize_arch_ignores "$IGNORE_LIST_ARCH")
+    local mgr
+    mgr=$(detect_arch_pkgmgr)
+    local patterns
+    patterns=$(normalize_arch_ignores "$IGNORE_LIST_ARCH")
     [[ -n "$EXCLUDE" ]] && patterns="${patterns:+$patterns,}$EXCLUDE"
 
     echo "Updating system with $mgr..."
     case "$mgr" in
-    paru) [[ -n "$patterns" ]] && paru -Syu --ignore "$patterns" ;;
-    pacman) [[ -n "$patterns" ]] && sudo pacman -Syu --ignore "$patterns" ;;
+    paru)
+        if [[ -n "$patterns" ]]; then
+            while ! paru -Syu --ignore "$patterns" --noconfirm; do
+                echo "Retrying paru update in 2s..."
+                sleep 2
+            done
+        else
+            while ! paru -Syu --noconfirm; do
+                echo "Retrying paru update in 2s..."
+                sleep 2
+            done
+        fi
+        ;;
+    pacman)
+        if [[ -n "$patterns" ]]; then
+            while ! sudo pacman -Syu --ignore "$patterns" --noconfirm; do
+                echo "Retrying pacman update in 2s..."
+                sleep 2
+            done
+        else
+            while ! sudo pacman -Syu --noconfirm; do
+                echo "Retrying pacman update in 2s..."
+                sleep 2
+            done
+        fi
+        ;;
     esac
 }
 

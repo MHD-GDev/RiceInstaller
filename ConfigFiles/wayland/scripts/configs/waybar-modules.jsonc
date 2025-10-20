@@ -46,26 +46,43 @@
         "tooltip": false
     },
     "battery": {
-      "states": { "warning": 20, "critical": 10 },
-      "format": "{icon} {capacity}%",
-      "format-time": "{H} hr {M} min",
-      "format-icons": [ "󰂎", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
-      "format-charging": "󰉁 {capacity}%",
-      "min-length": 7,
-      "max-length": 7,
-      "tooltip-format": "Discharging: {time}",
-      "tooltip-format-charging": "Charging: {time}",
-      "events": {
-        "on-discharging-warning": "notify-send 'Low Battery' '{capacity}% battery remaining'",
-        "on-discharging-critical": "notify-send 'Low Battery' '{capacity}% battery remaining' -u critical",
-        "on-charging-100": "notify-send 'Battery full' 'Battery is at {capacity}%'"
-      }
+        "states": {
+            "warning": 20,
+            "critical": 10
+        },
+        "format": "{icon} {capacity}%",
+        "format-time": "{H} hr {M} min",
+        "format-icons": [
+            "󰂎",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
+        "format-charging": "󰉁 {capacity}%",
+        "min-length": 7,
+        "max-length": 7,
+        "tooltip-format": "Discharging: {time}",
+        "tooltip-format-charging": "Charging: {time}",
+        "events": {
+            "on-discharging-warning": "notify-send 'Low Battery' '{capacity}% battery remaining'",
+            "on-discharging-critical": "notify-send 'Low Battery' '{capacity}% battery remaining' -u critical",
+            "on-charging-100": "notify-send 'Battery full' 'Battery is at {capacity}%'"
+        }
     },
     "cpu": {
         "format": "CPU {usage}% ",
         "format-warning": " {usage}%",
         "format-critical": " {usage}%",
-        "states": { "warning": 75, "critical": 90 },
+        "states": {
+            "warning": 75,
+            "critical": 90
+        },
         "interval": 10,
         "tooltip": false
     },
@@ -80,7 +97,10 @@
         "format": " MEM {used:0.1f}GB",
         "format-warning": " {percentage}%",
         "format-critical": " {percentage}%",
-        "states": { "warning": 75, "critical": 90 },
+        "states": {
+            "warning": 75,
+            "critical": 90
+        },
         "interval": 10,
         "tooltip-format": "Memory Used: {used:0.1f} GB / {total:0.1f} GB"
     },
@@ -97,8 +117,7 @@
     },
     "custom/music": {
         "format": "   ",
-        // "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
-        "on-click": "~/.config/wayland/scripts/barscripts/mpv-bar.sh",
+        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui",
         "tooltip": false
     },
     "tray": {
@@ -109,7 +128,11 @@
     "wireplumber": {
         "format": "{icon}   {volume}%",
         "format-icons": {
-        "default": ["", "", ""]
+            "default": [
+                "",
+                "",
+                ""
+            ]
         },
         "format-muted": "  Muted",
         "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
@@ -124,7 +147,7 @@
         "format": "|",
         "tooltip": false
     },
-    "custom/separator2":{
+    "custom/separator2": {
         "format": "/",
         "tooltip": false
     }

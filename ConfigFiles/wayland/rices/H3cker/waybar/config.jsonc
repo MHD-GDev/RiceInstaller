@@ -69,7 +69,7 @@
     },
     "custom/music": {
         "format": "    ",
-        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
+        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui",
         "tooltip": false
     },
     "cpu": {
