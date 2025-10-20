@@ -1,181 +1,201 @@
 [
-  {
-    "name": "topbar",
-    "layer": "top",
-    "position": "top",
-    "mode": "dock",
-    "height": 45,
-    "margin-right": 7,
-    "margin-left": 7,
-    "margin-bottom": -4,
-    "modules-left": [
-      "custom/separator-left",
-      "custom/stats",
-      "battery",
-      "memory",
-      "disk",
-      "cpu",
-      "tray",
-      "custom/separator"
-    ],
-    "modules-center": [
-      "custom/separator",
-      "hyprland/workspaces",
-      "custom/separator"
-    ],
-    "modules-right": [
-      "custom/separator",
-      "custom/skills",
-      "custom/music",
-      "wireplumber",
-      "network",
-      "clock",
-      "custom/logout",
-      "custom/separator-right"
-    ],
-    "custom/separator": {
-      "format": "|"
-    },
-    "custom/separator-right": {
-      "format": "|"
-    },
-    "custom/separator-left": {
-      "format": "|"
-    },
-    "custom/stats": {
-      "format": "STATS  ",
-      "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
-      "tooltip": false
-    },
-    "custom/skills": {
-      "format": "SKILLS",
-      "tooltip": false
-    },
-    "battery": {
-      "states": { "warning": 20, "critical": 10 },
-      "format": "{icon} {capacity}%",
-      "format-time": "{H} hr {M} min",
-      "format-icons": [ "󰂎", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹" ],
-      "format-charging": "󰉁 {capacity}%",
-      "min-length": 7,
-      "max-length": 7,
-      "tooltip-format": "Discharging: {time}",
-      "tooltip-format-charging": "Charging: {time}",
-      "events": {
-        "on-discharging-warning": "notify-send 'Low Battery' '{capacity}% battery remaining'",
-        "on-discharging-critical": "notify-send 'Low Battery' '{capacity}% battery remaining' -u critical",
-        "on-charging-100": "notify-send 'Battery full' 'Battery is at {capacity}%'"
-      }
-    },
-    "custom/music": {
-        "format": "    ",
-        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui",
-        "tooltip": false
-    },
-    "cpu": {
-      "format": "CPU  {usage}%",
-      "tooltip": false
-    },
-    "memory": {
-      "format": "MEM {used:0.1f}GB",
-      "tooltip": false
-    },
-    "disk": {
-      "interval": 30,
-      "format": " {used} ",
-      "path": "/",
-      "tooltip": false
-    },
-    "custom/battery": {
-      "exec": "~/.config/wayland/scripts/battery-animation.sh",
-      "return-type": "json",
-      "interval": 1,
-      "format": "{} ",
-      "tooltip": false
-    },
-    "network": {
-      "format-wifi": " {essid}",
-      "format-ethernet": " {ifname}: {ipaddr}",
-      "format-disconnected": "⚠ Disconnected",
-      "tooltip": false
-    },
-    "wireplumber": {
-      "format": "  {icon} {volume}%",
-      "format-icons": {
-        "default": [
-          "",
-          "",
-          ""
-        ]
-      },
-      "format-muted": "  Muted",
-      "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-      "tooltip": false
-    },
-    "custom/logout": {
-      "format": "  ",
-      "on-click": "wlogout",
-      "tooltip": false
-    },
-    "hyprland/workspaces": {
-      "format": "{icon}",
-      "on-click": "activate",
-      "format-icons": {
-        "1": "I",
-        "2": "II",
-        "3": "III",
-        "4": "IV",
-        "5": "V",
-        "6": "VI"
-      },
-      "sort-by-number": true,
-      "all-outputs": false,
-      "active-only": false, // Keep this as false
-      "persistent-workspaces": {
-        "*": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
-        ]
-      },
-      "tooltip": false
-    }
-  },
     {
-    "name": "bottombar",
-    "position": "bottom",
-    "margin-right": 7,
-    "margin-left": 7,
-    "modules-left": ["custom/separator-left"],
-    "modules-center": ["hyprland/window"],
-    "modules-right": ["custom/separator-right"],
-    "custom/separator-right": {
-      "format": "|"
-    },
-    "custom/separator-left": {
-      "format": "|"
-    },
-    "tray": {
-        "spacing": 10,
-        "icon-size": 24,
-        "tooltip": false
-    },
-    "hyprland/window": {
-        "format": "{title}",
-        "separate-outputs": true,
-        "max-length": 25,
-        "rewrite": {
-            "(.*) - Vivaldi": "󰖟 $1",
-            "(.*) - Code - OSS": "󰨞 $1",
-            "(.*)Steam": "󰓓 Steam",
-            "(.*) - PCSX2": "󰊖 $1",
-            "(vi|nvim) (.*)": "  $2",
-            "(.*) - Blender [0-9.]+.*": "󰂫 "
+        "name": "topbar",
+        "layer": "top",
+        "position": "top",
+        "mode": "dock",
+        "height": 45,
+        "margin-right": 7,
+        "margin-left": 7,
+        "margin-bottom": -4,
+        "modules-left": [
+            "custom/separator-left",
+            "custom/stats",
+            "battery",
+            "memory",
+            "disk",
+            "cpu",
+            "tray",
+            "custom/separator"
+        ],
+        "modules-center": [
+            "custom/separator",
+            "hyprland/workspaces",
+            "custom/separator"
+        ],
+        "modules-right": [
+            "custom/separator",
+            "custom/skills",
+            "custom/music",
+            "wireplumber",
+            "network",
+            "clock",
+            "custom/logout",
+            "custom/separator-right"
+        ],
+        "custom/separator": {
+            "format": "|"
         },
-        "tooltip": false
+        "custom/separator-right": {
+            "format": "|"
+        },
+        "custom/separator-left": {
+            "format": "|"
+        },
+        "custom/stats": {
+            "format": "STATS  ",
+            "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+            "tooltip": false
+        },
+        "custom/skills": {
+            "format": "SKILLS",
+            "tooltip": false
+        },
+        "battery": {
+            "states": {
+                "warning": 20,
+                "critical": 10
+            },
+            "format": "{icon} {capacity}%",
+            "format-time": "{H} hr {M} min",
+            "format-icons": [
+                "󰂎",
+                "󰁻",
+                "󰁼",
+                "󰁽",
+                "󰁾",
+                "󰁿",
+                "󰂀",
+                "󰂁",
+                "󰂂",
+                "󰁹"
+            ],
+            "format-charging": "󰉁 {capacity}%",
+            "min-length": 7,
+            "max-length": 7,
+            "tooltip-format": "Discharging: {time}",
+            "tooltip-format-charging": "Charging: {time}",
+            "events": {
+                "on-discharging-warning": "notify-send 'Low Battery' '{capacity}% battery remaining'",
+                "on-discharging-critical": "notify-send 'Low Battery' '{capacity}% battery remaining' -u critical",
+                "on-charging-100": "notify-send 'Battery full' 'Battery is at {capacity}%'"
+            }
+        },
+        "custom/music": {
+            "format": "    ",
+            "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui",
+            "tooltip": false
+        },
+        "cpu": {
+            "format": "CPU  {usage}%",
+            "tooltip": false
+        },
+        "memory": {
+            "format": "MEM {used:0.1f}GB",
+            "tooltip": false
+        },
+        "disk": {
+            "interval": 30,
+            "format": " {used} ",
+            "path": "/",
+            "tooltip": false
+        },
+        "custom/battery": {
+            "exec": "~/.config/wayland/scripts/battery-animation.sh",
+            "return-type": "json",
+            "interval": 1,
+            "format": "{} ",
+            "tooltip": false
+        },
+        "network": {
+            "format-wifi": " {essid}",
+            "format-ethernet": " {ifname}: {ipaddr}",
+            "format-disconnected": "⚠ Disconnected",
+            "tooltip": false
+        },
+        "wireplumber": {
+            "format": "  {icon} {volume}%",
+            "format-icons": {
+                "default": [
+                    "",
+                    "",
+                    ""
+                ]
+            },
+            "format-muted": "  Muted",
+            "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+            "tooltip": false
+        },
+        "custom/logout": {
+            "format": "  ",
+            "on-click": "~/.config/wayland/scripts/power-menu.sh",
+            "tooltip": false
+        },
+        "hyprland/workspaces": {
+            "format": "{icon}",
+            "on-click": "activate",
+            "format-icons": {
+                "1": "I",
+                "2": "II",
+                "3": "III",
+                "4": "IV",
+                "5": "V",
+                "6": "VI"
+            },
+            "sort-by-number": true,
+            "all-outputs": false,
+            "active-only": false, // Keep this as false
+            "persistent-workspaces": {
+                "*": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                ]
+            },
+            "tooltip": false
+        }
+    },
+    {
+        "name": "bottombar",
+        "position": "bottom",
+        "margin-right": 7,
+        "margin-left": 7,
+        "modules-left": [
+            "custom/separator-left"
+        ],
+        "modules-center": [
+            "hyprland/window"
+        ],
+        "modules-right": [
+            "custom/separator-right"
+        ],
+        "custom/separator-right": {
+            "format": "|"
+        },
+        "custom/separator-left": {
+            "format": "|"
+        },
+        "tray": {
+            "spacing": 10,
+            "icon-size": 24,
+            "tooltip": false
+        },
+        "hyprland/window": {
+            "format": "{title}",
+            "separate-outputs": true,
+            "max-length": 25,
+            "rewrite": {
+                "(.*) - Vivaldi": "󰖟 $1",
+                "(.*) - Code - OSS": "󰨞 $1",
+                "(.*)Steam": "󰓓 Steam",
+                "(.*) - PCSX2": "󰊖 $1",
+                "(vi|nvim) (.*)": "  $2",
+                "(.*) - Blender [0-9.]+.*": "󰂫 "
+            },
+            "tooltip": false
+        }
     }
-  }
 ]
