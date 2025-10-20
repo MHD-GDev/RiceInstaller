@@ -16,7 +16,7 @@ RESET='\e[0m'
 #-----------------------#
 function show_banner() {
     echo -e "${MAGENTA}"
-    cat << "EOF"
+    cat <<"EOF"
             ███╗   ███╗██╗  ██╗██████╗
             ████╗ ████║██║  ██║██╔══██╗
             ██╔████╔██║███████║██║  ██║
@@ -77,13 +77,13 @@ function install_packages() {
     read -rp "Which operating system is this? (Arch/Gentoo): " current_os
 
     if [[ "$current_os" =~ ^[Aa]rch$ ]]; then
-        sudo pacman -Syu --noconfirm && sudo pacman -S --noconfirm git
+        while ! sudo pacman -Syu --noconfirm && sudo pacman -S --noconfirm git; do echo "Failed, so retrying" && sleep 2 && clear; done
 
-        git clone https://aur.archlinux.org/paru.git && cd paru && makepkg -si --noconfirm
+        while ! git clone https://aur.archlinux.org/paru.git && cd paru && makepkg -si --noconfirm; do echo "cloning failed, so retrying" && sleep 2 && clear; done
         cd ..
 
         if [[ -f arch-rice-wayland-packs.txt ]]; then
-            paru -S --noconfirm $(<arch-rice-wayland-packs.txt)
+            while ! paru -S --noconfirm $(<arch-rice-wayland-packs.txt); do echo "paru failed, so retrying" && sleep 2 && clear; done
         else
             echo -e "${RED}Missing arch-rice-wayland-packs.txt file!${RESET}"
             exit 1
@@ -91,18 +91,18 @@ function install_packages() {
 
         read -rp "Which GPU do you have? (AMD/Intel/Nvidia/Hybrid): " selected_gpu
         case "$selected_gpu" in
-            [Nn]vidia)
-                paru -S --noconfirm nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda
-                ;;
-            [Ii]ntel)
-                paru -S --noconfirm vulkan-intel
-                ;;
-            [Aa][Mm][Dd])
-                paru -S --noconfirm amdsmi amdvlk radeontop radeontool
-                ;;
-            [Hh]ybrid)
-                paru -S --noconfirm amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda
-                ;;
+        [Nn]vidia)
+            while ! paru -S --noconfirm nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda; do echo "gpu packages failed,so retrying" && sleep 2 && clear; done
+            ;;
+        [Ii]ntel)
+            while ! paru -S --noconfirm vulkan-intel; do echo "gpu packages failed,so retrying" && sleep 2 && clear; done
+            ;;
+        [Aa][Mm][Dd])
+            while ! paru -S --noconfirm amdsmi amdvlk radeontop radeontool; do echo "gpu packages failed,so retrying" && sleep 2 && clear; done
+            ;;
+        [Hh]ybrid)
+            while ! paru -S --noconfirm amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda; do echo "gpu packages failed,so retrying" && sleep 2 && clear; done
+            ;;
         esac
 
         echo -e "${GREEN}Packages installed successfully!${RESET}"
@@ -189,7 +189,7 @@ function install_grub_theme() {
         if [[ -d yorha-1920x1080 ]]; then
             sudo cp -r yorha-1920x1080 /boot/grub/themes
             sudo sed -i '/^#*GRUB_THEME=/d' /etc/default/grub
-            echo 'GRUB_THEME="/boot/grub/themes/yorha-1920x1080/theme.txt"' | sudo tee -a /etc/default/grub > /dev/null
+            echo 'GRUB_THEME="/boot/grub/themes/yorha-1920x1080/theme.txt"' | sudo tee -a /etc/default/grub >/dev/null
             sudo grub-mkconfig -o /boot/grub/grub.cfg
             echo -e "${GREEN}GRUB theme installed successfully!${RESET}"
         fi
@@ -219,25 +219,25 @@ function build_llama() {
         read -rp "Choice (1-3): " build_choice
 
         case "$build_choice" in
-            1)
-                echo -e "${GREEN}CUDA build selected.${RESET}"
-                cmake -B build -DGGML_CUDA=ON && cmake --build build --config Release
-                break
-                ;;
-            2)
-                echo -e "${GREEN}CPU build selected.${RESET}"
-                cmake -B build -DBUILD_SHARED_LIBS=off && cmake --build build --config Release
-                break
-                ;;
-            3)
-                echo -e "${GREEN}Vulkan build selected.${RESET}"
-                paru -S --noconfirm vulkan-extra-layers vulkan-tools vulkan-headers
-                cmake -B build -DGGML_VULKAN=ON && cmake --build build --config Release
-                break
-                ;;
-            *)
-                echo -e "${RED}Invalid choice. Try again.${RESET}"
-                ;;
+        1)
+            echo -e "${GREEN}CUDA build selected.${RESET}"
+            cmake -B build -DGGML_CUDA=ON && cmake --build build --config Release
+            break
+            ;;
+        2)
+            echo -e "${GREEN}CPU build selected.${RESET}"
+            cmake -B build -DBUILD_SHARED_LIBS=off && cmake --build build --config Release
+            break
+            ;;
+        3)
+            echo -e "${GREEN}Vulkan build selected.${RESET}"
+            paru -S --noconfirm vulkan-extra-layers vulkan-tools vulkan-headers
+            cmake -B build -DGGML_VULKAN=ON && cmake --build build --config Release
+            break
+            ;;
+        *)
+            echo -e "${RED}Invalid choice. Try again.${RESET}"
+            ;;
         esac
     done
 
@@ -273,8 +273,8 @@ function add_llama_ui() {
 #-----------------------#
 function write_notes() {
     echo -e "${CYAN}Writing installation notes...${RESET}"
-    echo -e "REMEMBER: Copy your AI models into ~/.local/share/AI-Models" >> ~/Templates/IMPORTANT-README.txt
-    echo -e "Use llama.cpp via the LlamaUI-vMHD.html in your browser." >> ~/Templates/IMPORTANT-README.txt
+    echo -e "REMEMBER: Copy your AI models into ~/.local/share/AI-Models" >>~/Templates/IMPORTANT-README.txt
+    echo -e "Use llama.cpp via the LlamaUI-vMHD.html in your browser." >>~/Templates/IMPORTANT-README.txt
     sleep 5
     clear
 }
@@ -319,4 +319,3 @@ add_llama_ui
 write_notes
 fix_permissions
 enable_sddm
-
