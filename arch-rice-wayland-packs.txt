@@ -55,7 +55,7 @@ slurp
 sshfs
 starship
 swaybg
-swaylock
+swaylock-effects
 socat
 timeshift
 telegram-desktop
