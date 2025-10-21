@@ -140,7 +140,7 @@
     },
     "custom/logout": {
         "format": "  ",
-        "on-click": "~/.config/wayland/scripts/power-menu.sh",
+        "on-click": "~/.config/wayland/scripts/power-menu",
         "tooltip": false
     },
     "custom/separator": {

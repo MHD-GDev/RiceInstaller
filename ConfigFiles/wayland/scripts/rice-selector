@@ -3,7 +3,7 @@
 #     ____  _
 #    / __ \(_)_______
 #   / /_/ / / ___/ _ \
-    #  / _, _/ / /__/  __/
+#  / _, _/ / /__/  __/
 # /_/_|_/_/\___/\___/       __
 #   / ___/___  / /__  _____/ /_____  _____
 #   \__ \/ _ \/ / _ \/ ___/ __/ __ \/ ___/
@@ -112,13 +112,13 @@ EOF
 }
 
 # Function to reload neovim colorscheme
-reload_nvim_colorscheme() {
-    # Send command to all running nvim instances to reload colorscheme
-    for server in $(nvim --serverlist 2>/dev/null); do
-        nvim --server "$server" --remote-send '<Esc>:lua require("plugins.colorscheme")<CR>' 2>/dev/null || true
-        nvim --server "$server" --remote-send '<Esc>:colorscheme catppuccin<CR>' 2>/dev/null || true
-    done
-}
+# reload_nvim_colorscheme() {
+#     for server in $(nvim --serverlist 2>/dev/null); do
+#         nvim --server /tmp/nvim.sock --remote-expr "execute('luafile $NVIM_COLORS_FILE')"
+#         nvim --server "$server" --remote-expr "execute('colorscheme catppuccin')"
+#         nvim --server "$server" --remote-expr "execute('redraw!')"
+#     done
+# }
 
 # Get available rices
 get_rices() {
@@ -296,28 +296,28 @@ init_rice_system() {
 
 # Main logic
 case "${1:-menu}" in
-    "menu")
-        show_menu
-        ;;
-    "apply")
-        if [[ -n "$2" ]]; then
-            apply_rice "$2"
-        else
-            echo "Usage: $0 apply <rice_name>"
-            exit 1
-        fi
-        ;;
-    "current")
-        get_current_rice
-        ;;
-    "list")
-        get_rices
-        ;;
-    "init")
-        init_rice_system
-        ;;
-    *)
-        echo "Usage: $0 {menu|init|apply <rice>|current|list}"
+"menu")
+    show_menu
+    ;;
+"apply")
+    if [[ -n "$2" ]]; then
+        apply_rice "$2"
+    else
+        echo "Usage: $0 apply <rice_name>"
         exit 1
-        ;;
+    fi
+    ;;
+"current")
+    get_current_rice
+    ;;
+"list")
+    get_rices
+    ;;
+"init")
+    init_rice_system
+    ;;
+*)
+    echo "Usage: $0 {menu|init|apply <rice>|current|list}"
+    exit 1
+    ;;
 esac

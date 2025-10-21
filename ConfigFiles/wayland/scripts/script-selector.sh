@@ -20,6 +20,7 @@ THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
 
 # Scripts to ignore (add script names here)
 IGNORE_SCRIPTS=(
+    "programmer-infos"
     "script-selector.sh"
     "minimize-toggle.sh"
     "rice-init"
@@ -27,7 +28,8 @@ IGNORE_SCRIPTS=(
     "wallpaper-selector"
     "create_rice"
     "battery-animation.sh"
-    "mpv-tui.sh"
+    "mpv-tui"
+    "Updates"
     # Add more scripts to ignore here
 )
 
