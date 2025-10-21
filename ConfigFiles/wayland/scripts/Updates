@@ -13,7 +13,7 @@
 # IGNORE LIST (permanent)
 # -------------------------------
 # Arch: comma-space separated, e.g. "pkg1, pkg2-*, pkg3"
-IGNORE_LIST_ARCH="blender, krita"
+IGNORE_LIST_ARCH=""
 
 # Gentoo: space-separated, e.g. "pkgcompany/pkg1 pkgcompany/pkg2"
 EXCLUDE_LIST_GENTOO=""
