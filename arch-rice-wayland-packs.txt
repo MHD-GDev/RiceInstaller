@@ -61,7 +61,7 @@ timeshift
 telegram-desktop
 tmux
 ttf-meslo-nerd
-ttf-noto-cjk-vf
+ttf-noto-sans-cjk-vf
 ttf-noto-emoji-monochrome
 tor
 unrar
