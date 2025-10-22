@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Random wallpaper slideshow toggle wrapper for wallpaper-selector.sh
+# AUTHOR: MHD
+
+set -euo pipefail
+
+# --- Config ---
+script_dir="$HOME/.config/wayland/scripts"
+selector="$script_dir/wallpaper-selector"
+toggle_file="$HOME/.config/wayland/.random_wall_toggle"
+interval=60 # seconds between wallpaper changes
+
+# --- Helpers ---
+is_enabled() {
+    [[ -f $toggle_file ]] && [[ $(<"$toggle_file") == "on" ]]
+}
+
+toggle_random() {
+    if is_enabled; then
+        echo "off" >"$toggle_file"
+        notify-send "Random Wallpaper" "Slideshow Disabled"
+        pkill -f "$(basename "$0") loop" 2>/dev/null || true
+    else
+        echo "on" >"$toggle_file"
+        notify-send "Random Wallpaper" "Slideshow Enabled"
+        start_slideshow &
+    fi
+}
+
+start_slideshow() {
+    nohup "$0" loop >/dev/null 2>&1 &
+}
+
+slideshow_loop() {
+    while is_enabled; do
+        RANDOM_WALLPAPER_MODE=1 "$selector" random
+        sleep "$interval"
+    done
+}
+
+# --- CLI ---
+case "${1:-toggle}" in
+toggle) toggle_random ;;
+status)
+    if is_enabled; then
+        echo "Random wallpaper slideshow: ON"
+    else
+        echo "Random wallpaper slideshow: OFF"
+    fi
+    ;;
+loop) slideshow_loop ;;
+*)
+    echo "Usage: $0 {toggle|status}"
+    exit 1
+    ;;
+esac

@@ -2,6 +2,7 @@ awesome-terminal-fonts
 bat
 blueman
 bluez
+brightnessctl
 chrony
 cmake
 curl
