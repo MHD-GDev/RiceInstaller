@@ -168,7 +168,7 @@ function install_sddm_theme() {
     if [[ "$sddm_ans" =~ ^[Yy]$ ]]; then
         git clone https://github.com/stepanzubkov/where-is-my-sddm-theme.git
         cd where-is-my-sddm-theme && sudo cp -r where_is_my_sddm_theme /usr/share/sddm/themes
-        cd ~/RiceInstaller && sudo cp -r sddm.conf /etc/
+        cd ../ && sudo cp -r sddm.conf /etc/
         echo -e "${GREEN}SDDM theme installed successfully!${RESET}"
     else
         echo -e "${RED}SDDM theme installation skipped.${RESET}"
