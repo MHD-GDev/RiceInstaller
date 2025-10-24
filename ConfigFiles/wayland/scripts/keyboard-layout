@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+ROFI_THEME="$HOME/.config/wayland/scripts/rofi-themes/power-menu.rasi"
+
+# Ordered list of codes
+ORDER=(us ir jp cn ru es)
+
+# Map codes to fcitx5 engines
+declare -A ENGINES=(
+    [us]="keyboard-us"
+    [ir]="keyboard-ir"
+    [ru]="keyboard-ru"
+    [es]="keyboard-es"
+    [jp]="mozc"
+    [cn]="pinyin"
+)
+
+# Map codes to display names
+declare -A NAMES=(
+    [us]="English"
+    [ir]="Persian"
+    [ru]="Russian"
+    [es]="Espanish"
+    [jp]="Japanese"
+    [cn]="Chinese"
+)
+
+# Build menu in the specified order
+menu=$(for code in "${ORDER[@]}"; do
+    echo "${NAMES[$code]} ($code)"
+done)
+
+chosen=$(echo "$menu" | rofi -dmenu -i -p "Keyboard Layout" -theme "$ROFI_THEME" \
+        -kb-row-left "h" -kb-row-right "l" -kb-row-down "j" -kb-row-up "k" -kb-cancel "q")
+
+if [ -n "$chosen" ]; then
+    code=$(awk -F'[()]' '{print $2}' <<< "$chosen" | tr '[:upper:]' '[:lower:]')
+    engine="${ENGINES[$code]}"
+
+    if [ -n "$engine" ]; then
+        fcitx5-remote -s "$engine"
+
+        if command -v notify-send >/dev/null 2>&1; then
+            notify-send "Keyboard Layout" "Switched to: ${NAMES[$code]} ($code)"
+        fi
+    fi
+fi

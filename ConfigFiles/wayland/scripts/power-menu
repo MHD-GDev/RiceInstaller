@@ -69,7 +69,7 @@ esac
 options=" Lock\n Logout\n Suspend\n Hibernate\n Reboot\n Shutdown"
 
 # Launch Rofi as dmenu with horizontal layout theme
-choice=$(echo -e "$options" | rofi -dmenu -theme ~/.config/wayland/scripts/rofi-themes/power-menu.rasi -p "Power Menu")
+choice=$(echo -e "$options" | rofi -dmenu -theme ~/.config/wayland/scripts/rofi-themes/power-menu.rasi -p "Power Menu" -kb-row-left "h" -kb-row-right "l" -kb-row-down "j" -kb-row-up "k" -kb-cancel "q")
 
 # Match only the label (strip icon)
 label=$(echo "$choice" | awk '{print $2}')

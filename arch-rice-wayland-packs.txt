@@ -9,6 +9,11 @@ curl
 dolphin
 egl-wayland
 eza
+fcitx5-mozc
+fcitx5
+fcitx5-chinese-addons
+fcitx5-qt
+fcitx5-gtk
 fastfetch
 ffmpeg
 firefox

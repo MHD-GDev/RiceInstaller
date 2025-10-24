@@ -20,6 +20,7 @@ THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
 
 # Scripts to ignore (add script names here)
 IGNORE_SCRIPTS=(
+    "mako-logging"
     "todo.py"
     "programmer-infos"
     "script-selector.sh"

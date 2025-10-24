@@ -126,6 +126,7 @@ function copy_configs() {
     if [[ -d ConfigFiles ]]; then
         sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
         rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
+        rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
         echo -e "${GREEN}Config directories copied!${RESET}"
     else
         echo -e "${RED}Missing ConfigFiles directory!${RESET}"

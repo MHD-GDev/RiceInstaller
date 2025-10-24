@@ -1,5 +1,4 @@
-return {
-    -- Custom Parameters (with defaults)
+return { -- Custom Parameters (with defaults)
     {
         "MHD-GDev/LlamaGen.nvim",
         dependencies = {

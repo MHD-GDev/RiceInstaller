@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+CACHE_FILE="/tmp/mako-cache.log"
+
+# Start mako in background
+mako > /dev/null 2>&1 &
+
+# Log notifications into cache
+makoctl monitor > "$CACHE_FILE" &
+

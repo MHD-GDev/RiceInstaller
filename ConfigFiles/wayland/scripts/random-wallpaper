@@ -8,7 +8,7 @@ set -euo pipefail
 script_dir="$HOME/.config/wayland/scripts"
 selector="$script_dir/wallpaper-selector"
 toggle_file="$HOME/.config/wayland/.random_wall_toggle"
-interval=60 # seconds between wallpaper changes
+interval=45 # seconds between wallpaper changes
 
 # --- Helpers ---
 is_enabled() {
