@@ -78,13 +78,13 @@
             "keyColor": "red"
         },
         {
-            "type": "vulkan",
-            "key": "├─ Vulkan",
+            "type": "opengl",
+            "key": "├─ OpenGL",
             "keyColor": "red"
         },
         {
-            "type": "opengl",
-            "key": "╰─ OpenGL",
+            "type": "vulkan",
+            "key": "╰─ Vulkan",
             "keyColor": "red"
         },
         "break",
