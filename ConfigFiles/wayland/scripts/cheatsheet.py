@@ -28,6 +28,7 @@ TITLE_ASCII = (
 
 CHEATSHEET = [
     ("General", [
+        ("super + alt + space", "Keyboard Language Menu"),
         ("super + alt + c", "Cheatsheet"),
         ("super + return", "Terminal"),
         ("super + space", "Application Menu"),
