@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-#     ____  _                            
-#    / __ \(_)_______                    
-#   / /_/ / / ___/ _ \                   
-#  / _, _/ / /__/  __/                   
-# /_/_|_/_/\___/\___/      __            
+#     ____  _
+#    / __ \(_)_______
+#   / /_/ / / ___/ _ \
+#  / _, _/ / /__/  __/
+# /_/_|_/_/\___/\___/      __
 #   / ____/_______  ____ _/ /_____  _____
 #  / /   / ___/ _ \/ __ `/ __/ __ \/ ___/
-# / /___/ /  /  __/ /_/ / /_/ /_/ / /    
-# \____/_/   \___/\__,_/\__/\____/_/     
+# / /___/ /  /  __/ /_/ / /_/ /_/ / /
+# \____/_/   \___/\__,_/\__/\____/_/
 #
 #   AUTHOR: MHD
 #
@@ -20,63 +20,63 @@ RICE_DIR="$HOME/.config/wayland/rices"
 create_new_rice() {
     local rice_name="$1"
     local rice_path="$RICE_DIR/$rice_name"
-    
+
     # Check for invalid rice names
     if [[ "$rice_name" =~ ^[~.]|^-|/|\\$|^(cache|local|ai|config|script|CACHE|LOCAL|AI|CONFIG|SCRIPT)$ ]]; then
         echo "Invalid rice name. Names cannot start with '~', '.', '-' or contain '/' or '\', 'cache', 'local', 'ai', 'config', 'script', 'CACHE', 'LOCAL', 'AI', 'CONFIG', or 'SCRIPT'."
         return 1
     fi
-    
+
     if [[ -d "$rice_path" ]]; then
         echo "Rice '$rice_name' already exists!"
         return 1
     fi
-    
+
     # Create directory structure
     mkdir -p "$rice_path"/{hypr,kitty,mako,rofi,walls,waybar}
-    
+
     # Create template configs
-    cat > "$rice_path/kitty/kitty.conf" << 'EOF'
-# Example Rice - Kitty Configuration
+    cat >"$rice_path/kitty/kitty.conf" <<'EOF'
+# Gentooey Rice - Kitty Configuration
 font_family      Meslo LG M
 font_size        14
 
 # Gentoo Purple Theme
-foreground       #ffffff
-background       #000
-cursor           #54487a
+foreground       #d8dee9
+background       #2e3440
+cursor           #93a1a1
 
 # Black
-color0           #2d1b69
-color8           #54487a
+color0           #3b4252
+color8           #4c566a
 
 # Red
-color1           #ff6b6b
-color9           #ff8e8e
+color1           #bf616a
+color9           #bf616a
 
 # Green
-color2           #51cf66
-color10          #69db7c
+color2           #a3be8c
+color10          #a3be8c
 
 # Yellow
-color3           #ffd43b
-color11          #ffe066
+color3           #ebcb8b
+color11          #ebcb8b
 
 # Blue
-color4           #339af0
-color12          #74c0fc
+color4           #81a1c1
+color12          #81a1c1
 
 # Magenta
-color5           #845ef7
-color13          #9775fa
+color5           #eeade8
+color13          #eeade8
 
 # Cyan
-color6           #22b8cf
-color14          #3bc9db
+color6           #88c0d0
+color14          #8fbcbb
 
 # White
-color7           #ffffff
-color15          #ffffff
+color7           #e5e9f0
+color15          #eceff4
 
 # Window settings
 window_padding_width 10
@@ -85,9 +85,8 @@ confirm_os_window_close 0
 # opacity
 background_opacity 0.6
 EOF
-    
-    cat > "$rice_path/mako/config.ini" << 'EOF'
-# Rice Example - Mako Configuration
+
+    cat >"$rice_path/mako/config.ini" <<'EOF'
 
 # [ Global Config ]
 # max no of notification in buffer
@@ -110,7 +109,7 @@ on-notify=exec mpv /usr/share/sounds/freedesktop/stereo/message.oga
 font= Meslo LG M 12
 
 # background color of notification( #RRGGBB | #RRGGBBAA )
-background-color=#073642cc
+background-color=#2b303bcc
 
 # Text color inside the notification( #RRGGBB | #RRGGBBAA )
 text-color=#fdf6e3
@@ -133,13 +132,13 @@ padding=10
 border-size=2
 
 # color of border of each notification( #RRGGBB | #RRGGBBAA )
-border-color=#fdf6e3cc
+border-color=#ffb7c5cc
 
 # bordear radious of each notification(value in px )
 border-radius=14
 
 # Set popup progress indicator color to color.( value [over|source] ( #RRGGBB | #RRGGBBAA ))
-progress-color=over #657b83
+progress-color=over #ffb7c5
 
 # Show icons in notifications.( value: -1 | 1 )
 icons=1
@@ -178,225 +177,150 @@ layer=top
 anchor=top-right
 
 EOF
-    
-    cat > "$rice_path/waybar/config.jsonc" << 'EOF'
+
+    cat >"$rice_path/waybar/config.jsonc" <<'EOF'
 {
-    "include": "~/.config/wayland/waybar/waybar-modules.jsonc",
-    // Example configs
-    "layer": "top",
-    "position": "top",
-    "margin-top": 10,
-    "margin-left": 400,
-    "margin-right": 400,
-    "margin-bottom": 5,
-    "height": 30,
-    "spacing": 10,
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+    "layer": "top", 
+    "position": "top", 
+    "margin-left": -15,
+    "margin-right": -16,
+    "height": 60,  
+    "spacing": -5, 
+
     "modules-left": [
         "custom/launcher",
         "hyprland/workspaces",
-        "gamemode",
+        "custom/music",
         "tray"
     ],
+
     "modules-center": [
         "hyprland/window"
     ],
+
     "modules-right": [
-        "custom/music",
-        "custom/battery",
+        "wireplumber", 
         "cpu",
         "memory",
-        "clock"
+        "battery",
+        "clock",
+        "custom/logout"
     ]
 }
 EOF
-    
-    cat > "$rice_path/waybar/style.css" << 'EOF'
-/* Rice Template - Waybar Style */
+
+    cat >"$rice_path/waybar/style.css" <<'EOF'
 * {
     font-family: "Meslo LG M";
-    font-size: 13px;
-    border: none;
-    border-radius: 0;
-    min-height: 0;
+    font-size: 16px;
 }
 
 window#waybar {
-    background: #1a1a1a;
-    color: #ffffff;
-    border-bottom: 2px solid #666666;
+    background-color: transparent;
+}
+
+#window label {
+    font-weight: bold;
+}
+
+#workspaces {
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 15px;
 }
 
 #workspaces button {
-    padding: 0 8px;
-    background: transparent;
-    color: #ffffff;
-    border-bottom: 2px solid transparent;
+    color: #ebcb8b;
+    background: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
 }
 
 #workspaces button.active {
-    background: #666666;
-    border-bottom: 2px solid #bd93f9;
+    background: #ebcb8b;
+    color: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
 }
 
-#workspaces button:hover {
-    background: rgba(102, 102, 102, 0.5);
+#workspaces button.empty{
+    color: #828dc7;
 }
 
-#clock, #battery, #network, #wireplumber {
-    padding: 0 10px;
-    margin: 0 2px;
-    background: #666666;
-    border-radius: 5px;
+#window,
+#tray,
+#cpu,
+#memory,
+#wireplumber,
+#clock,
+#custom-music,
+#custom-launcher,
+#custom-logout,
+#battery {
+    color: #89b4fa;
+    background: #232330;
+    margin-right: 22px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+    margin-top: 10px;
 }
 
-#window {
-    padding: 0 10px;
-    color: #ffffff;
+#clock {
+    margin-right: 25px;
 }
-EOF
 
-
-    cat > "$rice_path/waybar/waybar-modules.jsonc" << 'EOF'
-/* Rice Template - Waybar modules */
-{
-    "hyprland/workspaces": {
-        "format": "{icon}",
-        "on-click": "activate",
-        "format-icons": {
-            "1": "I",
-            "2": "II",
-            "3": "III",
-            "4": "IV",
-            "5": "V",
-            "6": "VI"
-        },
-        "sort-by-number": true,
-        "all-outputs": false,
-        "active-only": false, // Keep this as false
-        "persistent-workspaces": {
-            "*": [
-                1,
-                2,
-                3,
-                4,
-                5,
-                6
-            ]
-        },
-        "tooltip": false
-    },
-    "hyprland/window": {
-        "format": "{title}",
-        "separate-outputs": true,
-        "max-length": 25,
-        "rewrite": {
-            "(.*) - Vivaldi": "󰖟 $1",
-            "(.*) - Visual Studio Code": "󰨞 $1",
-            "(.*)Steam": "󰓓 Steam",
-            "(.*) - PCSX2": "󰊖 $1"
-        },
-        "tooltip": false
-    },
-    "clock": {
-        "format": "| {:%I:%M %p}",
-        "format-alt": "| {:%Y/%m/%d}",
-        "tooltip": false
-    },
-    "custom/battery": {
-        "exec": "/home/mhd/.config/wayland/scripts/battery-animation.sh",
-        "return-type": "json",
-        "interval": 1,
-        "format": "{} |",
-        "tooltip": false
-    },
-    "cpu": {
-        "format": "CPU {usage}% |",
-        "interval": 1,
-        "tooltip": false
-    },
-    "custom/launcher": {
-        "format": " 󰣨 ",
-        // "format": " 󰣇 ", //arch linux
-        // "format": " 󰓓 ", //Steam os
-        "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
-        "tooltip": false
-    },
-    "memory": {
-        "format": " MEM {used:0.1f}GB",
-        "interval": 1,
-        "tooltip": false
-    },
-    "disk": {
-        "format": " {used} ",
-        "path": "/",
-        "tooltip": false
-    },
-    "network": {
-        "format-wifi": "{essid} ({signalStrength}%) ",
-        "format-ethernet": " Ethernet-connected ",
-        "format-disconnected": "Disconnected ⚠",
-        "tooltip": false
-    },
-    "custom/music": {
-        "format": "   |",
-        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui.sh",
-        "tooltip": false
-    },
-    "tray": {
-        "spacing": 10,
-        "tooltip": false
-    },
-    "wireplumber": {
-        "format": " {volume}% |",
-        "format-muted": "Muted",
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "tooltip": false
-    },
-    "gamemode": {
-        "format": "{icon}",
-        "format-alt": "{icon} {count}",
-        "icon": "gamemode",
-        "hide-not-running": true,
-        "use-icon": true,
-        "icon-name": "input-gaming-symbolic",
-        "tooltip": false
-    }
+#custom-launcher {
+    background: radial-gradient(circle, #eeade8 0%, #bf616a 12%, #ebcb8b 19%, #81a1c1 20%, #bf616a 24%, #ebcb8b 36%, #81a1c1 37%, #eeade8 48%, #eeade8 52%, #81a1c1 52%, #ebcb8b 66%, #81a1c1 67%, #eeade8 68%, #eeade8 77%, #81a1c1 78%, #eeade8 83%, #bf616a 90%, #81a1c1 100%);
+    background-size: 200% 500%;
+    color: #2e3440;
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 25px;
+    font-size: 31px;
 }
 EOF
-    
-    cat > "$rice_path/rofi/shared-colors.rasi" << 'EOF'
-# Rice Template - rofi Configuration
+
+    cat >"$rice_path/rofi/shared-colors.rasi" <<'EOF'
 * {
-    bg-col:         #002b36;
-    bg-col-light:   #073642;
-    border-col:     #268bd2;
-    selected-col:   #073642;
-    blue:           #268bd2;
-    fg-col:         #839496;
-    fg-col2:        #dc322f;
-    grey:           #586e75;
+    bg-col:         #2E3440;
+    bg-col-light:   #3B4252;
+    border-col:     #88C0D0;
+    selected-col:   #3B4252;
+    blue:           #88C0D0;
+    fg-col:         #D8DEE9;
+    fg-col2:        #BF616A;
+    grey:           #4C566A;
     width:          600;
-    font:           "Meslo LG M 14";
+    font:           "JetBrainsMono Nerd Font 14";
 }
 EOF
 
-    cat > "$rice_path/hypr/borders.conf" << 'EOF'
-# Rice Template - Hyprland Borders Configuration
+    cat >"$rice_path/hypr/borders.conf" <<'EOF'
 general {
     layout = dwindle
-    border_size = 3
+    border_size = 4
     gaps_in = 4
-    gaps_out = 4
-    col.inactive_border = 0xff073642 # Example inactive
-    col.active_border = 0xff93a1a1    # Example active
+    gaps_out = 11
+    col.inactive_border = 0xff434C5E # Nordic inactive
+    col.active_border = 0xfff9d9a6   # Light yellow active
     allow_tearing = true
 }
 
 decoration {
-    rounding = 0
+    rounding = 15
 }
 EOF
-    
+
     echo "Rice '$rice_name' created successfully at $rice_path"
     echo "Don't forget to add wallpapers to $rice_path/walls/"
 }
