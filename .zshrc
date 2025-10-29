@@ -129,7 +129,7 @@ alias vi='nvim'
 alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
 alias mpv='sh ~/.config/wayland/scripts/mpv-tui'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
-alias todo="~/.config/wayland/scripts/todo.py"
+alias todo="~/.config/wayland/scripts/todo"
 alias reflector='sudo reflector --protocol https --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
 
 #     ___         __       _____ __             __ 

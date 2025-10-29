@@ -21,7 +21,7 @@ sinks=$(wpctl status | awk '/Sinks:/{flag=1; next} /Sources:/{flag=0} flag' | gr
 done)
 
 # Let user select a sink
-selected_sink=$(echo "$sinks" | rofi -theme ~/.config/wayland/scripts/rofi-themes/audio-switcher.rasi -dmenu -p "Select Audio Output:" -no-show-icons -kb-cancel 'q')
+selected_sink=$(echo "$sinks" | rofi -theme ~/.config/wayland/scripts/rofi-themes/power-menu.rasi -dmenu -p "Select Audio Output:" -no-show-icons -kb-cancel 'q')
 
 if [ -n "$selected_sink" ]; then
     # Extract just the numeric sink ID

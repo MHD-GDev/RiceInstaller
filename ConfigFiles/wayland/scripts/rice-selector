@@ -18,6 +18,7 @@ RICE_DIR="$HOME/.config/wayland/rices"
 STATE_FILE="$HOME/.config/wayland/.current_rice"
 CACHE_DIR="$HOME/.cache/$USER/rice_previews"
 NVIM_COLORS_FILE="$HOME/.config/nvim/rice_colors.lua"
+CURRENT_WALLPAPER_FILE="$HOME/.config/wayland/.current_wallpaper"
 
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
@@ -199,6 +200,7 @@ apply_rice() {
     killall swaybg 2>/dev/null
     if [[ -n "$wallpaper" ]]; then
         swaybg -i "$wallpaper" -m fill >/dev/null 2>&1 &
+        echo "$wallpaper" > "$CURRENT_WALLPAPER_FILE"
     fi
 
     # Create symlinks to rice-specific configs
@@ -272,7 +274,7 @@ show_menu() {
             fi
         done | rofi -dmenu \
             -p "RiceSelector" \
-            -theme ~/.config/wayland/scripts/rofi-themes/rice-selector.rasi \
+            -theme ~/.config/wayland/scripts/rofi-themes/rice_wall_selector.rasi \
             -theme-str "$rofi_override" \
             -selected-row "$selected_index" \
             -no-custom \

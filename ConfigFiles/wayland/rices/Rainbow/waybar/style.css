@@ -1,146 +1,129 @@
 * {
     font-family: "Meslo LG M";
-    font-size: 16px;
+    font-size: 20px;
+    font-weight: bolder;
     border: none;
-    border-radius: 0;
-    min-height: 0;
+    border-radius: 6px;
+    min-height: 45px;
 }
 
-/* Entire bar */
-window#waybar {
-    background-color: rgba(0, 0, 0, 0.6);
-    color: #ffffff;
-    padding: 0;
-    margin: 0;
-    border-top: 2px solid #845ef7;
+#waybar {
+    background: transparent;
+    border: none;
 }
 
-/* Left, center, right module containers */
-/* .modules-left, */
-/* .modules-center, */
-/* .modules-right { */
-/*     padding: 6px 10px; */
-/*     margin: 0; */
-/*     display: flex; */
-/*     gap: 6px; */
-/* } */
-
-/* Workspaces: tab-style */
-#workspaces button {
-    background-color: #2d1b69;
-    /* color0 */
-    color: #ffffff;
-    padding: 4px 10px;
-    margin: 0 2px;
-    border-bottom: 2px solid transparent;
-    font-weight: bold;
-}
-
-#workspaces button.active {
-    border-bottom: 2px solid #845ef7;
-    /* color5 */
-    color: #845ef7;
-}
-
-#workspaces button.empty {
-    color: #ff6b6b;
-    /* color1 */
-}
-
-#workspaces button:hover {
-    background-color: #339af0;
-    /* color4 */
-    color: #000000;
-}
-
-/* Center window title */
-#window {
-    background-color: #74c0fc;
-    /* color12 */
-    color: #000000;
-    padding: 4px 12px;
-    font-weight: bold;
-    border: 1px solid #2d1b69;
-}
-
-/* Clock */
-#clock {
-    background-color: #845ef7;
-    /* color5 */
-    color: #ffffff;
-    padding: 4px 12px;
-    border-left: 3px solid #ff6b6b;
-    /* color1 */
-    font-weight: bold;
-}
-
-/* System metrics */
-#cpu,
-#memory,
-#disk,
-#battery {
-    background-color: #339af0;
-    /* color4 */
-    color: #000000;
-    padding: 4px 10px;
-    border: 1px solid #2d1b69;
-    font-weight: bold;
-}
-
-#battery.charging,
-#battery.plugged {
-    background-color: #51cf66;
-    /* color2 */
-    color: #000000;
-}
-
-/* Audio */
-#wireplumber {
-    background-color: #22b8cf;
-    /* color6 */
-    color: #000000;
-    padding: 4px 10px;
-    border: 1px solid #2d1b69;
-}
-
-#wireplumber.muted {
-    color: #ff6b6b;
-    /* color1 */
-}
-
-/* Custom modules */
-#custom-launcher,
-#custom-music,
-#custom-logout {
-    background-color: #9775fa;
-    /* color13 */
-    color: #000000;
-    padding: 4px 10px;
-    font-weight: bold;
-    border: 1px solid #2d1b69;
-}
-
-/* Tray */
-#tray {
-    background-color: #22b8cf;
-    /* color6 */
-    color: #000000;
-    padding: 4px 10px;
-    border: 1px solid #2d1b69;
-}
-
-/* Spacing */
-#workspaces,
-#window,
-#tray,
-#clock,
+#workspaces button,
 #battery,
 #cpu,
 #memory,
 #disk,
 #wireplumber,
-#custom-music,
+#window,
 #custom-launcher,
+#tray,
+#custom-logout,
+#custom-music {
+    padding: 6px 12px;
+    margin: 0 6px;
+    border-radius: 6px;
+
+    /* Face color */
+    color: #1a1f27;
+
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.45),
+        0 1px 3px rgba(0, 0, 0, 0.6),
+        inset 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+
+#workspaces {
+    margin: 0 8px;
+}
+
+#workspaces button {
+    background-color: #c0c0c0;
+    color: #232733;
+    border-bottom: 2px solid transparent;
+}
+
+#workspaces button.active {
+    background-color: #957dad;
+    color: #232733;
+    box-shadow:
+        0 0 0 2px rgba(122, 162, 247, 0.25),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 0 5px rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid #957dad;
+}
+
+#workspaces button.empty {
+    background-color: #232733;
+    color: #c0c0c0;
+}
+
+
+#window {
+    background-color: #ffe066;
+    border: 1px solid #232733;
+}
+
+#battery {
+    background-color: #69db7c;
+    border: 1px solid #232733;
+}
+
+#battery.warning {
+    background-color: #ffd43b;
+}
+
+#battery.critical {
+    background-color: #ff6b6b;
+}
+
+#cpu {
+    background-color: #74c0fc;
+    border: 1px solid #232733;
+}
+
+#memory {
+    background-color: #ff922b;
+    border: 1px solid #232733;
+}
+
+#disk {
+    background-color: #ff8e8e;
+    border: 1px solid #232733;
+}
+
+#wireplumber {
+    background-color: #339af0;
+    border: 1px solid #232733;
+}
+
+#wireplumber.muted {
+    background-color: #ff4d5c;
+}
+
+#tray {
+    background-color: #c0c0c0;
+    color: #232733;
+    border: 1px solid #232733;
+    padding: 4px 10px;
+}
+
+#custom-launcher {
+    background-color: #9775fa;
+    font-size: 32px;
+    border: 1px solid #232733;
+}
+
+#custom-music {
+    background-color: #ff4d5c;
+    border: 1px solid #232733;
+}
+
 #custom-logout {
-    margin: 0;
+    background-color: #9775fa;
+    border: 1px solid #232733;
 }

@@ -12,6 +12,7 @@ readonly BOLD=$(tput bold)
 readonly DIM=$(tput dim)
 readonly RESET=$(tput sgr0)
 
+
 # --- Globals ---
 TERM_WIDTH=$(tput cols)
 TERM_HEIGHT=$(tput lines)
@@ -19,6 +20,7 @@ SHOW_FOOTER=0
 declare -a LAST_DRAWN_LINES=()
 REDRAW_INTERVAL=0.016 # ~60fps
 LAST_REDRAW_TIME=0
+
 
 should_redraw() {
     local now
@@ -298,6 +300,8 @@ show_covers() {
     done
 }
 
+
+
 download_cover() {
     local file="$1"
     local music_name=${file##*/}
@@ -377,6 +381,8 @@ download_cover() {
     MEDIA_COVER_PATH="$cover_path"
     [[ -f $nocover_path ]] && rm -f "$nocover_path"
 }
+
+
 
 normalize_cover() {
     local cover_path="$1"
@@ -496,6 +502,7 @@ mpv_cmd() {
 }
 
 # --- Playback ---
+
 play_file() {
     local file="$1"
     local socket="/tmp/mpv-socket"
@@ -570,10 +577,12 @@ play_file() {
         esac
     done
 
+    MEDIA_COVER_PATH=""
     wait "$mpv_pid" 2>/dev/null
     echo "${DIM}Returning to menu...${RESET}"
     sleep 0.4
 }
+
 
 # --- Browser ---
 browse_files() {

@@ -119,6 +119,7 @@ function install_packages() {
 #-----------------------#
 # COPY CONFIG FILES     #
 #-----------------------#
+
 function copy_configs() {
     echo -e "${YELLOW}Copying rice directories...${RESET}"
     sleep 1
@@ -127,6 +128,15 @@ function copy_configs() {
         sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
         rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
         rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
+
+        # Check filesystem type of the profile file
+        FILE="$HOME/.config/fcitx5/profile"
+        FSTYPE=$(df --output=fstype "$FILE" | tail -1)
+
+        if [[ "$FSTYPE" == ext2 || "$FSTYPE" == ext3 || "$FSTYPE" == ext4 ]]; then
+            chattr +i "$FILE"
+        fi
+
         echo -e "${GREEN}Config directories copied!${RESET}"
     else
         echo -e "${RED}Missing ConfigFiles directory!${RESET}"
@@ -135,6 +145,7 @@ function copy_configs() {
     sleep 3
     clear
 }
+
 
 #-----------------------#
 # COPY .zshrc           #

@@ -1,0 +1,305 @@
+#!/bin/bash
+
+# Utility function to check if a command exists
+has() { command -v "$1" >/dev/null 2>&1; }
+
+# --- Colors ---
+BOLD="\033[1m"
+RESET="\033[0m"
+CYAN="\033[1;36m"
+MAGENTA="\033[1;35m"
+YELLOW="\033[1;33m"
+GREEN="\033[1;32m"
+RED="\033[1;31m"
+
+# --- Formatting functions ---
+# Main Section Header
+header() {
+  printf "\n${MAGENTA}==================== %s ====================${RESET}\n" "$1"
+}
+
+# Key-Value Pair (Yellow Key, Reset Value)
+kv() {
+  printf "  ${YELLOW}%-20s${RESET} %s\n" "$1:" "$2"
+}
+
+# --- System & Hardware Info ---
+OS="$(uname -s 2>/dev/null)"
+KERNEL="$(uname -r 2>/dev/null)"
+ARCH="$(uname -m 2>/dev/null)"
+UPTIME="$(uptime -p 2>/dev/null || echo "N/A")"
+LOAD="$(uptime | awk -F'load average: ' '{print $2}' 2>/dev/null || echo "N/A")"
+
+# CPU Model & Vendor
+CPU_MODEL="N/A"
+CPU_VENDOR="N/A"
+if has lscpu; then
+  CPU_MODEL="$(lscpu | awk -F: '/Model name/ {gsub(/^ +/,"",$2); print $2; exit}')"
+  CPU_VENDOR="$(lscpu | awk -F: '/Vendor ID/ {gsub(/^ +/,"",$2); print $2; exit}')"
+elif [ -r /proc/cpuinfo ]; then
+  CPU_MODEL="$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)"
+  CPU_VENDOR="$(awk -F': ' '/^vendor_id/ {print $2; exit}' /proc/cpuinfo)"
+elif has sysctl; then
+  CPU_MODEL="$(sysctl -n hw.model 2>/dev/null || echo "N/A")"
+  CPU_VENDOR="$(sysctl -n machdep.cpu.vendor 2>/dev/null || echo "N/A")"
+fi
+
+# GPU Info (Simplified back to just name)
+GPU="N/A"
+if has nvidia-smi; then
+  GPU="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 || echo "N/A")"
+elif has lspci && lspci -k | grep -i --color=never vga >/dev/null; then
+  # Grab the user-friendly name
+  GPU="$(lspci -k | awk '/VGA/ { getline; print }' | awk -F': ' '{$1=""; print $0}' | head -1 | sed 's/^[ \t]*//')"
+fi
+
+# Memory / Disk
+MEM=$(free -h 2>/dev/null | awk '/Mem:/ {print $3 "/" $2}') || MEM="N/A"
+DISK=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}') || DISK="N/A"
+
+# Network
+IP_ADDRESS="N/A"
+if has ip; then
+  IP_ADDRESS="$(ip a | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | cut -d/ -f1)"
+elif has ifconfig; then
+  IP_ADDRESS="$(ifconfig | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | sed 's/addr://')"
+fi
+
+# --- C / C++ Toolchains & Build Systems ---
+GCC=$(has gcc && gcc --version | head -1 || echo "N/A")
+GXX=$(has g++ && g++ --version | head -1 || echo "N/A")
+CLANG=$(has clang && clang --version | head -1 || echo "N/A")
+CLANGXX=$(has clang++ && clang++ --version | head -1 || echo "N/A")
+
+CMAKE=$(has cmake && cmake --version | head -1 || echo "N/A")
+MAKE=$(has make && make --version | head -1 || echo "N/A")
+NINJA=$(has ninja && ninja --version | head -1 || echo "N/A")
+MESON=$(has meson && meson --version | head -1 | awk '{print "Meson " $2}' || echo "N/A")
+
+# --- Deep Learning / HPC / GPU Toolchains ---
+# NVIDIA CUDA/cuDNN
+if has nvcc; then
+  CUDA_VER="$(nvcc --version | awk '/Cuda compilation tools/ {print $NF}')"
+else
+  CUDA_VER=$(cat /usr/local/cuda/version.txt 2>/dev/null || echo "N/A")
+fi
+
+CUDNN_VER="N/A"
+if [ -f "/usr/include/cudnn_version.h" ]; then
+  CUDNN_VER=$(grep CUDNN_MAJOR /usr/include/cudnn_version.h | awk '{print $NF"."}')
+  CUDNN_VER+="$(grep CUDNN_MINOR /usr/include/cudnn_version.h | awk '{print $NF"."}')"
+  CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/include/cudnn_version.h | awk '{print $NF}')"
+  CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//')
+elif [ -d "/usr/local/cuda/include" ]; then
+  CUDNN_VER=$(grep CUDNN_MAJOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')
+  CUDNN_VER+="$(grep CUDNN_MINOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')"
+  CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF}')"
+  CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//' || echo "N/A")
+fi
+
+# AMD ROCm / HIP
+ROCM_VER=$(has rocminfo && rocminfo 2>/dev/null | awk '/Runtime Version/ {print $NF; exit}' || echo "N/A")
+HIPCC_VER=$(has hipcc && hipcc --version 2>&1 | head -1 || echo "N/A")
+
+# OpenCL
+OPENCL_VER=$(has clinfo && clinfo | awk '/OpenCL Version/ {print $3; exit}' || echo "N/A")
+
+# Intel oneAPI
+ICX_VER=$(has icx && icx --version 2>&1 | head -1 || echo "N/A")
+IFX_VER=$(has ifx && ifx --version 2>&1 | head -1 || echo "N/A")
+DPCPP_VER=$(has dpcpp && dpcpp --version 2>&1 | head -1 || echo "N/A")
+MKL_VER=$(has mkl_link_tool && mkl_link_tool 2>&1 | grep "MKL version" | awk '{print $3}' || echo "N/A")
+
+# --- Programming Languages ---
+
+# C# / .NET
+DOTNET_SDK=$(has dotnet && dotnet --version || echo "N/A")
+DOTNET_RUNTIME=$(has dotnet && dotnet --list-runtimes 2>/dev/null | awk '{print $1 " (" $2 ")"}' | head -1 || echo "N/A")
+MONO=$(has mono && mono --version | head -1 || echo "N/A")
+MSBUILD=$(has msbuild && msbuild /version 2>/dev/null | awk '/Version/ {print $2; exit}' || echo "N/A")
+NUGET=$(has nuget && nuget help 2>&1 | awk '/NuGet Version/ {print $3; exit}' || echo "N/A")
+
+# Rust
+RUSTC=$(has rustc && rustc --version || echo "N/A")
+CARGO=$(has cargo && cargo --version | head -1 || echo "N/A")
+RUST_TARGETS=$(has rustup && rustup target list --installed | tr '\n' ', ' || echo "N/A")
+RUST_TOOLCHAIN=$(has rustc && rustc -Vv | awk '/host:/ {print $2}' || echo "N/A")
+
+# Go
+GO=$(has go && go version || echo "N/A")
+GOROOT=$(has go && go env GOROOT || echo "N/A")
+GOPATH=$(has go && go env GOPATH || echo "N/A")
+GO_MODULES=$(has go && go env GO111MODULE || echo "N/A")
+
+# Zig
+ZIG=$(has zig && zig version || echo "N/A")
+
+# Java / JVM
+JAVA=$(has java && java -version 2>&1 | head -1 || echo "N/A")
+JAVAC=$(has javac && javac -version 2>&1 | head -1 || echo "N/A")
+MAVEN=$(has mvn && mvn -v 2>&1 | grep "Apache Maven" | head -1 || echo "N/A")
+GRADLE=$(has gradle && gradle -v 2>&1 | awk '/Gradle/ {print $2; exit}' || echo "N/A")
+
+# Python
+PYTHON=$(has python3 && python3 --version || echo "N/A")
+PIP=$(has pip3 && pip3 --version | head -1 || echo "N/A")
+PY_VENV=$(echo $VIRTUAL_ENV)
+PY_SITE=$(has python3 && python3 -m site --user-site || echo "N/A")
+PY_PACKAGES=$(has pip3 && pip3 list --format=columns 2>/dev/null | tail -n +3 | head -20 | awk '{printf "%s (%s), ", $1, $2}' | sed 's/, $//' || echo "N/A")
+
+# Node.js / JS runtimes
+NODE=$(has node && node --version || echo "N/A")
+NODE_V8=$(has node && node -p 'process.versions.v8' 2>/dev/null || echo "N/A")
+NODE_MGR=$(has nvm && echo "NVM" || has volta && echo "Volta" || has fnm && echo "FNM" || echo "System")
+COREPACK=$(has corepack && corepack -v || echo "N/A")
+NPM=$(has npm && npm --version || echo "N/A")
+NPM_GLOBAL=$(has npm && npm list -g --depth=0 2>/dev/null | tail -n +2 | awk '{print $1}' | paste -sd ', ' - || echo "N/A")
+YARN=$(has yarn && yarn --version | head -1 || echo "N/A")
+PNPM=$(has pnpm && pnpm --version | head -1 || echo "N/A")
+BUN=$(has bun && bun --version || echo "N/A")
+DENO=$(has deno && deno --version | head -1 || echo "N/A")
+
+# Ruby
+RUBY=$(has ruby && ruby --version || echo "N/A")
+GEM=$(has gem && gem --version || echo "N/A")
+BUNDLER=$(has bundler && bundler --version | awk '/Bundler version/ {print $3}' || echo "N/A")
+GEMS=$(has gem && gem list --local | awk '{print $1}' | paste -sd ', ' - | head -c 100 && echo "..." || echo "N/A")
+
+# --- Dev Tools & Containers ---
+GIT=$(has git && git --version || echo "N/A")
+DOCKER=$(has docker && docker --version | head -1 || echo "N/A")
+PODMAN=$(has podman && podman --version | head -1 || echo "N/A")
+KUBECTL=$(has kubectl && kubectl version --client --short | head -1 || echo "N/A")
+
+# --- Environment Variables ---
+ENV_PATH="$PATH"
+CPATH="${CPATH:-N/A}"
+LIBRARY_PATH="${LIBRARY_PATH:-N/A}"
+C_INCLUDE_PATH="${C_INCLUDE_PATH:-N/A}"
+CPLUS_INCLUDE_PATH="${CPLUS_INCLUDE_PATH:-N/A}"
+PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-N/A}"
+LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-N/A}"
+TERM_PROGRAM="${TERM_PROGRAM:-N/A}"
+SHELL_PROG="${SHELL:-N/A}"
+NODE_PATH_ENV="${NODE_PATH:-N/A}"
+
+# --- Build Report ---
+REPORT="$(
+  header 'SYSTEM OVERVIEW'
+  kv "OS/Kernel/Arch" "$OS / $KERNEL / $ARCH"
+  kv "Uptime" "$UPTIME"
+  kv "System Load (1/5/15)" "$LOAD"
+  kv "Local IP" "$IP_ADDRESS"
+  kv "CPU Vendor" "$CPU_VENDOR"
+  kv "CPU Model" "$CPU_MODEL"
+  kv "GPU (Primary)" "$GPU"
+  kv "Memory (Used/Total)" "$MEM"
+  kv "Disk (Root /)" "$DISK"
+
+  header 'C / C++ TOOLCHAINS'
+  kv "GCC" "$GCC"
+  kv "G++" "$GXX"
+  kv "Clang" "$CLANG"
+  kv "Clang++" "$CLANGXX"
+  kv "CMake" "$CMAKE"
+  kv "Make" "$MAKE"
+  kv "Ninja" "$NINJA"
+  kv "Meson" "$MESON"
+
+  header 'C# / .NET DEVELOPMENT'
+  kv ".NET SDK Version" "$DOTNET_SDK"
+  kv ".NET Runtime" "$DOTNET_RUNTIME"
+  kv "Mono" "$MONO"
+  kv "MSBuild" "$MSBUILD"
+  kv "NuGet" "$NUGET"
+
+  header 'AI / HPC / GPU TOOLCHAINS'
+  kv "OpenCL" "$OPENCL_VER"
+
+  printf "\n${CYAN}--- NVIDIA (CUDA/cuDNN) ---${RESET}\n"
+  kv "CUDA Toolkit Ver" "$CUDA_VER"
+  kv "cuDNN Ver" "$CUDNN_VER"
+  kv "NVIDIA Driver" "$(has nvidia-smi && nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1 || echo "N/A")"
+
+  printf "\n${CYAN}--- AMD (ROCm/HIP) ---${RESET}\n"
+  kv "ROCm Runtime Ver" "$ROCM_VER"
+  kv "HIP Compiler" "$HIPCC_VER"
+
+  printf "\n${CYAN}--- Intel (oneAPI) ---${RESET}\n"
+  kv "Intel C Compiler (ICX)" "$ICX_VER"
+  kv "Intel Fortran (IFX)" "$IFX_VER"
+  kv "DPC++ Compiler" "$DPCPP_VER"
+  kv "MKL Library Ver" "$MKL_VER"
+
+  header 'RUST DEVELOPMENT'
+  kv "Rustc" "$RUSTC"
+  kv "Cargo" "$CARGO"
+  kv "Toolchain (Host)" "$RUST_TOOLCHAIN"
+  printf "  ${GREEN}Installed Targets:${RESET} $RUST_TARGETS\n"
+
+  header 'GO DEVELOPMENT'
+  kv "Go" "$GO"
+  kv "GOROOT" "$GOROOT"
+  kv "GOPATH" "$GOPATH"
+  kv "Go Modules" "$GO_MODULES"
+
+  header 'PYTHON DEVELOPMENT'
+  kv "Python3" "$PYTHON"
+  kv "Pip3" "$PIP"
+  kv "Virtual Env" "${PY_VENV:-None}"
+  kv "User Site" "$PY_SITE"
+  printf "  ${GREEN}Top Python Packages:${RESET} $PY_PACKAGES\n"
+
+  header 'NODE.JS / JAVASCRIPT'
+  kv "Node.js" "$NODE"
+  kv "V8 Engine" "$NODE_V8"
+  kv "Node Version Mgr" "$NODE_MGR"
+  kv "Corepack (Package Proxy)" "$COREPACK"
+  kv "npm" "$NPM"
+  kv "yarn" "$YARN"
+  kv "pnpm" "$PNPM"
+  kv "bun" "$BUN"
+  kv "deno" "$DENO"
+  printf "  ${GREEN}Global npm packages (Top):${RESET} $NPM_GLOBAL\n"
+
+  header 'JAVA / JVM'
+  kv "Java Runtime" "$JAVA"
+  kv "Javac" "$JAVAC"
+  kv "Maven" "$MAVEN"
+  kv "Gradle" "$GRADLE"
+
+  header 'OTHER LANGUAGES'
+  kv "Zig" "$ZIG"
+  kv "Ruby" "$RUBY"
+  kv "Gem" "$GEM"
+  kv "Bundler" "$BUNDLER"
+  printf "  ${GREEN}Top Ruby Gems:${RESET} $GEMS\n"
+
+  header 'DEV OPS / CONTAINERS'
+  kv "Git" "$GIT"
+  kv "Docker" "$DOCKER"
+  kv "Podman" "$PODMAN"
+  kv "Kubectl (Client)" "$KUBECTL"
+
+  header 'ENVIRONMENT VARIABLES'
+  kv "SHELL" "$SHELL_PROG"
+  kv "TERM_PROGRAM" "$TERM_PROGRAM"
+  kv "CPATH (C/C++ Includes)" "$CPATH"
+  kv "C_INCLUDE_PATH" "$C_INCLUDE_PATH"
+  kv "CPLUS_INCLUDE_PATH" "$CPLUS_INCLUDE_PATH"
+  kv "LIBRARY_PATH (C/C++ Libs)" "$LIBRARY_PATH"
+  kv "LD_LIBRARY_PATH (Runtime Libs)" "$LD_LIBRARY_PATH"
+  kv "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH"
+  kv "NODE_PATH" "$NODE_PATH_ENV"
+  printf "  ${GREEN}PATH:${RESET}\n    $(echo "$ENV_PATH" | tr ':' '\n    ')\n"
+  header '=============================================================='
+)"
+
+# --- Display with bat if available ---
+if has bat; then
+    echo -e "$REPORT" | bat --plain --language=txt
+elif has less; then
+    echo -e "$REPORT" | less
+else
+    echo -e "$REPORT"
+fi

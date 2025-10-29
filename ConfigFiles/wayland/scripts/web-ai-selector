@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Define AI applications and URLs
+AI_APPS=(
+    "Gemini|https://gemini.google.com/"
+    "Microsoft Copilot|https://copilot.microsoft.com"
+    "Chat GPT|https://chat.openai.com/"
+    "Deepseek|https://chat.deepseek.com/"
+)
+
+# Function to find first available browser
+find_browser() {
+    local browsers=("firefox" "chromium" "vivaldi-stable" "google-chrome" "brave-browser" "epiphany")
+    for browser in "${browsers[@]}";
+    do
+        command -v "$browser" &> /dev/null && echo "$browser" && return 0
+    done
+    return 1
+}
+
+# --- Robust List Generation and Rofi Call ---
+# Generate names only for Rofi
+NAMES_ONLY=$(for app in "${AI_APPS[@]}"; do
+    echo "$app" | awk -F'|' '{print $1}'
+done)
+
+# Show Rofi menu and capture selection
+# Removed -sep '|' as the input is newline-separated (default for Rofi dmenu input)
+# Enclosed "$NAMES_ONLY" in quotes to preserve newlines correctly
+SELECTED_NAME=$(echo -e "$NAMES_ONLY" | rofi -dmenu -theme ~/.config/wayland/scripts/rofi-themes/web-ai-menu.rasi -kb-row-left "h" -kb-row-up "k" -kb-row-down "j" -kb-row-right "l" -kb-cancel "q")
+
+# Exit if no selection
+[ -z "$SELECTED_NAME" ] && exit 0
+
+# --- URL Mapping and Execution ---
+# Initialize URL variable
+URL=""
+# Iterate to find the corresponding URL
+for entry in "${AI_APPS[@]}";
+do
+    entry_name=$(echo "$entry" | awk -F'|' '{print $1}')
+    # Trim potential whitespace from the Rofi selection and comparison string
+    if [ "$(echo "$entry_name" | xargs)" == "$(echo "$SELECTED_NAME" | xargs)" ];
+    then
+        URL=$(echo "$entry" | awk -F'|' '{print $2}')
+        break
+    fi
+done
+
+# Execute if URL found
+if [ -n "$URL" ];
+then
+    BROWSER_CMD=$(find_browser)
+    if [ -n "$BROWSER_CMD" ];
+    then
+        # Launch browser in background
+        "$BROWSER_CMD" "$URL" &
+    else
+        # Error message if no browser found
+        rofi -e "No suitable web browser found to open the URL."
+        exit 1
+    fi
+fi

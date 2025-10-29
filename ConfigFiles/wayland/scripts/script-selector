@@ -1,0 +1,105 @@
+#!/bin/bash
+#
+#    _____           _       __           
+#   / ___/__________(_)___  / /_          
+#   \__ \/ ___/ ___/ / __ \/ __/          
+#  ___/ / /__/ /  / / /_/ / /_            
+# /____/\___/_/ _/_/ .___/\__/    
+#         
+#   / ___/___  / //_/ _____/ /_____  _____
+#   \__ \/ _ \/ / _ \/ ___/ __/ __ \/ ___/
+#  ___/ /  __/ /  __/ / /__/ /_/ /_/ /    
+# /____/\___/_/\___/\___/\__/\____/_/     
+#
+# AUTHOR: MHD
+#
+# A rofi dmenu to select and run custom made scripts and apps
+#
+
+SCRIPTS_DIR="$HOME/.config/wayland/scripts"
+THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
+
+# Scripts to ignore (add script names here)
+IGNORE_SCRIPTS=(
+    "mako-logging"
+    "todo"
+    "programmer-info"
+    "script-selector"
+    "minimize-toggle"
+    "rice-init"
+    "rice-selector"
+    "wallpaper-selector"
+    "random-wallpaper"
+    "create_rice"
+    "mpv-tui"
+    "Updates"
+    # Add more scripts to ignore here
+)
+
+# Check if scripts directory exists
+if [[ ! -d "$SCRIPTS_DIR" ]]; then
+    rofi -e "Scripts directory not found: $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Check if theme file exists
+if [[ ! -f "$THEME_PATH" ]]; then
+    rofi -e "Theme file not found: $THEME_PATH"
+    exit 1
+fi
+
+# Get list of all scripts (excluding ignored scripts and directories)
+scripts=$(find "$SCRIPTS_DIR" -maxdepth 1 -type f ! -name "*.rasi" -printf "%f\n" | sort)
+for ignore in "${IGNORE_SCRIPTS[@]}"; do
+    scripts=$(echo "$scripts" | grep -v "^$ignore$")
+done
+
+# Check if any scripts were found
+if [[ -z "$scripts" ]]; then
+    rofi -e "No scripts found in $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Create formatted list with executable indicators
+formatted_scripts=""
+while IFS= read -r script; do
+    script_path="$SCRIPTS_DIR/$script"
+    if [[ -x "$script_path" ]]; then
+        formatted_scripts+="󱜧 $script\n"
+    fi
+done <<<"$scripts"
+
+# Show rofi menu and get user selection
+selected=$(echo -e "$formatted_scripts" | rofi -dmenu -i -p "Select Script" -theme "$THEME_PATH" -kb-cancel "q")
+
+# Process selection
+if [[ -n "$selected" ]]; then
+    # Remove the icon prefix to get the actual script name
+    script_name=$(echo "$selected" | sed 's/^[󱜧] //')
+    script_path="$SCRIPTS_DIR/$script_name"
+
+    if [[ -x "$script_path" ]]; then
+        # Execute the script directly if it's executable
+        "$script_path" &
+    elif [[ -f "$script_path" ]]; then
+        
+        # Get the MIME type of the file
+        MIME_TYPE=$(file -b --mime-type "$script_path")
+
+        case "$MIME_TYPE" in
+            # Shell scripts (e.g., bash, sh)
+            "text/x-shellscript")
+                bash "$script_path" &
+                ;;
+            # Python scripts
+            "text/x-python")
+                python3 "$script_path" &
+                ;;
+            *)
+                rofi -e "Script is not executable and file type ($MIME_TYPE) is unknown. Please make it executable with: chmod +x $script_name"
+                ;;
+        esac
+    else
+        rofi -e "Script not found: $script_name"
+    fi
+fi

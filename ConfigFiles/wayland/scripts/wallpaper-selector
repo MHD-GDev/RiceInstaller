@@ -19,7 +19,7 @@ get_current_rice() {
 }
 
 current_rice=$(get_current_rice)
-state_cache="$HOME/.cache/current_rice"
+state_cache="$HOME/.config/wayland/.current_rice"
 read -r previous_rice <"$state_cache" 2>/dev/null || previous_rice="$current_rice"
 
 wall_dir="$HOME/.config/wayland/rices/$current_rice/walls"
@@ -92,7 +92,7 @@ wall_selection=$(
         echo -e "$base\0icon\x1f${cache_file:-$img}"
     done | rofi -dmenu \
         -p "Select Wallpaper for $current_rice:" \
-        -theme ~/.config/wayland/scripts/rofi-themes/wallpaper-selector.rasi \
+        -theme ~/.config/wayland/scripts/rofi-themes/rice_wall_selector.rasi\
         -theme-str "$rofi_override" \
         -no-custom \
         -kb-row-left "h" \

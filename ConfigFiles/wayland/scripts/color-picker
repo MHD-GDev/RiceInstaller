@@ -1,98 +1,41 @@
 #!/bin/bash
+# Title: color_picker_mako
 
-# Color Picker Script for Hyprland
-# Dependencies: grim, slurp, imagemagick, notify-send, wl-copy
-
-# Check if required tools are installed
-check_dependencies() {
-    local deps=("grim" "slurp" "magick" "notify-send" "wl-copy")
-    for dep in "${deps[@]}"; do
-        if ! command -v "$dep" &> /dev/null; then
-            notify-send "Color Picker" "Missing dependency: $dep" -u critical
-            exit 1
-        fi
-    done
-}
-
-# Get color from pixel coordinates
-get_color() {
-    local coords="$1"
-    local temp_file="/tmp/colorpicker_$(date +%s).png"
-    
-    # Take screenshot of the selected pixel area (1x1)
-    grim -g "$coords" "$temp_file"
-    
-    # Extract color using ImageMagick
-    local hex_color=$(magick "$temp_file" -format "%[pixel:u.p{0,0}]" info:)
-    
-    # Clean up temp file
-    rm -f "$temp_file"
-    
-    # magick to proper hex format
-    if [[ $hex_color =~ srgb\(([0-9]+),([0-9]+),([0-9]+)\) ]]; then
-        printf "#%02x%02x%02x\n" "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"
-    elif [[ $hex_color =~ ^#[0-9A-Fa-f]{6}$ ]]; then
-        echo "$hex_color"
-    else
-        # Fallback: try to extract hex directly
-        echo "$hex_color" | grep -o '#[0-9A-Fa-f]\{6\}' || echo "#000000"
+# Check for required dependencies
+deps=("slurp" "grim" "magick" "notify-send")
+for dep in "${deps[@]}"; do
+    if ! command -v "$dep" &> /dev/null; then
+        echo "Error: Dependency '$dep' is not installed." >&2
+        exit 1
     fi
-}
+done
 
-# magick hex to RGB
-hex_to_rgb() {
-    local hex="$1"
-    hex=${hex#"#"}
-    local r=$((16#${hex:0:2}))
-    local g=$((16#${hex:2:2}))
-    local b=$((16#${hex:4:2}))
-    echo "rgb($r, $g, $b)"
-}
+# slurp -p selects a single pixel and outputs the geometry (e.g., 926,6731,1,1)
+GEOMETRY=$(slurp -p)
 
-# Create color preview
-create_preview() {
-    local hex="$1"
-    local preview_file="/tmp/color_preview_$(date +%s).png"
-    magick -size 50x50 xc:"$hex" "$preview_file"
-    echo "$preview_file"
-}
+if [ -z "$GEOMETRY" ]; then
+    exit 0
+fi
 
-# Main function
-main() {
-    check_dependencies
-    
-    while true; do
-        # Use slurp to get mouse position
-        local coords=$(slurp -p -f "%x,%y 1x1")
-        
-        if [ -z "$coords" ]; then
-            notify-send "Color Picker" "Selection cancelled" -u low
-            exit 0
-        fi
-        
-        # Get the color
-        local hex_color=$(get_color "$coords")
-        local rgb_color=$(hex_to_rgb "$hex_color")
-        
-        # Create color preview
-        local preview_file=$(create_preview "$hex_color")
-        
-        # Show notification with color preview
-        notify-send -i "$preview_file" "Color at cursor" \
-            "HEX: $hex_color\nRGB: $rgb_color" \
-            -t 5000 \
-            -u normal
-            
-        # Copy hex color to clipboard
-        echo -n "$hex_color" | wl-copy
-        
-        # Clean up preview file
-        rm -f "$preview_file"
-        
-        # Small delay to prevent too many notifications
-        sleep 0.1
-    done
-}
+# 1. grim captures *only* the single selected pixel in PNG format and pipes it.
+# 2. magick reads the PNG from the pipe and outputs the color data in the 'txt' format.
+# 3. tail -n 1 | awk '{print $3}' extracts the HEX code from the line: '0,0: (R,G,B) #RRGGBB srgb(R,G,B)'
+COLOR_HEX=$(grim -g "$GEOMETRY" -t png - | magick - -format '%[pixel:p{0,0}]' txt:- | tail -n 1 | awk '{print $3}')
 
-# Run main function
-main "$@"
+# Fallback check for an empty result or incorrectly formatted HEX
+if [ -z "$COLOR_HEX" ] || [[ "$COLOR_HEX" != \#* ]]; then
+    # Final attempt to check output, this often points to a missing ImageMagick component
+    # The output from 'magick - -format ...' for a successful capture looks like:
+    # # ImageMagick pixel enumeration: 1,1,255,srgb
+    # 0,0: (12,34,56) #0C2238 srgb(12,34,56)
+    # If the output is missing or truncated, the previous awk command fails.
+    echo "Error: Failed to extract valid color data. Please check your 'magick' installation and its ability to process piped PNG data." >&2
+    exit 1
+fi
+
+echo "$COLOR_HEX"
+
+# Display the picked color via notify-send (for Mako)
+notify-send  "Picked color: " "$COLOR_HEX"
+
+exit 0

@@ -1,31 +1,66 @@
-{
-  "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
-  "layer": "top",
-  "position": "top",
-  "height": 35,
-  "spacing": 4,
-  "margin-top": 5,
-  "margin-bottom": 10,
-
-  "modules-left": [
-    "custom/launcher",
-    "hyprland/workspaces",
-    "tray"
-  ],
-
-  "modules-center": [
-    "hyprland/window",
-  ],
-
-  "modules-right": [
-    "custom/music",
-    "wireplumber",
-    "cpu",
-    "memory",
-    "disk",
-    "battery",
-    "clock",
-    "custom/logout"
-  ]
-}
-
+[
+    {
+        "include": "/home/mhd/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "name": "topbar",
+        "layer": "top",
+        "position": "top",
+        "mode": "dock",
+        "margin-right": 100,
+        "margin-left": 100,
+        "margin-top": 6,
+        "margin-bottom": 6,
+        "modules-left": [
+            "custom/launcher",
+            "custom/music",
+            "wireplumber",
+            "tray"
+        ],
+        "modules-center": [
+            "hyprland/window"
+        ],
+        "modules-right": [
+            "cpu",
+            "memory",
+            "disk",
+            "battery",
+            "custom/logout"
+        ]
+    },
+    {
+        "name": "bottombar",
+        "position": "bottom",
+        "layer": "top",
+        "mode": "dock",
+        "margin-bottom": 6,
+        "margin-top": 6,
+        "modules-center": [
+            "hyprland/workspaces"
+        ],
+        "hyprland/workspaces": {
+            "format": "{icon}",
+            "on-click": "activate",
+            "format-icons": {
+                "1": "一", /* Ichi (One) */
+                "2": "二", /* Ni (Two) */
+                "3": "三", /* San (Three) */
+                "4": "四", /* Shi/Yon (Four) */
+                "5": "五", /* Go (Five) */
+                "6": "六" /* Roku (Six) */
+            },
+            "sort-by-number": true,
+            "all-outputs": false,
+            "active-only": false, // Keep this as false
+            "persistent-workspaces": {
+                "*": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                ]
+            },
+            "tooltip": false
+        }
+    }
+]

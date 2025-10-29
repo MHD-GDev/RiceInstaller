@@ -27,18 +27,10 @@
     },
     "hyprland/window": {
         "format": "{title}",
-        "separate-outputs": true,
-        "max-length": 25,
-        "rewrite": {
-            "(.*) - Vivaldi": "󰖟 $1",
-            "(.*) - Code - OSS": "󰨞 $1",
-            "(.*)Steam": "󰓓 Steam",
-            "(.*) - (Mozilla )?Firefox": "󰈹 $1",
-            "(.*) - PCSX2": "󰊖 $1",
-            "(vi|nvim) (.*)": "  $2",
-            "(.*) - Blender [0-9.]+.*": "󰂫 "
-        },
-        "tooltip": false
+        "max-length": 48,
+        "tooltip": false,
+        "icon": true,
+        "icon-size": 18
     },
     "clock": {
         "format": " {:%I:%M %p}",
@@ -117,7 +109,7 @@
     },
     "custom/music": {
         "format": "   ",
-        "on-click": "sh -c 'sleep 0.1 && kitty -c ~/.config/wayland/kitty/kitty.conf sh  ~/.config/wayland/scripts/mpv-tui'",
+        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh ~/.config/wayland/scripts/mpv-tui",
         "tooltip": false
     },
     "tray": {
@@ -126,7 +118,7 @@
         "tooltip": false
     },
     "wireplumber": {
-        "format": "{icon}   {volume}%",
+        "format": "{icon} {volume}%",
         "format-icons": {
             "default": [
                 "",

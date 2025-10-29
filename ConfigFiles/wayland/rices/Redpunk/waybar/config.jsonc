@@ -1,0 +1,114 @@
+[
+    {
+        "include": "/home/mhd/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "name": "topbar",
+        "layer": "top",
+        "position": "top",
+        "mode": "dock",
+        "margin-right": 7,
+        "margin-left": 7,
+        "margin-bottom": 6,
+        "modules-center": [
+            "hyprland/window"
+        ]
+    },
+    {
+        "name": "bottombar",
+        "position": "bottom",
+        "layer": "top",
+        "margin-right": 5,
+        "margin-left": 5,
+        "margin-bottom": 4,
+        "margin-top": -4,
+        "mode": "dock",
+        "modules-center": [
+            "hyprland/workspaces"
+        ],
+        "hyprland/workspaces": {
+            "format": "{icon}",
+            "on-click": "activate",
+            "format-icons": {
+                "1": "ア",
+                "2": "ラ",
+                "3": "サ",
+                "4": "カ",
+                "5": "ド",
+                "6": "ム"
+            },
+            "sort-by-number": true,
+            "all-outputs": false,
+            "active-only": false, // Keep this as false
+            "persistent-workspaces": {
+                "*": [
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                ]
+            },
+            "tooltip": false
+        }
+    },
+    {
+        "include": "/home/mhd/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "name": "rightbar",
+        "position": "right",
+        "layer": "top",
+        "margin-right": -10,
+        "margin-left": -60,
+        "mode": "dock",
+        "modules-center": [
+            "custom/launcher",
+            "tray",
+            "custom/music",
+            "wireplumber",
+            "battery",
+            "custom/logout"
+        ],
+        "wireplumber": {
+            "format": "{icon}",
+            "format-icons": {
+                "default": [
+                    "",
+                    "",
+                    ""
+                ]
+            },
+            "format-muted": "Muted",
+            "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+            "tooltip": false
+        },
+        "battery": {
+            "states": {
+                "warning": 20,
+                "critical": 10
+            },
+            "format": "{icon}",
+            "format-time": "{H} hr {M} min",
+            "format-icons": [
+                "󰂎",
+                "󰁻",
+                "󰁼",
+                "󰁽",
+                "󰁾",
+                "󰁿",
+                "󰂀",
+                "󰂁",
+                "󰂂",
+                "󰁹"
+            ],
+            "format-charging": "󰉁",
+            "min-length": 7,
+            "max-length": 7,
+            "tooltip-format": "Discharging: {time}",
+            "tooltip-format-charging": "Charging: {time}",
+            "events": {
+                "on-discharging-warning": "notify-send 'Low Battery' '20% battery remaining'",
+                "on-discharging-critical": "notify-send 'Low Battery' '10% battery remaining' -u critical",
+                "on-charging-100": "notify-send 'Battery full' 'Battery is at 100%'"
+            }
+        }
+    }
+]
