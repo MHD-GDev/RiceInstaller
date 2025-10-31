@@ -13,15 +13,8 @@ GREEN="\033[1;32m"
 RED="\033[1;31m"
 
 # --- Formatting functions ---
-# Main Section Header
-header() {
-  printf "\n${MAGENTA}==================== %s ====================${RESET}\n" "$1"
-}
-
-# Key-Value Pair (Yellow Key, Reset Value)
-kv() {
-  printf "  ${YELLOW}%-20s${RESET} %s\n" "$1:" "$2"
-}
+header() { printf "\n${MAGENTA}==================== %s ====================${RESET}\n" "$1"; }
+kv() { printf "  ${YELLOW}%-20s${RESET} %s\n" "$1:" "$2"; }
 
 # --- System & Hardware Info ---
 OS="$(uname -s 2>/dev/null)"
@@ -44,12 +37,11 @@ elif has sysctl; then
   CPU_VENDOR="$(sysctl -n machdep.cpu.vendor 2>/dev/null || echo "N/A")"
 fi
 
-# GPU Info (Simplified back to just name)
+# GPU Info
 GPU="N/A"
 if has nvidia-smi; then
   GPU="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 || echo "N/A")"
 elif has lspci && lspci -k | grep -i --color=never vga >/dev/null; then
-  # Grab the user-friendly name
   GPU="$(lspci -k | awk '/VGA/ { getline; print }' | awk -F': ' '{$1=""; print $0}' | head -1 | sed 's/^[ \t]*//')"
 fi
 
@@ -77,7 +69,6 @@ NINJA=$(has ninja && ninja --version | head -1 || echo "N/A")
 MESON=$(has meson && meson --version | head -1 | awk '{print "Meson " $2}' || echo "N/A")
 
 # --- Deep Learning / HPC / GPU Toolchains ---
-# NVIDIA CUDA/cuDNN
 if has nvcc; then
   CUDA_VER="$(nvcc --version | awk '/Cuda compilation tools/ {print $NF}')"
 else
@@ -97,57 +88,59 @@ elif [ -d "/usr/local/cuda/include" ]; then
   CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//' || echo "N/A")
 fi
 
-# AMD ROCm / HIP
 ROCM_VER=$(has rocminfo && rocminfo 2>/dev/null | awk '/Runtime Version/ {print $NF; exit}' || echo "N/A")
 HIPCC_VER=$(has hipcc && hipcc --version 2>&1 | head -1 || echo "N/A")
-
-# OpenCL
 OPENCL_VER=$(has clinfo && clinfo | awk '/OpenCL Version/ {print $3; exit}' || echo "N/A")
 
-# Intel oneAPI
 ICX_VER=$(has icx && icx --version 2>&1 | head -1 || echo "N/A")
 IFX_VER=$(has ifx && ifx --version 2>&1 | head -1 || echo "N/A")
 DPCPP_VER=$(has dpcpp && dpcpp --version 2>&1 | head -1 || echo "N/A")
 MKL_VER=$(has mkl_link_tool && mkl_link_tool 2>&1 | grep "MKL version" | awk '{print $3}' || echo "N/A")
 
-# --- Programming Languages ---
+# --- Gaming / Graphics Stack ---
+OPENGL_VER=$(has glxinfo && glxinfo | awk -F': ' '/OpenGL version string/ {print $2; exit}' || echo "N/A")
+VULKAN_VER=$(has vulkaninfo && vulkaninfo 2>/dev/null | awk -F': ' '/apiVersion/ {print $2; exit}' || echo "N/A")
+SDL2_VER=$(has sdl2-config && sdl2-config --version || echo "N/A")
+WINE_VER=$(has wine && wine --version || echo "N/A")
+PROTON_VER=$(has proton && proton --version 2>/dev/null || echo "N/A")
+MESA_VER=$(has glxinfo && glxinfo | awk -F': ' '/OpenGL version string/ {print $2; exit}' | grep -o 'Mesa.*' || echo "N/A")
 
-# C# / .NET
+# Gaming Benchmarks / Tools
+GLMARK2_VER=$(has glmark2 && glmark2 --version 2>&1 | head -1 || echo "N/A")
+VKCUBE_VER=$(has vkcube && vkcube --version 2>&1 | head -1 || echo "N/A")
+UNIGINE_VER=$(has unigine-benchmark && unigine-benchmark --version 2>&1 | head -1 || echo "N/A")
+STEAM_VER=$(has steam && steam --version 2>&1 | head -1 || echo "N/A")
+
+# --- Programming Languages ---
 DOTNET_SDK=$(has dotnet && dotnet --version || echo "N/A")
 DOTNET_RUNTIME=$(has dotnet && dotnet --list-runtimes 2>/dev/null | awk '{print $1 " (" $2 ")"}' | head -1 || echo "N/A")
 MONO=$(has mono && mono --version | head -1 || echo "N/A")
 MSBUILD=$(has msbuild && msbuild /version 2>/dev/null | awk '/Version/ {print $2; exit}' || echo "N/A")
 NUGET=$(has nuget && nuget help 2>&1 | awk '/NuGet Version/ {print $3; exit}' || echo "N/A")
 
-# Rust
 RUSTC=$(has rustc && rustc --version || echo "N/A")
 CARGO=$(has cargo && cargo --version | head -1 || echo "N/A")
 RUST_TARGETS=$(has rustup && rustup target list --installed | tr '\n' ', ' || echo "N/A")
 RUST_TOOLCHAIN=$(has rustc && rustc -Vv | awk '/host:/ {print $2}' || echo "N/A")
 
-# Go
 GO=$(has go && go version || echo "N/A")
 GOROOT=$(has go && go env GOROOT || echo "N/A")
 GOPATH=$(has go && go env GOPATH || echo "N/A")
 GO_MODULES=$(has go && go env GO111MODULE || echo "N/A")
 
-# Zig
 ZIG=$(has zig && zig version || echo "N/A")
 
-# Java / JVM
 JAVA=$(has java && java -version 2>&1 | head -1 || echo "N/A")
 JAVAC=$(has javac && javac -version 2>&1 | head -1 || echo "N/A")
 MAVEN=$(has mvn && mvn -v 2>&1 | grep "Apache Maven" | head -1 || echo "N/A")
 GRADLE=$(has gradle && gradle -v 2>&1 | awk '/Gradle/ {print $2; exit}' || echo "N/A")
 
-# Python
 PYTHON=$(has python3 && python3 --version || echo "N/A")
 PIP=$(has pip3 && pip3 --version | head -1 || echo "N/A")
 PY_VENV=$(echo $VIRTUAL_ENV)
 PY_SITE=$(has python3 && python3 -m site --user-site || echo "N/A")
 PY_PACKAGES=$(has pip3 && pip3 list --format=columns 2>/dev/null | tail -n +3 | head -20 | awk '{printf "%s (%s), ", $1, $2}' | sed 's/, $//' || echo "N/A")
 
-# Node.js / JS runtimes
 NODE=$(has node && node --version || echo "N/A")
 NODE_V8=$(has node && node -p 'process.versions.v8' 2>/dev/null || echo "N/A")
 NODE_MGR=$(has nvm && echo "NVM" || has volta && echo "Volta" || has fnm && echo "FNM" || echo "System")
@@ -159,7 +152,6 @@ PNPM=$(has pnpm && pnpm --version | head -1 || echo "N/A")
 BUN=$(has bun && bun --version || echo "N/A")
 DENO=$(has deno && deno --version | head -1 || echo "N/A")
 
-# Ruby
 RUBY=$(has ruby && ruby --version || echo "N/A")
 GEM=$(has gem && gem --version || echo "N/A")
 BUNDLER=$(has bundler && bundler --version | awk '/Bundler version/ {print $3}' || echo "N/A")
@@ -206,16 +198,8 @@ REPORT="$(
   kv "Ninja" "$NINJA"
   kv "Meson" "$MESON"
 
-  header 'C# / .NET DEVELOPMENT'
-  kv ".NET SDK Version" "$DOTNET_SDK"
-  kv ".NET Runtime" "$DOTNET_RUNTIME"
-  kv "Mono" "$MONO"
-  kv "MSBuild" "$MSBUILD"
-  kv "NuGet" "$NUGET"
-
   header 'AI / HPC / GPU TOOLCHAINS'
   kv "OpenCL" "$OPENCL_VER"
-
   printf "\n${CYAN}--- NVIDIA (CUDA/cuDNN) ---${RESET}\n"
   kv "CUDA Toolkit Ver" "$CUDA_VER"
   kv "cuDNN Ver" "$CUDNN_VER"
@@ -230,6 +214,18 @@ REPORT="$(
   kv "Intel Fortran (IFX)" "$IFX_VER"
   kv "DPC++ Compiler" "$DPCPP_VER"
   kv "MKL Library Ver" "$MKL_VER"
+
+  header 'GAMING / GRAPHICS STACK'
+  kv "OpenGL" "$OPENGL_VER"
+  kv "Vulkan" "$VULKAN_VER"
+  kv "Mesa" "$MESA_VER"
+  kv "SDL2" "$SDL2_VER"
+  kv "Wine" "$WINE_VER"
+  kv "Proton" "$PROTON_VER"
+  kv "glmark2" "$GLMARK2_VER"
+  kv "vkcube" "$VKCUBE_VER"
+  kv "Unigine Benchmark" "$UNIGINE_VER"
+  kv "Steam" "$STEAM_VER"
 
   header 'RUST DEVELOPMENT'
   kv "Rustc" "$RUSTC"
@@ -292,6 +288,7 @@ REPORT="$(
   kv "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH"
   kv "NODE_PATH" "$NODE_PATH_ENV"
   printf "  ${GREEN}PATH:${RESET}\n    $(echo "$ENV_PATH" | tr ':' '\n    ')\n"
+
   header '=============================================================='
 )"
 
