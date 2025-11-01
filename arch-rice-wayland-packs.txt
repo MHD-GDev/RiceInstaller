@@ -43,6 +43,7 @@ neovim
 nodejs
 openssh
 obfs4proxy-bin
+obsidian
 proxychains
 pavucontrol
 pipewire
