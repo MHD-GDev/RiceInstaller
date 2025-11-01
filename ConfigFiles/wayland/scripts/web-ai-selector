@@ -6,6 +6,7 @@ AI_APPS=(
     "Microsoft Copilot|https://copilot.microsoft.com"
     "Chat GPT|https://chat.openai.com/"
     "Deepseek|https://chat.deepseek.com/"
+    "MHD AI|file:///home/mhd/.config/AI/LlamaUI-vMHD.html"
 )
 
 # Function to find first available browser

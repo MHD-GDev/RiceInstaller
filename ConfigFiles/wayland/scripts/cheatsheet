@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Hyprland Cheatsheet Window (GTK4, Dark Dashboard + ANSI Title)
 
+import sys
+from gi.repository import Gtk, Gdk, Gio, Pango
 import gi
 gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk, Gdk, Gio, Pango
-import sys
 
 APP_NAME = "Hypr Cheatsheet"
 
@@ -41,6 +41,7 @@ CHEATSHEET = [
         ("shift + alt + i", "Menu → AI Websites"),
         ("shift + alt + t", "Telegram"),
         ("shift + alt + v", "Neovim"),
+        ("shift + alt + n", "Obsidian"),
         ("super + alt + s", "Screenshoter"),
         ("super + alt + p", "Audio Switcher Menu"),
         ("super + b", "Hide/Unhide Waybar"),
@@ -92,6 +93,7 @@ CHEATSHEET = [
     ]),
 ]
 
+
 class CheatsheetWindow(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app)
@@ -140,7 +142,8 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
             content.append(cat)
 
             for keys, desc in items:
-                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row = Gtk.Box(
+                    orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
                 row.set_hexpand(True)
                 row.add_css_class("keys-row")
 
@@ -220,6 +223,7 @@ scrolledwindow scrollbar:hover slider {{
 }}
 """
 
+
 class CheatsheetApp(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="dev.hypr.cheatsheet",
@@ -231,9 +235,11 @@ class CheatsheetApp(Gtk.Application):
             self.window = CheatsheetWindow(self)
         self.window.present()
 
+
 def main():
     app = CheatsheetApp()
     app.run(sys.argv)
+
 
 if __name__ == "__main__":
     main()

@@ -125,6 +125,8 @@ function copy_configs() {
     sleep 1
 
     if [[ -d ConfigFiles ]]; then
+        mkdir -p ~/Obsidian\ Vault
+        tar -xzf .obsidian.tar.gz && mv .obsidian ~/Obsidian\ Vault
         sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
         rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
         rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
@@ -146,7 +148,6 @@ function copy_configs() {
     clear
 }
 
-
 #-----------------------#
 # COPY .zshrc           #
 #-----------------------#
@@ -156,7 +157,7 @@ function copy_zshrc() {
 
     if [[ -f .zshrc ]]; then
         cp -r .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
-        mkdir .bash && mv .bash_history .bash_logout .bashrc .bash_profile .bash
+        mkdir .bash && mv .bash_logout .bashrc .bash_profile .bash
         chsh -s $(which zsh)
         echo -e "${GREEN}.zshrc copied successfully!${RESET}"
     else
@@ -287,6 +288,7 @@ function write_notes() {
     echo -e "${CYAN}Writing installation notes...${RESET}"
     echo -e "REMEMBER: Copy your AI models into ~/.local/share/AI-Models" >>~/Templates/IMPORTANT-README.txt
     echo -e "Use llama.cpp via the LlamaUI-vMHD.html in your browser." >>~/Templates/IMPORTANT-README.txt
+    echo -e "You can use obsidian for planning and todo command for daily todo." >>~/Templates/IMPORTANT-README.txt
     sleep 5
     clear
 }
