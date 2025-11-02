@@ -67,8 +67,6 @@ otf-ipafont
 docker
 docker-compose
 podman
-ansible
-terraform
 nix-git
 nixfmt
 nix-melt
