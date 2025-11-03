@@ -1,4 +1,5 @@
 awesome-terminal-fonts
+btrfs-progs
 bat
 blueman
 bluez
