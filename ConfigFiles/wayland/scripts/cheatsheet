@@ -52,6 +52,13 @@ CHEATSHEET = [
         ("super + t", "Float Window"),
         ("super + f", "Fullscreen"),
     ]),
+    ("Tmux mode", [
+        ("ctrl + shift + enter", "opens tmux mode"),
+        ("ctrl + shift + l", "inline node rotation"),
+        ("ctrl + shift + b", "terminal node switch"),
+        ("ctrl + shift + [", "move between nodes back"),
+        ("ctrl + shift + ]", "move between nodes next"),
+    ]),
     ("Vim-like Navigation", [
         ("super + h", "Move ←"),
         ("super + l", "Move →"),
