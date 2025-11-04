@@ -156,7 +156,8 @@ function copy_zshrc() {
     sleep 1
 
     if [[ -f .zshrc ]]; then
-        cp -r .zshrc .fonts ~ && sudo cp -r plugins /usr/share/zsh/
+        cp -r .zshrc ~ && sudo cp -r plugins /usr/share/zsh/
+        cp -r fonts ~/.local/share
         mkdir .bash && mv .bash_logout .bashrc .bash_profile .bash
         chsh -s $(which zsh)
         echo -e "${GREEN}.zshrc copied successfully!${RESET}"
