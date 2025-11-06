@@ -37,11 +37,11 @@ create_new_rice() {
 
     # Create template configs
     cat >"$rice_path/kitty/kitty.conf" <<'EOF'
-# Gentooey Rice - Kitty Configuration
+# Example Rice - Kitty Configuration
 font_family      Meslo LG M
 font_size        14
 
-# Gentoo Purple Theme
+# Example rice Theme
 foreground       #d8dee9
 background       #2e3440
 cursor           #93a1a1

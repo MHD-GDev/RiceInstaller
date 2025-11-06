@@ -1,0 +1,170 @@
+* {
+    font-family: "Meslo LG M";
+    font-weight: bolder;
+    font-size: 16px;
+    border: none;
+    min-height: 0;
+    padding: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+    background: transparent;
+}
+
+window#waybar {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25)0%, rgba(0, 0, 0, 0.5)50%, rgba(0, 0, 0, 0.6)50%);
+    padding: 0px;
+}
+
+tooltip {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.15)50%, rgba(0, 0, 0, 0.2)50%, rgba(0, 0, 0, 0.3)50%);
+    color: #ffffff;
+    border-top-style: solid;
+    border-bottom-style: solid;
+    border-width: 1px;
+    border-top-color: rgba(255, 255, 255, 0.4);
+    border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+tooltip label {
+    color: #ffffff;
+}
+
+#window,
+#tray,
+#cpu,
+#memory,
+#wireplumber,
+#disk,
+#custom-music,
+#custom-logout,
+#battery {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.025));
+    box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.34);
+    margin: 4px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    color: rgb(220, 220, 220);
+
+    /* Important style feature in order to give a glassy look! */
+    border-style: none;
+    border-bottom-style: solid;
+    border-top-style: solid;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.45);
+    border-width: 1px;
+}
+
+#battery.warning,
+#battery.urgent {
+    background-image: linear-gradient(to bottom, #f9e9c4, #a67f2f, #e0b84e);
+    color: #ffffff;
+}
+
+#battery.critical {
+    background-image: linear-gradient(to bottom, #f2c4c4, #7a2b2b, #b84e4e);
+    color: #ffffff;
+}
+
+#battery.charging {
+    background-image: linear-gradient(to bottom, #a8d8b9, #2f6f5a, #4ca88c);
+    color: #ffffff;
+}
+
+#tray menu {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25)0%, rgba(0, 0, 0, 0.5)50%, rgba(0, 0, 0, 0.6)50%);
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: #f0f8ff;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.2),
+        0 0 8px rgba(0, 0, 0, 0.3);
+    padding: 6px 10px;
+}
+
+#tray menu menuitem {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25)0%, rgba(0, 0, 0, 0.5)50%, rgba(0, 0, 0, 0.6)50%);
+    margin: 4px;
+    border-radius: 6px;
+    color: #ffffff;
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.2),
+        0 0 8px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.6);
+    padding: 4px 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+#tray menu menuitem:hover {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25)0%, rgba(0, 0, 0, 0.5)50%, rgba(0, 0, 0, 0.6)50%);
+    color: #ffffff;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.6);
+    box-shadow: 0 0 6px rgba(32, 208, 252, 0.8),
+        inset 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+#disk {
+    margin-right: 25px;
+}
+
+#workspaces {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+
+#custom-logout {
+    margin-right: 0.5cm;
+}
+
+#workspaces button {
+    transition-duration: 100ms;
+    all: initial;
+    min-width: 0;
+    color: #e78a4e;
+    margin-right: 0.2cm;
+    margin-left: 0.2cm;
+    text-shadow: 0px 0px 4px rgb(135, 135, 135);
+}
+
+#workspaces button.active {
+    color: #20d0fc;
+    text-shadow: 0px 0px 6px #20d0fc;
+}
+
+#workspaces button:hover {
+    transition-duration: 120ms;
+    color: #20d0fc;
+    text-shadow: 0px 0px 8px #20d0fc;
+}
+
+#workspaces button.current_output {
+    color: #20d0fc;
+    ;
+}
+
+#workspaces button.empty {
+    color: rgb(220, 220, 220);
+    text-shadow: 0px 0px 6px rgb(135, 135, 135);
+}
+
+#workspaces button.empty:hover {
+    transition-duration: 120ms;
+    color: #20d0fc;
+    text-shadow: 0px 0px 8px #20d0fc;
+}
+
+#custom-launcher {
+    background-image: linear-gradient(to bottom, #7fbae1, #065183, #2e8cb4);
+    border-bottom-color: #2e8cb4;
+    border-top-color: #7fbae1;
+    border-style: none;
+    border-bottom-style: solid;
+    border-top-style: solid;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.9);
+    text-shadow: 0px 3px 3px rgba(0, 0, 0, 1);
+    border-radius: 999px;
+    min-height: 40px;
+    margin-left: 10px;
+    margin-top: 4px;
+    padding: 6px 12px;
+}

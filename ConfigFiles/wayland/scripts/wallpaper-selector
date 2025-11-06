@@ -65,7 +65,7 @@ fi
 set_wallpaper() {
     killall swaybg 2>/dev/null || true
     swaybg -i "$1" -m fill >/dev/null 2>&1 &
-    echo "$1" > "$HOME/.config/wayland/.current_wallpaper"
+    echo "$1" >"$HOME/.config/wayland/.current_wallpaper"
     # Only show notification if not running under random-wallpaper slideshow
     if [[ -z "${RANDOM_WALLPAPER_MODE:-}" ]]; then
         notify-send "Wallpaper Changed" "Applied: $(basename "$1")"
@@ -79,9 +79,15 @@ set_random_wallpaper() {
 
 # --- CLI args ---
 case "${1:-menu}" in
-    random) set_random_wallpaper; exit 0 ;;
-    menu|"") ;; # continue
-    *) echo "Usage: $0 {menu|random}"; exit 1 ;;
+random)
+    set_random_wallpaper
+    exit 0
+    ;;
+menu | "") ;; # continue
+*)
+    echo "Usage: $0 {menu|random}"
+    exit 1
+    ;;
 esac
 
 # --- Rofi menu ---
@@ -92,8 +98,7 @@ wall_selection=$(
         echo -e "$base\0icon\x1f${cache_file:-$img}"
     done | rofi -dmenu \
         -p "Select Wallpaper for $current_rice:" \
-        -theme ~/.config/wayland/scripts/rofi-themes/rice_wall_selector.rasi\
-        -theme-str "$rofi_override" \
+        -theme ~/.config/wayland/scripts/rofi-themes/rice_wall_selector.rasi -theme-str "$rofi_override" \
         -no-custom \
         -kb-row-left "h" \
         -kb-row-right "l" \

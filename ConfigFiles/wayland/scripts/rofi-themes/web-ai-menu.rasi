@@ -45,7 +45,7 @@ mainbox {
 /*****----- Listview -----*****/
 listview {
     enabled:                     true;
-    columns:                     2;
+    columns:                     3;
     lines:                       2;
     cycle:                       true;
     dynamic:                     true;
