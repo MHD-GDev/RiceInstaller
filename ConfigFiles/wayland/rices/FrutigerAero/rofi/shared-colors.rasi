@@ -1,12 +1,17 @@
 * {
-    bg-col:         #2E3440;
+    bg-col:         #29599b;
     bg-col-light:   #3B4252;
-    border-col:     #88C0D0;
-    selected-col:   #3B4252;
-    blue:           #88C0D0;
+    border-col:     #206797;
+    selected-col:   #244B85;
+    blue:           #3b4252;
     fg-col:         #D8DEE9;
-    fg-col2:        #BF616A;
-    grey:           #4C566A;
+    fg-col2:        #ff8c00;
+    grey:           #d8dee9;
     width:          600;
     font:           "JetBrainsMono Nerd Font 14";
+}
+
+window {
+    background: transparent;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.6));
 }
