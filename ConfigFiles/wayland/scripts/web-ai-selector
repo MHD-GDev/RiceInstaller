@@ -2,10 +2,10 @@
 
 # Define AI applications and URLs
 AI_APPS=(
-    "Gemini|https://gemini.google.com/chat"
     "Microsoft Copilot|https://copilot.microsoft.com"
     "DuckDuckgo AI|https://duck.ai"
     "Deepseek|https://chat.deepseek.com/"
+    "Gemini|https://gemini.google.com/chat"
     "MHD AI|file:///home/mhd/.config/AI/LlamaUI-vMHD.html"
     "Chat GPT|https://chat.openai.com/"
 )
