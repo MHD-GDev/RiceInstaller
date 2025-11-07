@@ -44,16 +44,22 @@ mainbox {
 
 /*****----- Inputbar -----*****/
 inputbar {
+
     enabled:                     true;
     spacing:                     10px;
     margin:                      0px;
-    padding:                     15px;
-    border:                      0px solid;
-    border-radius:               10px;
-    border-color:                @border-col;
-    background-color:            @bg-col-light;
+    background: none;
+    border: none;
+    outline: none;
+    max-width: 190px;
+    padding: 10px 20px;
+    font-size: 16px;
     text-color:                  @fg-col;
+    background-color:            @bg-col-light;
+    border-radius: 9999px;
+    box-shadow: 2px 5px 10px;
     children:                    [ "entry" ];
+
 }
 
 prompt {
