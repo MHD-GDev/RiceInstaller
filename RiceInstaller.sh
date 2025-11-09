@@ -47,7 +47,7 @@ function create_user_dirs() {
     echo -e "${YELLOW}Creating user directories...${RESET}"
     sleep 1
 
-    mkdir -p ~/Downloads ~/Documents ~/Pictures ~/Videos ~/Music ~/Desktop ~/Templates
+    mkdir -p ~/Downloads ~/Documents ~/Pictures ~/Videos ~/Music ~/Desktop ~/Templates ~/MyNotes
 
     read -rp "Which type of system do you want to create? (gaming/work/both): " which_os
 
