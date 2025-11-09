@@ -41,7 +41,6 @@ CHEATSHEET = [
         ("shift + alt + i", "Menu → AI Websites"),
         ("shift + alt + t", "Telegram"),
         ("shift + alt + v", "Neovim"),
-        ("shift + alt + n", "Obsidian"),
         ("super + alt + s", "Screenshoter"),
         ("super + alt + p", "Audio Switcher Menu"),
         ("super + b", "Hide/Unhide Waybar"),
