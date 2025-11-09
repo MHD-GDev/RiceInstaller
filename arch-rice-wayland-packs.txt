@@ -58,6 +58,7 @@ ranger
 rofi
 rsync
 rtkit
+rustup
 sddm
 slurp
 sshfs

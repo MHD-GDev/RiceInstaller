@@ -84,6 +84,7 @@ function install_packages() {
 
         if [[ -f arch-rice-wayland-packs.txt ]]; then
             while ! paru -S --noconfirm $(<arch-rice-wayland-packs.txt); do echo "paru failed, so retrying" && sleep 2 && clear; done
+            rustup default stable
         else
             echo -e "${RED}Missing arch-rice-wayland-packs.txt file!${RESET}"
             exit 1
