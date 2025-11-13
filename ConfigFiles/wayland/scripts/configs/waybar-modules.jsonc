@@ -80,8 +80,9 @@
     },
     "custom/launcher": {
         //"format": " 󰣨 ",
-        "format": " 󰣇 ",
+        // "format": " 󰣇 ",
         // "format": " 󰓓 ",
+        "format": "  ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
     },

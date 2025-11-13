@@ -37,9 +37,9 @@ map("n", "<leader>th", "<C-w>t<C-w>H", { desc = "Change window splits to horizon
 map("n", "<leader>tv", "<C-w>t<C-w>K", { desc = "Change window splits to vertical", noremap = true})
 
 -- Resize window
-map("n", "<C-Up>", ":resize -5<CR>")
+map("n", "<C-Up>", ":resize -1<CR>")
 map("n", "<C-Down>", ":resize +1<CR>")
-map("n", "<C-Left>", ":vertical resize -5<CR>")
+map("n", "<C-Left>", ":vertical resize -1<CR>")
 map("n", "<C-Right>", ":vertical resize +1<CR>")
 
 -- Barbar
@@ -67,6 +67,4 @@ map('n', '<leader>sw', '<cmd>lua require("spectre").open_visual({select_word=tru
 map('v', '<leader>sw', '<esc><cmd>lua require("spectre").open_visual()<CR>', { desc = "Search current word", noremap = true })
 map('n', '<leader>sp', '<cmd>lua require("spectre").open_file_search({select_word=true})<CR>', { desc = "Search on current file", noremap = true})
 
--- Run my custom make file for C++
-map('n', '<leader>pr', '<cmd> make && ./program<CR>', { noremap = true })
-map('n', '<leader>pc', '<cmd> make clean<CR>', { noremap = true })
+-- custom configs here
