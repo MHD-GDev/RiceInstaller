@@ -10,9 +10,28 @@
     background: transparent;
 }
 
-window#waybar {
-    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25)0%, rgba(0, 0, 0, 0.5)50%, rgba(0, 0, 0, 0.6)50%);
+window#waybar.mainbar {
+    background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.35)0%, rgba(0, 0, 0, 0.6)50%, rgba(0, 0, 0, 0.7)50%);
     padding: 0px;
+}
+
+window#waybar.launcherbar {
+    background: transparent;
+    border-radius: 999px;
+}
+
+#custom-launcher {
+    background-image: linear-gradient(to bottom, rgb(127, 186, 245), rgb(6, 81, 140), rgb(46, 140, 190));
+    border-radius: 999px;
+    min-height: 64px;
+    min-width: 64px;
+    margin-left: 0px;
+    font-size: 28px;
+    box-shadow: 2px 1px rgba(0, 0, 0, 0.33);
+}
+
+#custom-launcher:hover {
+    background-image: linear-gradient(to bottom, rgb(127, 174, 245), rgb(6, 71, 140), rgb(46, 130, 190));
 }
 
 tooltip {
@@ -107,7 +126,7 @@ tooltip label {
 }
 
 #workspaces {
-    margin-left: 25px;
+    margin-left: 100px;
     margin-right: 25px;
 }
 
@@ -151,20 +170,4 @@ tooltip label {
     transition-duration: 120ms;
     color: #20d0fc;
     text-shadow: 0px 0px 8px #20d0fc;
-}
-
-#custom-launcher {
-    background-image: linear-gradient(to bottom, #7fbae1, #065183, #2e8cb4);
-    border-bottom-color: #2e8cb4;
-    border-top-color: #7fbae1;
-    border-style: none;
-    border-bottom-style: solid;
-    border-top-style: solid;
-    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.9);
-    text-shadow: 0px 3px 3px rgba(0, 0, 0, 1);
-    border-radius: 999px;
-    min-height: 40px;
-    margin-left: 10px;
-    margin-top: 4px;
-    padding: 6px 12px;
 }
