@@ -11,10 +11,6 @@ opt.shiftwidth = 4
 opt.expandtab = true
 opt.autoindent = true
 
--- Line wrapping
-opt.wrap = true
-opt.colorcolumn = "62"
-
 -- Search setting
 opt.ignorecase = true
 opt.smartcase = true

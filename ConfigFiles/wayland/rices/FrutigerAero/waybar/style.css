@@ -27,7 +27,6 @@ window#waybar.launcherbar {
     min-width: 64px;
     margin-left: 0px;
     font-size: 28px;
-    box-shadow: 2px 1px rgba(0, 0, 0, 0.33);
 }
 
 #custom-launcher:hover {
