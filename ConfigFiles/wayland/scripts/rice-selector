@@ -23,7 +23,6 @@ CURRENT_WALLPAPER_FILE="$HOME/.config/wayland/.current_wallpaper"
 # Create cache directory if it doesn't exist
 mkdir -p "$CACHE_DIR"
 
-# Variables to try to define the correct size of the images for your resolution
 monitor_res=$(($(xrandr | grep -w "connected" | grep -o '[0-9]*x[0-9]*+[0-9]*+[0-9]*' | head -n1 | cut -d'x' -f1) * 17 / 96))
 rofi_override="element-icon { size: $(($monitor_res))px; }"
 
@@ -111,22 +110,11 @@ EOF
 
     echo "Generated Neovim colors file: $NVIM_COLORS_FILE"
 }
-
-# Function to reload neovim colorscheme
-# reload_nvim_colorscheme() {
-#     for server in $(nvim --serverlist 2>/dev/null); do
-#         nvim --server /tmp/nvim.sock --remote-expr "execute('luafile $NVIM_COLORS_FILE')"
-#         nvim --server "$server" --remote-expr "execute('colorscheme catppuccin')"
-#         nvim --server "$server" --remote-expr "execute('redraw!')"
-#     done
-# }
-
 # Get available rices
 get_rices() {
     find "$RICE_DIR" -maxdepth 1 -type d -exec basename {} \; | grep -v "^rices$" | sort
 }
 
-# Get current rice
 get_current_rice() {
     if [[ -f "$STATE_FILE" ]]; then
         cat "$STATE_FILE"
@@ -135,12 +123,9 @@ get_current_rice() {
     fi
 }
 
-# Get current rice index for rofi selection
 get_current_rice_index() {
     local current_rice=$(get_current_rice)
     local rices=($(get_rices))
-    local index=0
-
     for i in "${!rices[@]}"; do
         if [[ "${rices[$i]}" == "$current_rice" ]]; then
             echo "$i"
@@ -150,26 +135,19 @@ get_current_rice_index() {
     echo "0"
 }
 
-# Create cached thumbnail for rice preview
 create_cached_thumbnail() {
     local source_image="$1"
     local rice_name="$2"
     local cache_file="${CACHE_DIR}/${rice_name}.png"
     local md5_file="${CACHE_DIR}/.${rice_name}.md5"
-
-    # Generate MD5 of original file
     local current_md5=$(md5sum "$source_image" | cut -d' ' -f1)
-
-    # Check if cache file exists and if content has changed
     if [ ! -f "$cache_file" ] || [ ! -f "$md5_file" ] || [ "$current_md5" != "$(cat "$md5_file")" ]; then
         magick "$source_image" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
         echo "$current_md5" >"$md5_file"
     fi
-
     echo "$cache_file"
 }
 
-# Apply rice configuration
 apply_rice() {
     local rice_name="$1"
     local rice_path="$RICE_DIR/$rice_name"
@@ -179,31 +157,39 @@ apply_rice() {
         return 1
     fi
 
-    # Save current rice selection
     echo "$rice_name" >"$STATE_FILE"
-
-    # Generate Neovim colors file from kitty config
     generate_nvim_colors "$rice_name"
 
-    # Pre-select wallpaper before killing processes
     local rice_walls_dir="$rice_path/walls"
     local wallpaper=""
     if [[ -d "$rice_walls_dir" ]]; then
         wallpaper=$(find "$rice_walls_dir" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.webp" \) | shuf -n 1)
     fi
 
-    # Kill existing processes
     killall waybar 2>/dev/null
     killall mako 2>/dev/null
-
-    # Start new wallpaper immediately after killing old swaybg
     killall swaybg 2>/dev/null
+
     if [[ -n "$wallpaper" ]]; then
         swaybg -i "$wallpaper" -m fill >/dev/null 2>&1 &
-        echo "$wallpaper" > "$CURRENT_WALLPAPER_FILE"
+        echo "$wallpaper" >"$CURRENT_WALLPAPER_FILE"
+
+        # --- Hyprlock background sync ---
+        hyprlock_conf="$HOME/.config/hypr/hyprlock.conf"
+        if [[ -f $hyprlock_conf ]]; then
+            awk -v newpath="$wallpaper" '
+                BEGIN { in_bg=0 }
+                /^background[[:space:]]*{/ { in_bg=1 }
+                in_bg && /^[[:space:]]*path[[:space:]]*=/ {
+                    sub(/=.*/, "= " newpath)
+                }
+                { print }
+                /^}/ { in_bg=0 }
+            ' "$hyprlock_conf" >"$hyprlock_conf.tmp" && mv "$hyprlock_conf.tmp" "$hyprlock_conf"
+            pkill -USR1 hyprlock 2>/dev/null || true
+        fi
     fi
 
-    # Create symlinks to rice-specific configs
     ln -sf "$rice_path/kitty/kitty.conf" "$HOME/.config/wayland/kitty/kitty.conf"
     ln -sf "$rice_path/mako/config.ini" "$HOME/.config/wayland/mako/config.ini"
     ln -sf "$rice_path/waybar" "$HOME/.config/wayland"
@@ -211,21 +197,14 @@ apply_rice() {
     ln -sf "$rice_path/hypr/borders.conf" "$HOME/.config/wayland/hypr/borders.conf"
 
     killall -SIGUSR1 kitty 2>/dev/null
-
-    # Reload Hyprland configuration to apply new border colors
     hyprctl reload
 
-    # Start new processes with rice-specific configs
     waybar -c "$HOME/.config/wayland/waybar/config.jsonc" -s "$HOME/.config/wayland/waybar/style.css" >/dev/null 2>&1 &
     mako -c "$HOME/.config/wayland/mako/config.ini" >/dev/null 2>&1 &
 
-    # Reload Neovim colorscheme
     reload_nvim_colorscheme
-
-    # Update tmux colors for all sessions
     ~/.config/wayland/tmux/update-colors.sh 2>/dev/null || true
 
-    # Clear wallpaper cache for new rice to force regeneration
     local new_cache_dir="$HOME/.cache/$USER/$rice_name"
     if [[ -d "$new_cache_dir" ]]; then
         find "$new_cache_dir" -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" | head -5 | xargs -I {} rm -f {}
@@ -234,20 +213,13 @@ apply_rice() {
     notify-send "Rice Changed" "Applied: $rice_name rice!"
 }
 
-# Show rice selection menu with preview
 show_menu() {
     local current_rice=$(get_current_rice)
-
-    # Get available rices as array
     mapfile -t rices < <(get_rices)
-
-    # Get selected index for current rice
     local selected_index=$(get_current_rice_index)
 
-    # Show the rofi selection menu with image previews
     local selected=$(
         for rice in "${rices[@]}"; do
-            # Look for preview image (try different formats)
             local preview_img=""
             for ext in webp png jpg jpeg; do
                 if [[ -f "$RICE_DIR/$rice/preview.$ext" ]]; then
@@ -255,18 +227,13 @@ show_menu() {
                     break
                 fi
             done
-
-            # If no preview found, use a default or the wallpaper
             if [[ -z "$preview_img" ]]; then
                 local rice_walls_dir="$RICE_DIR/$rice/walls"
                 if [[ -d "$rice_walls_dir" ]]; then
                     preview_img=$(find "$rice_walls_dir" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" -o -name "*.webp" \) | head -1)
                 fi
             fi
-
-            # Output rice name with icon path
             if [[ -n "$preview_img" ]]; then
-                # Create cached thumbnail and use it, ensuring it fits the window and shows top portion
                 local cached_thumbnail=$(create_cached_thumbnail "$preview_img" "$rice" "256x256^")
                 echo -e "$rice\0icon\x1f$cached_thumbnail"
             else
@@ -283,24 +250,18 @@ show_menu() {
             -kb-cancel "q" \
             -fixed-num-lines true
     )
-    # If a valid option was selected and it's different from current, apply it
     if [[ -n "$selected" ]]; then
         apply_rice "$selected"
     fi
-
 }
 
-# Initialize rice system
 init_rice_system() {
     local current_rice=$(get_current_rice)
     apply_rice "$current_rice"
 }
 
-# Main logic
 case "${1:-menu}" in
-"menu")
-    show_menu
-    ;;
+"menu") show_menu ;;
 "apply")
     if [[ -n "$2" ]]; then
         apply_rice "$2"
@@ -309,15 +270,9 @@ case "${1:-menu}" in
         exit 1
     fi
     ;;
-"current")
-    get_current_rice
-    ;;
-"list")
-    get_rices
-    ;;
-"init")
-    init_rice_system
-    ;;
+"current") get_current_rice ;;
+"list") get_rices ;;
+"init") init_rice_system ;;
 *)
     echo "Usage: $0 {menu|init|apply <rice>|current|list}"
     exit 1

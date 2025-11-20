@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Wallpaper selector using rofi + swaybg
-# AUTHOR: MHD (optimized by Arc & Copilot)
+# AUTHOR: MHD
 
 set -euo pipefail
 
@@ -40,33 +40,27 @@ monitor_res=$(xrandr | awk '/ connected/{print $3; exit}' | cut -d'x' -f1)
 icon_size=$((monitor_res * 17 / 96))
 rofi_override="element-icon { size: ${icon_size}px; }"
 
-# --- Cache thumbnails ---
-find "$wall_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | while read -r img; do
-    base=$(basename "$img")
-    cache_file="$cache_dir/$base"
-    md5_file="$cache_dir/.$base.md5"
-
-    md5sum "$img" | awk '{print $1}' >"$cache_dir/.tmp.md5"
-    if [[ ! -f $cache_file ]] || ! cmp -s "$cache_dir/.tmp.md5" "$md5_file"; then
-        magick "$img" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
-        mv "$cache_dir/.tmp.md5" "$md5_file"
-    else
-        rm "$cache_dir/.tmp.md5"
-    fi
-done
-
-# --- Ensure wallpapers exist ---
-if ! find "$wall_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | grep -q .; then
-    notify-send "No Wallpapers" "No wallpapers found for '$current_rice'"
-    exit 1
-fi
-
 # --- Wallpaper functions ---
 set_wallpaper() {
     killall swaybg 2>/dev/null || true
     swaybg -i "$1" -m fill >/dev/null 2>&1 &
     echo "$1" >"$HOME/.config/wayland/.current_wallpaper"
-    # Only show notification if not running under random-wallpaper slideshow
+
+    # Update only the background {} path in hyprlock.conf
+    hyprlock_conf="$HOME/.config/hypr/hyprlock.conf"
+    if [[ -f $hyprlock_conf ]]; then
+        awk -v newpath="$1" '
+            BEGIN { in_bg=0 }
+            /^background[[:space:]]*{/ { in_bg=1 }
+            in_bg && /^[[:space:]]*path[[:space:]]*=/ {
+                sub(/=.*/, "= " newpath)
+            }
+            { print }
+            /^}/ { in_bg=0 }
+        ' "$hyprlock_conf" >"$hyprlock_conf.tmp" && mv "$hyprlock_conf.tmp" "$hyprlock_conf"
+        pkill -USR1 hyprlock 2>/dev/null || true
+    fi
+
     if [[ -z "${RANDOM_WALLPAPER_MODE:-}" ]]; then
         notify-send "Wallpaper Changed" "Applied: $(basename "$1")"
     fi
@@ -90,11 +84,17 @@ menu | "") ;; # continue
     ;;
 esac
 
-# --- Rofi menu ---
+# --- Rofi menu with lazy thumbnail generation ---
 wall_selection=$(
     find "$wall_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | while read -r img; do
         base=$(basename "$img")
         cache_file="$cache_dir/$base"
+
+        # Lazy thumbnail generation: only create if missing
+        if [[ ! -f $cache_file ]]; then
+            magick "$img" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
+        fi
+
         echo -e "$base\0icon\x1f${cache_file:-$img}"
     done | rofi -dmenu \
         -p "Select Wallpaper for $current_rice:" \

@@ -29,6 +29,8 @@ hyprland-qtutils
 hyprutils
 hyprwayland-scanner
 hyprshot
+hyprlock
+hypridle
 imagemagick
 imv
 jq
@@ -65,7 +67,6 @@ slurp
 sshfs
 starship
 swaybg
-swaylock-effects
 socat
 timeshift
 telegram-desktop
