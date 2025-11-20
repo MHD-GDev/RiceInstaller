@@ -2,14 +2,33 @@ return {
 	"nvim-lualine/lualine.nvim",
 	event = "VeryLazy",
 	config = function()
+		-- Extend Lua's search path to include ~/.config/nvim
+		package.path = package.path .. ";" .. vim.fn.stdpath("config") .. "/?.lua"
+
+		-- Try to load rice_colors.lua from ~/.config/nvim
+		local ok, rice_colors = pcall(require, "rice_colors")
+		if not ok then
+			-- Fallback colors if rice_colors.lua is missing
+			rice_colors = {
+				blue = "#80a0ff",
+				teal = "#79dac8",
+				base = "#080808",
+				text = "#c6c6c6",
+				red = "#ff5189",
+				mauve = "#d183e8",
+				surface1 = "#303030",
+			}
+		end
+
+		-- Map rice colors into lualine palette
 		local colors = {
-			blue = "#80a0ff",
-			cyan = "#79dac8",
-			black = "#080808",
-			white = "#c6c6c6",
-			red = "#ff5189",
-			violet = "#d183e8",
-			grey = "#303030",
+			blue = rice_colors.blue,
+			cyan = rice_colors.teal, -- mapped from teal
+			black = rice_colors.base,
+			white = rice_colors.text,
+			red = rice_colors.red,
+			violet = rice_colors.mauve,
+			grey = rice_colors.surface1,
 		}
 
 		local bubbles_theme = {
@@ -40,7 +59,7 @@ return {
 				lualine_a = { { "mode", separator = { left = "" }, right_padding = 2 } },
 				lualine_b = { "filename", "branch" },
 				lualine_c = {
-					"%=", --[[ add your center components here in place of this comment ]]
+					"%=", --[[ add your center components here ]]
 				},
 				lualine_x = {},
 				lualine_y = { "filetype", "progress" },

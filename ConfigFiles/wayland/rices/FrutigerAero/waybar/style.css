@@ -135,38 +135,20 @@ tooltip label {
 }
 
 #workspaces button {
-    transition-duration: 100ms;
-    all: initial;
-    min-width: 0;
     color: #e78a4e;
+    min-width: 0;
     margin-right: 0.2cm;
     margin-left: 0.2cm;
     text-shadow: 0px 0px 4px rgb(135, 135, 135);
+    font-weight: bolder;
+}
+
+#workspaces button.empty {
+    color: #ffffff;
+    text-shadow: 0px 0px 6px rgb(135, 135, 135);
 }
 
 #workspaces button.active {
     color: #20d0fc;
     text-shadow: 0px 0px 6px #20d0fc;
-}
-
-#workspaces button:hover {
-    transition-duration: 120ms;
-    color: #20d0fc;
-    text-shadow: 0px 0px 8px #20d0fc;
-}
-
-#workspaces button.current_output {
-    color: #20d0fc;
-    ;
-}
-
-#workspaces button.empty {
-    color: rgb(220, 220, 220);
-    text-shadow: 0px 0px 6px rgb(135, 135, 135);
-}
-
-#workspaces button.empty:hover {
-    transition-duration: 120ms;
-    color: #20d0fc;
-    text-shadow: 0px 0px 8px #20d0fc;
 }

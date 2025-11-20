@@ -10,6 +10,8 @@ $directory\
 $git_branch\
 $git_status\
 [](fg:green bg:bright-blue)\
+$nix_shell\
+$docker_context\
 $c\
 $rust\
 $nodejs\
@@ -17,6 +19,7 @@ $java\
 $kotlin\
 $python\
 $cpp\
+$dotnet\
 [](fg:bright-blue bg:blue)\
 $docker_context\
 [](fg:blue bg:purple)\
@@ -32,7 +35,8 @@ style = "bg:bright-black fg:white"
 Linux = "󰌽"
 Gentoo = "󰣨"
 Android = ""
-Arch = "󰣇"
+Arch = "󰌽"
+# Arch = "󰣇"
 
 [username]
 show_always = true
@@ -64,7 +68,7 @@ style = "bg:bright-blue"
 format = '[[($all_status$ahead_behind )](fg:black bg:green)]($style)'
 
 [nodejs]
-symbol = ""
+symbol = " "
 style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
@@ -74,7 +78,7 @@ style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
 [rust]
-symbol = ""
+symbol = " "
 style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
@@ -84,19 +88,39 @@ style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
 [kotlin]
-symbol = ""
+symbol = " "
 style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
 [python]
-symbol = ""
+symbol = " "
 style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
 
 [cpp]
-symbol = ""
+disabled = false
+symbol = "󰙲 "
 style = "bg:bright-blue"
 format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
+
+[dotnet]
+symbol = "󰌛 "
+style = "bg:bright-blue"
+format = '[[ $symbol( $version) ](fg:black bg:bright-blue)]($style)'
+
+[nix_shell]
+disabled = true
+symbol = " "
+style = "bg:bright-blue"
+impure_msg = '[impure shell](bold red)'
+pure_msg = '[pure shell](bold green)'
+unknown_msg = '[unknown shell](bold yellow)'
+format = 'via [[$symbol( $state) ](fg:black bg:bright-blue)]($style)'
+
+[docker_context]
+symbol = " "
+style = "bg:bright-blue"
+format = '[[ $symbol( $context) ](fg:black bg:bright-blue)]($style)'
 
 [time]
 disabled = false

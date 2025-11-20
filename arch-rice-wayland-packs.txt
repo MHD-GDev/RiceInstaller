@@ -1,7 +1,7 @@
 awesome-terminal-fonts
 btrfs-progs
 bat
-blueman
+bluetui
 bluez
 brightnessctl
 chrony
@@ -28,6 +28,7 @@ hyprland-qt-support
 hyprland-qtutils
 hyprutils
 hyprwayland-scanner
+hyprshot
 imagemagick
 imv
 jq
