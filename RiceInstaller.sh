@@ -150,6 +150,7 @@ function copy_configs() {
     until {
         echo -e "${YELLOW}Copying rice directories...${RESET}"
         if [[ -d ConfigFiles ]]; then
+            cp -r mhd-theme ~/.vscode/extensions
             sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
             rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
             rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
