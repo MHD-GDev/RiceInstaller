@@ -23,6 +23,32 @@ EOF
     sleep 1
 }
 
+function show_notice() {
+    echo -e "${RED}NOTICE:${RESET} This script will modify your ${CYAN}Neovim (nvim)${RESET} configuration and ${CYAN}Hyprland.conf${RESET}."
+    echo -e "If you already have custom configs, they may be overwritten."
+    echo -e "${YELLOW}Tip:${RESET} If you do not want these changes, you can comment out the relevant parts of the script."
+    echo
+    echo "Do you want to continue?"
+    echo "1) Yes"
+    echo "2) No"
+    read -rp "Enter choice [1-2]: " confirm_choice
+    case "$confirm_choice" in
+    1)
+        echo -e "${GREEN}Proceeding with installation...${RESET}"
+        sleep 2
+        clear
+        ;;
+    2)
+        echo -e "${CYAN}Installation aborted by user.${RESET}"
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}Invalid choice. Exiting.${RESET}"
+        exit 1
+        ;;
+    esac
+}
+
 function check_sudo() {
     if [ "$(id -u)" = 0 ]; then
         echo -e "${RED}Do not run this script as root!${RESET}"
@@ -36,7 +62,8 @@ function choose_build_type() {
         echo "1) Gaming"
         echo "2) Programming"
         echo "3) Both"
-        read -rp "Enter choice [1-3]: " choice
+        echo "4) None"
+        read -rp "Enter choice [1-4]: " choice
         case "$choice" in
         1)
             BUILD_TYPE="gaming"
@@ -48,6 +75,10 @@ function choose_build_type() {
             ;;
         3)
             BUILD_TYPE="both"
+            break
+            ;;
+        4)
+            BUILD_TYPE="none"
             break
             ;;
         *) echo -e "${RED}Invalid choice. Try again.${RESET}" ;;
@@ -66,6 +97,7 @@ function create_user_dirs() {
         gaming) mkdir -p ~/Games ~/Emulations ;;
         programming) mkdir -p ~/Projects ;;
         both) mkdir -p ~/Projects ~/Games ~/Emulations ;;
+        none) ;; # Do nothing extra
         esac
     } do
         echo -e "${RED}Failed creating directories, retrying...${RESET}"
@@ -422,6 +454,7 @@ function finish_and_restart() {
 # RUN SCRIPT SECTIONS   #
 #-----------------------#
 show_banner
+show_notice
 check_sudo
 choose_build_type
 create_user_dirs

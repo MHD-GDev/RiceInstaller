@@ -78,7 +78,6 @@ ttf-noto-sans-cjk-vf
 ttf-noto-emoji-monochrome
 unrar
 unzip
-vimix-cursors
 visual-studio-code-bin
 waybar
 wayland
