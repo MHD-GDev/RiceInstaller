@@ -18,7 +18,7 @@ export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
 export BROWSER='firefox'
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
-export SUDO_PROMPT="Password: "
+export SUDO_PROMPT="Password : "
 export BAT_THEME="base16"
 # fcitx vars
 export GTK_IM_MODULE=fcitx
@@ -121,19 +121,24 @@ command_not_found_handler() {
 #  / ___ |/ / / /_/ (__  ) 
 # /_/  |_/_/_/\__,_/____/  
 
-alias update="~/.config/wayland/scripts/Updates"
 alias grub-update="sudo grub-mkconfig -o /boot/grub/grub.cfg"
 alias cat="bat --theme=base16"
 alias ls='eza --icons=always --color=always -a'
 alias vi='nvim'
 alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
-alias mpv='sh ~/.config/wayland/scripts/mpv-tui'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
-alias todo="~/.config/wayland/scripts/todo"
 alias reflector='sudo reflector --protocol https --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
+alias update="~/.config/wayland/scripts/Updates"
+alias todo="~/.config/wayland/scripts/todo"
+alias mpv='sh ~/.config/wayland/scripts/mpv-tui'
+alias programmer='sh ~/.config/wayland/scripts/programmer-info'
+alias icat='kitten icat'
 
 #     ___         __       _____ __             __ 
 #    /   | __  __/ /_____ / ___// /_____ ______/ /_
 #   / /| |/ / / / __/ __ \\__ \/ __/ __ `/ ___/ __/
 #  / ___ / /_/ / /_/ /_/ /__/ / /_/ /_/ / /  / /_  
 # /_/  |_\__,_/\__/\____/____/\__/\__,_/_/   \__/  
+
+# opencode
+export PATH=/home/mhd/.opencode/bin:$PATH

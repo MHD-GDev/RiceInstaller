@@ -780,20 +780,40 @@
       color: #dbab58;
     }
 
+    /* File preview box (placed above the input) */
+    #file-preview {
+      display: none;
+      background-color: rgba(0,0,0,0.12);
+      color: var(--text-color);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--border-radius);
+      margin: 0 0 0.5rem 0;
+      max-height: 160px;
+      overflow: auto;
+      box-shadow: var(--shadow);
+      font-size: 0.95rem;
+    }
+    #file-preview .fp-row { display:flex; align-items:center; gap:0.5rem; }
+    #file-preview .fp-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60%; }
+    #file-preview .fp-snippet { font-size:0.9rem; color:#ddd; white-space:pre-wrap; margin-top:0.35rem; }
+    #file-preview .fp-actions { margin-left:auto; }
+    #file-preview .fp-remove { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text-color); padding:4px 8px; border-radius:6px; cursor:pointer; }
+
+    /* Stop button styled to match the send button but in red */
+    #input-container { position: relative; }
     #stop-button {
-      position: fixed;
-      bottom: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background-color: var(--button-color);
+      background-color: #d32f2f;
       color: var(--text-color);
       border: none;
-      border-radius: var(--border-radius);
-      padding: 0.5rem 1rem;
+      border-radius: 50%;
+      width: 2.75rem;
+      height: 2.75rem;
       cursor: pointer;
       display: none;
-      animation: fadeIn 0.3s ease, pulse 2s infinite;
+      justify-content: center;
+      align-items: center;
+      transition: all var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+      animation: fadeInPulse 0.3s ease-out, buttonPulse 2s infinite;
     }
 
     @keyframes fadeInPulse {
@@ -814,9 +834,10 @@
     }
 
     #stop-button:hover {
-      animation: fadeIn 0.3s ease;
-      background-color: #d32f2f;
-      transform: translateX(-50%) scale(1.05);
+      transform: translateY(-2px) scale(1.05);
+      background-color: #e34153;
+      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.3);
+      animation: none;
     }
 
     /* Message card styling */
@@ -1215,9 +1236,13 @@
     <div id="system-prompt-container">
       <textarea id="system-prompt-textarea" placeholder="Enter system prompt here..."></textarea>
       <div class="system-prompt-controls">
-        <button class="system-prompt-button" id="save-prompt"><i class="fas fa-save"></i> Save</button>
-        <button class="system-prompt-button" id="edit-prompt"><i class="fas fa-edit"></i> Edit</button>
-        <button class="system-prompt-button" id="delete-prompt"><i class="fas fa-trash"></i> Delete</button>
+          <button class="system-prompt-button" id="save-prompt"><i class="fas fa-save"></i> Save</button>
+          <button class="system-prompt-button" id="edit-prompt"><i class="fas fa-edit"></i> Edit</button>
+          <button class="system-prompt-button" id="delete-prompt"><i class="fas fa-trash"></i> Delete</button>
+          <label style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="toggle-thinking" checked />
+            <span style="font-size:0.9rem;">Show Thinking</span>
+          </label>
       </div>
     </div>
 
@@ -1233,17 +1258,15 @@
 
       <div id="chat-section">
         <div id="chat-container"></div>
-        <button id="stop-button">
-          <i class="fas fa-stop"></i> Stop Generating
-        </button>
+        <div id="file-preview" aria-live="polite" role="region"></div>
         <div id="input-container">
-          <button id="upload-button"><i class="fas fa-image"></i></button>
-          <input type="file" id="image-upload" accept="image/*" style="display:none;" />
-          <div id="image-preview"></div>
+          <button id="upload-button"><i class="fas fa-file-alt"></i></button>
+          <input type="file" id="file-upload" accept=".md,.markdown,.txt,text/*" style="display:none;" />
           <input type="text" id="user-input" placeholder="Type a message..." disabled />
           <button id="quick-search-button"><i class="fas fa-search"></i></button>
           <button id="deep-search-button"><i class="fas fa-search-plus"></i></button>
           <button id="send-button"><i class="fas fa-paper-plane"></i></button>
+          <button id="stop-button" title="Stop"><i class="fas fa-stop"></i></button>
         </div>
       </div>
     </div>
@@ -1273,12 +1296,25 @@
   const chatList = document.getElementById('chat-list');
   const contextMenu = document.getElementById('context-menu');
   const uploadButton = document.getElementById('upload-button');
-  const imageUpload = document.getElementById('image-upload');
-  const imagePreview = document.getElementById('image-preview');
+  const fileUpload = document.getElementById('file-upload');
+  const filePreview = document.getElementById('file-preview');
   const stopButton = document.getElementById('stop-button');
-  stopButton.id = 'stop-button';
-  stopButton.innerHTML = '<i class="fas fa-stop"></i> Stop Generating';
-  document.getElementById('chat-section').appendChild(stopButton);
+  // ensure stop button hidden initially
+  if (stopButton) stopButton.style.display = 'none';
+
+  // Helper: scroll to bottom only if the user is already near the bottom.
+  function scrollToBottomIfNeeded() {
+    try {
+      const threshold = 120; // px from bottom where autoscroll still happens
+      const atBottom = (chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight) <= threshold;
+      if (atBottom) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    } catch (e) {
+      // ignore
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+  }
   document.getElementById('quick-search-button').addEventListener('click', performQuickSearch);
   document.getElementById('deep-search-button').addEventListener('click', performDeepSearch);
   enforceOneConnection();
@@ -1290,7 +1326,23 @@
   let controller = null;
 
 
+  let pendingFileText = null;
+  let pendingFileName = null;
   let pendingImage = null;
+  const toggleThinkingCheckbox = document.getElementById('toggle-thinking');
+  // flag set when the user explicitly clicks Stop to abort generation
+  let userAborted = false;
+  // Track the currently-displaying assistant thinking element (if any)
+  let currentThinkingDiv = null;
+
+  // Keep toggle in sync with the current thinking div (live updates)
+  if (toggleThinkingCheckbox) {
+    toggleThinkingCheckbox.addEventListener('change', () => {
+      if (currentThinkingDiv) {
+        currentThinkingDiv.style.display = toggleThinkingCheckbox.checked ? '' : 'none';
+      }
+    });
+  }
 
   // Adds system roles
   const roleNames = {
@@ -1500,6 +1552,8 @@
     roleSelect.style.display = 'none';
     document.getElementById('system-prompt-container').style.display = 'none';
     uploadButton.style.display = 'none';
+    // ensure stop button is hidden in search mode
+    if (stopButton) stopButton.style.display = 'none';
   }
 
   function setNormalChatMode() {
@@ -1512,6 +1566,8 @@
     roleSelect.style.display = 'block';
     document.getElementById('system-prompt-container').style.display = 'flex';
     uploadButton.style.display = 'flex';
+    // ensure stop button hidden by default when entering chat mode
+    if (stopButton) stopButton.style.display = 'none';
   }
 
   normalChatBtn.addEventListener('click', setNormalChatMode);
@@ -1644,14 +1700,62 @@
   }
 
   // Adds an image message.
-  function addImageMessage(dataURL, promptText) {
-    // Display image message in the UI
-    addMessage(`<img src="${dataURL}" style="max-width:100%; border-radius: var(--border-radius);" />`, true);
-    // Mark the last message in the history as an image message
-    const lastMsg = currentChat.messages[currentChat.messages.length - 1];
-    lastMsg.isImage = true;
-    lastMsg.imageData = dataURL;
-    lastMsg.text = promptText;
+  // Adds a file/text message (for .md/.txt uploads)
+  function addFileMessage(textContent, fileName, promptText) {
+    // Display only filename in the chat history. Store full file text separately
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', 'user-message');
+
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('message-header');
+    headerDiv.textContent = 'You';
+    messageDiv.appendChild(headerDiv);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('message-content');
+
+    const fileBox = document.createElement('div');
+    fileBox.style.display = 'flex';
+    fileBox.style.alignItems = 'center';
+    fileBox.style.gap = '0.5rem';
+
+    const fileIcon = document.createElement('i');
+    fileIcon.className = 'fas fa-file-alt';
+    fileIcon.style.opacity = 0.9;
+    fileBox.appendChild(fileIcon);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = fileName || 'Uploaded file';
+    nameSpan.style.fontWeight = '600';
+    fileBox.appendChild(nameSpan);
+
+    if (promptText && promptText.trim() !== '') {
+      const caption = document.createElement('div');
+      caption.style.marginTop = '0.5rem';
+      caption.style.whiteSpace = 'pre-wrap';
+      caption.textContent = promptText;
+      contentDiv.appendChild(caption);
+    }
+
+    contentDiv.appendChild(fileBox);
+    messageDiv.appendChild(contentDiv);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    if (currentChat) {
+      currentChat.messages.push({
+        // content is what is displayed in the chat; for files show filename only
+        content: fileName || 'Uploaded file',
+        isUser: true,
+        isImage: false,
+        isFile: true,
+        fileName: fileName || '',
+        // store raw file text separately so it can be included when building history
+        fileContent: textContent || '',
+        metrics: null,
+        text: ''
+      });
+    }
   }
 
   // Creates a new chat.
@@ -1724,11 +1828,65 @@
     });
   }
   // Loads a chat's messages into the chat container.
+  function renderFileMessageDOM(msg) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message', msg.isUser ? 'user-message' : 'assistant-message');
+
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('message-header');
+    headerDiv.textContent = msg.isUser ? 'You' : roleNames[roleSelect.value];
+    messageDiv.appendChild(headerDiv);
+
+    if (!msg.isUser && currentModel) {
+      const modelDiv = document.createElement('div');
+      modelDiv.classList.add('message-model');
+      const modelName = currentModel.split('/').pop().replace('.gguf', '');
+      modelDiv.textContent = modelName;
+      messageDiv.appendChild(modelDiv);
+    }
+
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('message-content');
+
+    // For file messages, display filename only (no full contents)
+    const fileBox = document.createElement('div');
+    fileBox.style.display = 'flex';
+    fileBox.style.alignItems = 'center';
+    fileBox.style.gap = '0.5rem';
+
+    const fileIcon = document.createElement('i');
+    fileIcon.className = 'fas fa-file-alt';
+    fileBox.appendChild(fileIcon);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = msg.fileName || msg.content || 'Uploaded file';
+    nameSpan.style.fontWeight = '600';
+    fileBox.appendChild(nameSpan);
+
+    contentDiv.appendChild(fileBox);
+
+    if (msg.text && msg.text.trim() !== '') {
+      const caption = document.createElement('div');
+      caption.style.marginTop = '0.5rem';
+      caption.style.whiteSpace = 'pre-wrap';
+      caption.textContent = msg.text;
+      contentDiv.appendChild(caption);
+    }
+
+    messageDiv.appendChild(contentDiv);
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
   function loadChat(chat) {
     chatContainer.innerHTML = '';
     systemPromptTextarea.value = chat.systemPrompt || systemPromptTextarea.value;
     chat.messages.forEach(message => {
-      addMessage(message.content, message.isUser, message.metrics, false);
+      if (message.isFile) {
+        renderFileMessageDOM(message);
+      } else {
+        addMessage(message.content, message.isUser, message.metrics, false);
+      }
     });
   }
 
@@ -2056,22 +2214,22 @@
     const combinedPrompt = `${customSystemPrompt}\n\n${thinkingStructure}`;
 
     const history = [{
+
       role: 'system',
       content: combinedPrompt
     }];
 
+    // Convert stored messages into plain-string content.
+    // For file/text messages, include the raw text contents and filename
     currentChat.messages.forEach(msg => {
-      if (msg.isImage) {
-        history.push({
-          role: msg.isUser ? 'user' : 'assistant',
-          content: [
-            { type: "text", text: msg.text || "What's in this image?" },
-            { type: "image_url", image_url: { url: msg.imageData } }
-          ]
-        });
-      } else {
-        history.push({ role: msg.isUser ? 'user' : 'assistant', content: msg.content });
-      }
+        if (msg.isFile) {
+          // When building history include the raw file content (stored in fileContent)
+          const caption = msg.fileName ? `Filename: ${msg.fileName}\n\n` : '';
+          const contentString = caption + (msg.fileContent || msg.text || '');
+          history.push({ role: msg.isUser ? 'user' : 'assistant', content: contentString });
+        } else {
+          history.push({ role: msg.isUser ? 'user' : 'assistant', content: msg.content });
+        }
     });
     return history;
   }
@@ -2079,15 +2237,18 @@
   // Send message: if a pending image exists, include it.
   async function sendMessage() {
     let message = userInput.value.trim();
-    if (!message && !pendingImage) return;
+    if (!message && !pendingImage && !pendingFileText) return;
     controller = new AbortController();
-    stopButton.style.display = 'block';
+    userAborted = false;
+    // Show stop button overlay on top of send button
+    stopButton.style.display = 'flex';
 
-    if (pendingImage) {
-      let promptText = message || "What's in this image?";
-      addImageMessage(pendingImage, promptText);
-      pendingImage = null;
-      imagePreview.style.display = "none";
+    if (pendingFileText) {
+      let promptText = message || '';
+      addFileMessage(pendingFileText, pendingFileName, promptText);
+      pendingFileText = null;
+      pendingFileName = null;
+      filePreview.style.display = "none";
       userInput.value = "";
     } else {
       addMessage(message, true);
@@ -2113,6 +2274,10 @@
 
     const thinkingDiv = document.createElement('div');
     thinkingDiv.classList.add('thinking-section');
+    // initialize thinking visibility based on toggle
+    if (!toggleThinkingCheckbox || !toggleThinkingCheckbox.checked) thinkingDiv.style.display = 'none';
+    // track the current thinking div so toggle updates while streaming
+    currentThinkingDiv = thinkingDiv;
     assistantMessageElement.appendChild(thinkingDiv);
 
     const answerDiv = document.createElement('div');
@@ -2142,12 +2307,15 @@
         }),
         signal: controller.signal
       });
-      if (!response.ok) throw new Error('Server response was not ok');
+      if (!response.ok) {
+        // Read server response body for more detailed error info when available
+        const errText = await response.text().catch(() => 'no response body');
+        throw new Error('Server response was not ok: ' + errText);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
-      let accumulatedText = '';
 
       while (!done) {
         const { value, done: doneReading } = await reader.read();
@@ -2168,38 +2336,50 @@
                 if (delta && delta.content) {
                   accumulatedText += delta.content;
 
-                  // Create separate content for thinking and answer sections
-                  let thinkingContent = '';
-                  let answerContent = '';
+                  // Robust parsing: split into thinking and answer based on markers
+                  const acc = accumulatedText;
+                  const lower = acc.toLowerCase();
 
-                  if (accumulatedText.includes("💡 Answer:")) {
-                    [thinkingContent, answerContent] = accumulatedText.split("💡 Answer:");
-                    thinkingDiv.innerHTML = marked.parse(thinkingContent);
-                    answerDiv.innerHTML = marked.parse("💡 Answer:" + answerContent);
-                  } else if (accumulatedText.includes("Answer:")) {
-                    [thinkingContent, answerContent] = accumulatedText.split("Answer:");
-                    thinkingDiv.innerHTML = marked.parse(thinkingContent);
-                    answerDiv.innerHTML = marked.parse("Answer:" + answerContent);
+                  // Find answer marker (prefer emoji marker if present)
+                  let answerIdx = -1;
+                  let answerLen = 0;
+                  let m = acc.match(/💡\s*answer:/i);
+                  if (m) { answerIdx = m.index; answerLen = m[0].length; }
+                  else { m = acc.match(/answer:/i); if (m) { answerIdx = m.index; answerLen = m[0].length; } }
+
+                  // Find thinking marker
+                  let thinkingIdx = -1;
+                  let thinkingLen = 0;
+                  let m2 = acc.match(/💭\s*thinking process:|thinking process:/i);
+                  if (m2) { thinkingIdx = m2.index; thinkingLen = m2[0].length; }
+
+                  let thinkingPart = '';
+                  let answerPart = '';
+
+                  if (answerIdx !== -1) {
+                    // Everything before the answer marker is thinking (if any)
+                    thinkingPart = acc.slice(0, answerIdx).trim();
+                    answerPart = acc.slice(answerIdx + answerLen).trim();
+                  } else if (thinkingIdx !== -1) {
+                    // There's a thinking marker but no answer yet: capture thinking after the marker
+                    thinkingPart = acc.slice(thinkingIdx + thinkingLen).trim();
+                    answerPart = '';
                   } else {
-                    // New handling for Qwen and similar models
-                    const lines = accumulatedText.split('\n');
-                    let foundThinking = false;
-                    thinkingContent = [];
-                    answerContent = [];
-                    for (const line of lines) {
-                      if (line.toLowerCase().includes('thinking process:')) {
-                        foundThinking = true;
-                        continue;
-                      }
-                      if (foundThinking) {
-                        thinkingContent.push(line);
-                      } else {
-                        answerContent.push(line);
-                      }
-                    }
-                    thinkingDiv.innerHTML = marked.parse(thinkingContent.join('\n'));
-                    answerDiv.innerHTML = marked.parse(answerContent.join('\n'));
+                    // No markers: treat entire output as the answer
+                    thinkingPart = '';
+                    answerPart = acc;
                   }
+
+                  thinkingDiv.innerHTML = thinkingPart ? marked.parse(thinkingPart) : '';
+                  answerDiv.innerHTML = answerPart ? marked.parse(answerPart) : '';
+
+                  // Respect thinking toggle visibility while streaming
+                  if (toggleThinkingCheckbox && !toggleThinkingCheckbox.checked) {
+                    thinkingDiv.style.display = 'none';
+                  } else {
+                    thinkingDiv.style.display = thinkingPart ? '' : 'none';
+                  }
+
                   // Update syntax highlighting
                   assistantMessageElement.querySelectorAll('pre code').forEach(block => {
                     hljs.highlightElement(block);
@@ -2210,7 +2390,8 @@
                     MathJax.typesetPromise([assistantMessageElement]);
                   }
 
-                  chatContainer.scrollTop = chatContainer.scrollHeight;
+                  // Only auto-scroll if the user is near the bottom
+                  scrollToBottomIfNeeded();
                 }
               } catch (err) {
                 console.error("Error parsing stream chunk", err);
@@ -2240,16 +2421,28 @@
       }
     } catch (error) {
       if (error.name === 'AbortError') {
-        addMessage('\n\n*Generation stopped by user*', false);
+        // Only show 'stopped by user' when the user actually clicked Stop
+        if (userAborted) {
+          addMessage('\n\n*Generation stopped by user*', false);
+        } else {
+          // silent abort or aborted by system - log for debugging but don't claim user stopped
+          console.warn('Request was aborted (not by user)');
+        }
       } else {
         console.error('Error:', error);
         addMessage('Error: Unable to get a response from the server. Please try again.', false);
       }
     } finally {
       stopButton.style.display = 'none';
+      // Ensure send button returns when generation/file send is complete
+      sendButton.style.display = 'block';
       controller = null;
       userInput.disabled = false;
       sendButton.disabled = false;
+      // ensure final autoscroll if appropriate
+      scrollToBottomIfNeeded();
+      // clear current thinking div tracking
+      currentThinkingDiv = null;
       userInput.focus();
     }
   }
@@ -2257,28 +2450,47 @@
   // Stop button click handler
   stopButton.addEventListener('click', () => {
     if (controller) {
+      userAborted = true;
       controller.abort();
       stopButton.style.display = 'none';
+    } else if (pendingFileText) {
+      // If there is no active generation but a file is pending, treat stop as cancel upload
+      clearPendingFile();
     }
   });
 
-  // Image upload: store image and show preview.
-  uploadButton.addEventListener('click', () => { imageUpload.click(); });
-  imageUpload.addEventListener('change', () => {
-    const file = imageUpload.files[0];
+  // File upload: accept text/markdown files and read as text
+  // helper to clear pending file and reset preview/buttons
+  function clearPendingFile() {
+    pendingFileText = null;
+    pendingFileName = null;
+    filePreview.innerHTML = '';
+    filePreview.style.display = 'none';
+    // toggle buttons back
+    sendButton.style.display = 'block';
+    stopButton.style.display = 'none';
+    fileUpload.value = '';
+  }
+
+  uploadButton.addEventListener('click', () => { fileUpload.click(); });
+  fileUpload.addEventListener('change', () => {
+    const file = fileUpload.files[0];
     if (!file) return;
 
-    // Add file size and type validation
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
+    const maxSize = 2 * 1024 * 1024; // 2MB for text files
     if (file.size > maxSize) {
-      alert('File size must be less than 5MB');
+      alert('File size must be less than 2MB');
       return;
     }
 
-    if (!validTypes.includes(file.type)) {
-      alert('Only JPG, PNG and GIF files are allowed');
+    const validTypes = ['text/plain', 'text/markdown', 'text/x-markdown'];
+    // allow based on extension too
+    const allowedExt = ['.md', '.markdown', '.txt'];
+    const lowerName = file.name.toLowerCase();
+    const extAllowed = allowedExt.some(ext => lowerName.endsWith(ext));
+
+    if (!validTypes.includes(file.type) && !extAllowed) {
+      alert('Only .md, .markdown, .txt or plain text files are allowed');
       return;
     }
 
@@ -2287,12 +2499,23 @@
       alert('Error reading file');
     };
     reader.onload = (e) => {
-      pendingImage = e.target.result;
-      imagePreview.innerHTML = `<img src="${pendingImage}" style="max-width:100%; border-radius: var(--border-radius);" alt="Preview" />`;
-      imagePreview.style.display = "block";
+      pendingFileText = e.target.result;
+      pendingFileName = file.name;
+      filePreview.innerHTML = `
+        <div class="fp-row">
+          <div class="fp-name">${file.name}</div>
+          <div class="fp-actions"><button class="fp-remove" title="Remove file">Remove</button></div>
+        </div>
+      `;
+      filePreview.style.display = 'block';
+      // keep send button available; do not show stop button for file selection
+      sendButton.style.display = 'block';
+      // attach remove handler
+      const rem = filePreview.querySelector('.fp-remove');
+      if (rem) rem.addEventListener('click', () => { clearPendingFile(); });
     };
-    reader.readAsDataURL(file);
-    imageUpload.value = "";
+    reader.readAsText(file);
+    fileUpload.value = "";
   });
 
   userInput.addEventListener('keypress', (e) => {
@@ -2315,6 +2538,16 @@
     }
   });
   sendButton.addEventListener('click', sendMessage);
+  // allow pressing stop overlay to abort
+  stopButton.addEventListener('click', () => {
+    if (controller) {
+      controller.abort();
+      stopButton.style.display = 'none';
+    } else if (pendingFileText) {
+      // Cancel pending file upload/selection
+      clearPendingFile();
+    }
+  });
   newChatButton.addEventListener('click', () => { createNewChat(); });
   toggleSidebarButton.addEventListener('click', () => { chatSidebar.classList.toggle('collapsed'); });
 
