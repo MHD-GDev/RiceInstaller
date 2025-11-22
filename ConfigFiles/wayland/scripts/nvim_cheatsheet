@@ -3,8 +3,6 @@
 
 import sys
 from gi.repository import Gtk, Gdk, Gio, Pango
-import gi
-gi.require_version("Gtk", "4.0")
 
 APP_NAME = "Neovim Cheatsheet"
 
@@ -28,55 +26,72 @@ TITLE_ASCII = (
 )
 
 CHEATSHEET = [
-    ("General", [
-        ("Normal: q", "Disables the q recording"),
-        ("Normal: Space + w", "Save file"),
-        ("Insert: j k", "Escape"),
-        ("Normal: Space + q", "Quit Neovim"),
-        ("Normal: +", "Increment"),
-        ("Normal: -", "Decrement"),
-        ("Normal: Ctrl + a", "Select all"),
-        ("Normal: n f", "New tab"),
-    ]),
-    ("Navigation", [
-        ("Normal: Space + s h", "Split horizontal"),
-        ("Normal: Space + s v", "Split vertical"),
-        ("Normal: Ctrl + k", "Navigate up"),
-        ("Normal: Ctrl + j", "Navigate down"),
-        ("Normal: Ctrl + h", "Navigate left"),
-        ("Normal: Ctrl + l", "Navigate right"),
-        ("Normal: Space + t h", "Change splits to horizontal"),
-        ("Normal: Space + t v", "Change splits to vertical"),
-        ("Normal: Ctrl + Up", "Resize up"),
-        ("Normal: Ctrl + Down", "Resize down"),
-        ("Normal: Ctrl + Left", "Resize left"),
-        ("Normal: Ctrl + Right", "Resize right"),
-    ]),
-    ("Buffers", [
-        ("Normal: Tab", "Move to next tab"),
-        ("Normal: Shift + Tab", "Move to previous tab"),
-        ("Normal: Space + x", "Close buffer"),
-        ("Normal: Alt + p", "Pin buffer"),
-    ]),
-    ("Comments", [
-        ("Normal/Visual: Space + c c", "Toggle comment"),
-    ]),
-    ("File Explorer", [
-        ("Normal: Space + b", "Toggle Neotree"),
-        ("Normal: Space + n b", "Reveal buffers in Neotree"),
-    ]),
-    ("Search", [
-        ("Normal: Space + f f", "Find files"),
-        ("Normal: Space + f g", "Live grep"),
-        ("Normal: Space + f r", "Recent files"),
-        ("Normal: Space + f b", "Find buffers"),
-        ("Normal: Space + S", "Toggle Spectre"),
-        ("Normal: Space + s w", "Search current word"),
-        ("Visual: Space + s w", "Search selected word"),
-        ("Normal: Space + s p", "Search in current file"),
-    ]),
-    ("Custom", [
-    ]),
+    (
+        "General",
+        [
+            ("Normal: q", "Disables the q recording"),
+            ("Normal: Space + w", "Save file"),
+            ("Insert: j k", "Escape"),
+            ("Normal: Space + q", "Quit Neovim"),
+            ("Normal: +", "Increment"),
+            ("Normal: -", "Decrement"),
+            ("Normal: Ctrl + a", "Select all"),
+            ("Normal: n f", "New tab"),
+        ],
+    ),
+    (
+        "Navigation",
+        [
+            ("Normal: Space + s h", "Split horizontal"),
+            ("Normal: Space + s v", "Split vertical"),
+            ("Normal: Ctrl + k", "Navigate up"),
+            ("Normal: Ctrl + j", "Navigate down"),
+            ("Normal: Ctrl + h", "Navigate left"),
+            ("Normal: Ctrl + l", "Navigate right"),
+            ("Normal: Space + t h", "Change splits to horizontal"),
+            ("Normal: Space + t v", "Change splits to vertical"),
+            ("Normal: Ctrl + Up", "Resize up"),
+            ("Normal: Ctrl + Down", "Resize down"),
+            ("Normal: Ctrl + Left", "Resize left"),
+            ("Normal: Ctrl + Right", "Resize right"),
+        ],
+    ),
+    (
+        "Buffers",
+        [
+            ("Normal: Tab", "Move to next tab"),
+            ("Normal: Shift + Tab", "Move to previous tab"),
+            ("Normal: Space + x", "Close buffer"),
+            ("Normal: Alt + p", "Pin buffer"),
+        ],
+    ),
+    (
+        "Comments",
+        [
+            ("Normal/Visual: Space + c c", "Toggle comment"),
+        ],
+    ),
+    (
+        "File Explorer",
+        [
+            ("Normal: Space + b", "Toggle Neotree"),
+            ("Normal: Space + n b", "Reveal buffers in Neotree"),
+        ],
+    ),
+    (
+        "Search",
+        [
+            ("Normal: Space + f f", "Find files"),
+            ("Normal: Space + f g", "Live grep"),
+            ("Normal: Space + f r", "Recent files"),
+            ("Normal: Space + f b", "Find buffers"),
+            ("Normal: Space + S", "Toggle Spectre"),
+            ("Normal: Space + s w", "Search current word"),
+            ("Visual: Space + s w", "Search selected word"),
+            ("Normal: Space + s p", "Search in current file"),
+        ],
+    ),
+    ("Custom", []),
 ]
 
 
@@ -90,8 +105,7 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
         provider = Gtk.CssProvider()
         provider.load_from_data(self._css().encode("utf-8"))
         Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -128,8 +142,7 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
             content.append(cat)
 
             for keys, desc in items:
-                row = Gtk.Box(
-                    orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
                 row.set_hexpand(True)
                 row.add_css_class("keys-row")
 
@@ -212,8 +225,9 @@ scrolledwindow scrollbar:hover slider {{
 
 class CheatsheetApp(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id="dev.hypr.cheatsheet",
-                         flags=Gio.ApplicationFlags.FLAGS_NONE)
+        super().__init__(
+            application_id="dev.hypr.cheatsheet", flags=Gio.ApplicationFlags.FLAGS_NONE
+        )
         self.window = None
 
     def do_activate(self, *args, **kwargs):
