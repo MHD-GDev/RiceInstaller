@@ -57,6 +57,7 @@ polkit-gnome
 polkit-kde-agent
 pulsemixer
 python-pillow
+python-gobject
 qbittorrent
 ranger
 rofi
