@@ -19,6 +19,9 @@ fastfetch
 ffmpeg
 firefox
 fzf
+gtk4-layer-shell
+gtksourceview4
+wxwidgets-gtk3
 git
 grim
 gstreamer
