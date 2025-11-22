@@ -1,6 +1,6 @@
 [
     {
-        "include": "/home/mhd/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
         "name": "topbar",
         "layer": "top",
         "position": "top",

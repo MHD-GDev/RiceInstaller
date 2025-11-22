@@ -6,16 +6,15 @@ AI_APPS=(
     "DuckDuckgo AI|https://duck.ai"
     "Deepseek|https://chat.deepseek.com/"
     "Gemini|https://gemini.google.com/chat"
-    "MHD AI|file:///home/mhd/.config/AI/LlamaUI-vMHD.html"
+    "MHD AI|file:///home/$(whoami)/.config/AI/LlamaUI-vMHD.html"
     "Chat GPT|https://chat.openai.com/"
 )
 
 # Function to find first available browser
 find_browser() {
     local browsers=("firefox" "chromium" "vivaldi-stable" "google-chrome" "brave-browser" "epiphany")
-    for browser in "${browsers[@]}";
-    do
-        command -v "$browser" &> /dev/null && echo "$browser" && return 0
+    for browser in "${browsers[@]}"; do
+        command -v "$browser" &>/dev/null && echo "$browser" && return 0
     done
     return 1
 }
@@ -38,23 +37,19 @@ SELECTED_NAME=$(echo -e "$NAMES_ONLY" | rofi -dmenu -theme ~/.config/wayland/scr
 # Initialize URL variable
 URL=""
 # Iterate to find the corresponding URL
-for entry in "${AI_APPS[@]}";
-do
+for entry in "${AI_APPS[@]}"; do
     entry_name=$(echo "$entry" | awk -F'|' '{print $1}')
     # Trim potential whitespace from the Rofi selection and comparison string
-    if [ "$(echo "$entry_name" | xargs)" == "$(echo "$SELECTED_NAME" | xargs)" ];
-    then
+    if [ "$(echo "$entry_name" | xargs)" == "$(echo "$SELECTED_NAME" | xargs)" ]; then
         URL=$(echo "$entry" | awk -F'|' '{print $2}')
         break
     fi
 done
 
 # Execute if URL found
-if [ -n "$URL" ];
-then
+if [ -n "$URL" ]; then
     BROWSER_CMD=$(find_browser)
-    if [ -n "$BROWSER_CMD" ];
-    then
+    if [ -n "$BROWSER_CMD" ]; then
         # Launch browser in background
         "$BROWSER_CMD" "$URL" &
     else

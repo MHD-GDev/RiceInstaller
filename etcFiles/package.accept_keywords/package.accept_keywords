@@ -1,6 +1,0 @@
-gui-apps/tuigreet ~amd64
-dev-games/godot ~amd64
-dev-games/recastnavigation ~amd64
-net-libs/mbedtls ~amd64
-net-libs/wslay ~amd64
-dev-util/nvidia-cuda-toolkit ~amd64

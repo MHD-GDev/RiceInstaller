@@ -1,14 +1,16 @@
-#     ____                                                 
-#    / __ \____ _____  ____ ____  _____                    
-#   / /_/ / __ `/ __ \/ __ `/ _ \/ ___/                    
-#  / _, _/ /_/ / / / / /_/ /  __/ /                        
-# /_/_|_|\__,_/_/ /_/\__, /\___/_/                   __    
+#     ____
+#    / __ \____ _____  ____ ____  _____
+#   / /_/ / __ `/ __ \/ __ `/ _ \/ ___/
+#  / _, _/ /_/ / / / / /_/ /  __/ /
+# /_/_|_|\__,_/_/ /_/\__, /\___/_/                   __
 #   / ____/___  ____/____/____ ___  ____ _____  ____/ /____
 #  / /   / __ \/ __ `__ \/ __ `__ \/ __ `/ __ \/ __  / ___/
-# / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  ) 
-# \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/  
-                                                         
-from __future__ import (absolute_import, division, print_function)
+# / /___/ /_/ / / / / / / / / / / / /_/ / / / / /_/ (__  )
+# \____/\____/_/ /_/ /_/_/ /_/ /_/\__,_/_/ /_/\__,_/____/
+#
+#   AUTHOR = MHD
+
+from __future__ import absolute_import, division, print_function
 
 from collections import deque
 import os
@@ -35,12 +37,15 @@ class open_with(Command):
             files=[f for f in self.fm.thistab.get_selection()],
             app=app,
             flags=flags,
-            mode=mode)
+            mode=mode,
+        )
 
     def tab(self, tabnum):
         return self._tab_through_executables()
 
-    def _get_app_flags_mode(self, string):  # pylint: disable=too-many-branches,too-many-statements
+    def _get_app_flags_mode(
+        self, string
+    ):  # pylint: disable=too-many-branches,too-many-statements
         """Extracts the application, flags and mode from a string.
 
         examples:
@@ -50,8 +55,8 @@ class open_with(Command):
         "" => None
         """
 
-        app = ''
-        flags = ''
+        app = ""
+        flags = ""
         mode = 0
         split = string.split()
 
@@ -115,11 +120,12 @@ class open_with(Command):
     @staticmethod
     def _is_flags(arg):
         from ranger.core.runner import ALLOWED_FLAGS
+
         return all(x in ALLOWED_FLAGS for x in arg)
 
     @staticmethod
     def _is_mode(arg):
-        return all(x in '0123456789' for x in arg)
+        return all(x in "0123456789" for x in arg)
 
 
 class default_linemode(Command):
@@ -129,7 +135,9 @@ class default_linemode(Command):
 
         if len(self.args) < 2:
             self.fm.notify(
-                "Usage: default_linemode [path=<regexp> | tag=<tag(s)>] <linemode>", bad=True)
+                "Usage: default_linemode [path=<regexp> | tag=<tag(s)>] <linemode>",
+                bad=True,
+            )
 
         # Extract options like "path=..." or "tag=..." from the command line
         arg1 = self.arg(1)
@@ -148,8 +156,8 @@ class default_linemode(Command):
         lmode = self.rest(1)
         if lmode not in FileSystemObject.linemode_dict:
             self.fm.notify(
-                "Invalid linemode: %s; should be %s" % (
-                    lmode, "/".join(FileSystemObject.linemode_dict)),
+                "Invalid linemode: %s; should be %s"
+                % (lmode, "/".join(FileSystemObject.linemode_dict)),
                 bad=True,
             )
 
@@ -163,9 +171,11 @@ class default_linemode(Command):
                 col.need_redraw = True
 
     def tab(self, tabnum):
-        return (self.arg(0) + " " + lmode
-                for lmode in self.fm.thisfile.linemode_dict.keys()
-                if lmode.startswith(self.arg(1)))
+        return (
+            self.arg(0) + " " + lmode
+            for lmode in self.fm.thisfile.linemode_dict.keys()
+            if lmode.startswith(self.arg(1))
+        )
 
 
 class quit(Command):  # pylint: disable=redefined-builtin
@@ -174,9 +184,10 @@ class quit(Command):  # pylint: disable=redefined-builtin
     Closes the current tab, if there's more than one tab.
     Otherwise quits if there are no tasks in progress.
     """
+
     def _exit_no_work(self):
         if self.fm.loader.has_work():
-            self.fm.notify('Not quitting: Tasks in progress: Use `quit!` to force quit')
+            self.fm.notify("Not quitting: Tasks in progress: Use `quit!` to force quit")
         else:
             self.fm.exit()
 
@@ -193,7 +204,8 @@ class quit_bang(Command):
     Closes the current tab, if there's more than one tab.
     Otherwise force quits immediately.
     """
-    name = 'quit!'
+
+    name = "quit!"
     allow_abbrev = False
 
     def execute(self):
@@ -208,9 +220,12 @@ class quitall(Command):
 
     Quits if there are no tasks in progress.
     """
+
     def _exit_no_work(self):
         if self.fm.loader.has_work():
-            self.fm.notify('Not quitting: Tasks in progress: Use `quitall!` to force quit')
+            self.fm.notify(
+                "Not quitting: Tasks in progress: Use `quitall!` to force quit"
+            )
         else:
             self.fm.exit()
 
@@ -223,7 +238,8 @@ class quitall_bang(Command):
 
     Force quits immediately.
     """
-    name = 'quitall!'
+
+    name = "quitall!"
     allow_abbrev = False
 
     def execute(self):
@@ -252,11 +268,15 @@ class delete(Command):
         from functools import partial
 
         def is_directory_with_files(path):
-            return os.path.isdir(path) and not os.path.islink(path) and len(os.listdir(path)) > 0
+            return (
+                os.path.isdir(path)
+                and not os.path.islink(path)
+                and len(os.listdir(path)) > 0
+            )
 
         if self.rest(1):
             files = shlex.split(self.rest(1))
-            many_files = (len(files) > 1 or is_directory_with_files(files[0]))
+            many_files = len(files) > 1 or is_directory_with_files(files[0])
         else:
             cwd = self.fm.thisdir
             tfile = self.fm.thisfile
@@ -266,14 +286,14 @@ class delete(Command):
 
             # relative_path used for a user-friendly output in the confirmation.
             files = [f.relative_path for f in self.fm.thistab.get_selection()]
-            many_files = (cwd.marked_items or is_directory_with_files(tfile.path))
+            many_files = cwd.marked_items or is_directory_with_files(tfile.path)
 
         confirm = self.fm.settings.confirm_on_delete
-        if confirm != 'never' and (confirm != 'multiple' or many_files):
+        if confirm != "never" and (confirm != "multiple" or many_files):
             self.fm.ui.console.ask(
-                "Confirm deletion of: %s (y/N)" % ', '.join(files),
+                "Confirm deletion of: %s (y/N)" % ", ".join(files),
                 partial(self._question_callback, files),
-                ('n', 'N', 'y', 'Y'),
+                ("n", "N", "y", "Y"),
             )
         else:
             # no need for a confirmation, just delete
@@ -283,7 +303,7 @@ class delete(Command):
         return self._tab_directory_content()
 
     def _question_callback(self, files, answer):
-        if answer == 'y' or answer == 'Y':
+        if answer == "y" or answer == "Y":
             self.fm.delete(files)
 
 
@@ -318,7 +338,7 @@ class touch(Command):
 
         fname = join(self.fm.thisdir.path, expanduser(self.rest(1)))
         if not lexists(fname):
-            open(fname, 'a').close()
+            open(fname, "a").close()
         else:
             self.fm.notify("file/directory exists!", bad=True)
 
@@ -355,7 +375,7 @@ class rename(Command):
         new_name = self.rest(1)
 
         if not new_name:
-            return self.fm.notify('Syntax: rename <newname>', bad=True)
+            return self.fm.notify("Syntax: rename <newname>", bad=True)
 
         if new_name == self.fm.thisfile.relative_path:
             return None
@@ -381,7 +401,8 @@ class help_(Command):
 
     Display ranger's manual page.
     """
-    name = 'help'
+
+    name = "help"
 
     def execute(self):
         def callback(answer):
@@ -399,7 +420,7 @@ class help_(Command):
         self.fm.ui.console.ask(
             "View [m]an page, [k]ey bindings, [c]ommands or [s]ettings? (press q to abort)",
             callback,
-            list("mqkcs")
+            list("mqkcs"),
         )
 
 
@@ -411,7 +432,7 @@ class grep(Command):
 
     def execute(self):
         if self.rest(1):
-            action = ['grep', '--line-number']
-            action.extend(['-e', self.rest(1), '-r'])
+            action = ["grep", "--line-number"]
+            action.extend(["-e", self.rest(1), "-r"])
             action.extend(f.path for f in self.fm.thistab.get_selection())
-            self.fm.execute_command(action, flags='p')
+            self.fm.execute_command(action, flags="p")

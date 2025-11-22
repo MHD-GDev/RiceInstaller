@@ -135,7 +135,7 @@ function install_packages() {
                 ;;
             esac
         else
-            echo -e "${GREEN}You're on Gentoo. Install packages manually.${RESET}"
+            echo -e "${GREEN}You're on Gentoo. Install packages manually from Gentoo-Rice-packages.md.${RESET}"
         fi
     }; do
         echo -e "${RED}Package installation failed, retrying...${RESET}"
@@ -151,7 +151,6 @@ function copy_configs() {
         echo -e "${YELLOW}Copying rice directories...${RESET}"
         if [[ -d ConfigFiles ]]; then
             cp -r mhd-theme ~/.vscode/extensions
-            sudo rm -rf /etc/tor/torrc && sudo cp -r torrc /etc/tor
             rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
             rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
             if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then

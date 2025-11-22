@@ -1,5 +1,0 @@
-UseBridges 1 
-ClientTransportPlugin obfs4 exec /usr/bin/obfs4proxy
-
-## Bridges
-Bridge obfs4 51.75.207.79:443 EB25E719A7A1C1C1D5B8EB637B3831B2F1A0BE1B cert=PXrZbce37lFWcsqnlZqvaHaJGgAI1OXrwhPeQE2KAIfh7ZaFptgITMRBiis1HPhSnwUyCw iat-mode=0

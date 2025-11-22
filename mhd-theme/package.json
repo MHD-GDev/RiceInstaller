@@ -1,22 +1,22 @@
 {
-  "name": "mhd-theme",
-  "displayName": "MHD Theme",
-  "description": "MHD's Theme",
-  "version": "0.0.1",
-  "publisher": "mhd",
-  "engines": {
-    "vscode": "^1.96.0"
-  },
-  "categories": [
-    "Themes"
-  ],
-  "contributes": {
-    "themes": [
-      {
-        "label": "MHD's Theme",
-        "uiTheme": "vs-dark",
-        "path": "./themes/MHD's Theme-color-theme.json"
-      }
-    ]
-  }
+    "name": "mhd-theme",
+    "displayName": "MHD Theme",
+    "description": "MHD's Theme",
+    "version": "1.0.0",
+    "publisher": "mhd",
+    "engines": {
+        "vscode": "^1.96.0"
+    },
+    "categories": [
+        "Themes"
+    ],
+    "contributes": {
+        "themes": [
+            {
+                "label": "MHD's Theme",
+                "uiTheme": "vs-dark",
+                "path": "./themes/MHD's Theme-color-theme.json"
+            }
+        ]
+    }
 }

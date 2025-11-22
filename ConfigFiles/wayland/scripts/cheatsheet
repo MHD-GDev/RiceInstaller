@@ -3,8 +3,6 @@
 
 import sys
 from gi.repository import Gtk, Gdk, Gio, Pango
-import gi
-gi.require_version("Gtk", "4.0")
 
 APP_NAME = "Hypr Cheatsheet"
 
@@ -27,76 +25,92 @@ TITLE_ASCII = (
 )
 
 CHEATSHEET = [
-    ("General", [
-        ("ctrl + space", "Keyboard Language switch"),
-        ("super + alt + space", "Keyboard Language Menu"),
-        ("super + alt + c", "Cheatsheet"),
-        ("super + return", "Terminal"),
-        ("super + space", "Application Menu"),
-        ("alt + space", "Rice Menu"),
-        ("super + alt + w", "Wallpaper Menu"),
-        ("super + alt + a", "Scripts Menu"),
-        ("shift + alt + b", "Browser"),
-        ("shift + alt + w", "Browser → WhatsApp"),
-        ("shift + alt + i", "Menu → AI Websites"),
-        ("shift + alt + t", "Telegram"),
-        ("shift + alt + v", "Neovim"),
-        ("super + alt + s", "Screenshoter"),
-        ("super + alt + p", "Audio Switcher Menu"),
-        ("super + b", "Hide/Unhide Waybar"),
-    ]),
-    ("Window Management", [
-        ("super + q", "Kill Window"),
-        ("super + alt + r", "Reload Hyprland"),
-        ("super + t", "Float Window"),
-        ("super + f", "Fullscreen"),
-    ]),
-    ("Tmux mode", [
-        ("ctrl + shift + enter", "opens tmux mode"),
-        ("ctrl + shift + l", "inline node rotation"),
-        ("ctrl + shift + b", "terminal node switch"),
-        ("ctrl + shift + [", "move between nodes back"),
-        ("ctrl + shift + ]", "move between nodes next"),
-    ]),
-    ("Vim-like Navigation", [
-        ("super + h", "Move ←"),
-        ("super + l", "Move →"),
-        ("super + k", "Move ↑"),
-        ("super + j", "Move ↓"),
-        ("super + shift + h", "Rotate ←"),
-        ("super + shift + l", "Rotate →"),
-        ("super + shift + k", "Rotate ↑"),
-        ("super + shift + j", "Rotate ↓"),
-        ("super + ctrl + h", "Workspace ←"),
-        ("super + ctrl + l", "Workspace →"),
-        ("super + shift + 1", "Send → WS1"),
-        ("super + shift + 2", "Send → WS2"),
-        ("super + shift + 3", "Send → WS3"),
-        ("super + shift + 4", "Send → WS4"),
-        ("super + shift + 5", "Send → WS5"),
-        ("super + shift + 6", "Send → WS6"),
-        ("super + shift + ctrl + h", "Send Node ← WS"),
-        ("super + shift + ctrl + l", "Send Node → WS"),
-        ("super + 1", "Switch → WS1"),
-        ("super + 2", "Switch → WS2"),
-        ("super + 3", "Switch → WS3"),
-        ("super + 4", "Switch → WS4"),
-        ("super + 5", "Switch → WS5"),
-        ("super + 6", "Switch → WS6"),
-        ("super + grave", "Last Window/WS"),
-    ]),
-    ("Resize & Effects", [
-        ("super + alt + h", "Resize ←"),
-        ("super + alt + l", "Resize →"),
-        ("super + alt + k", "Resize ↑"),
-        ("super + alt + j", "Resize ↓"),
-        ("ctrl + alt + +", "No Opacity"),
-        ("ctrl + alt + -", "Window Opacity"),
-        ("super + mouseclick left", "Move Window (Mouse)"),
-        ("super + alt + m", "Monitor Rotation"),
-        ("ctrl + alt + h", "Hide/Unhide Window"),
-        ("ctrl + alt + 0", "Toggle Blur"),
-    ]),
+    (
+        "General",
+        [
+            ("ctrl + space", "Keyboard Language switch"),
+            ("super + alt + space", "Keyboard Language Menu"),
+            ("super + alt + c", "Cheatsheet"),
+            ("super + return", "Terminal"),
+            ("super + space", "Application Menu"),
+            ("alt + space", "Rice Menu"),
+            ("super + alt + w", "Wallpaper Menu"),
+            ("super + alt + a", "Scripts Menu"),
+            ("shift + alt + b", "Browser"),
+            ("shift + alt + w", "Browser → WhatsApp"),
+            ("shift + alt + i", "Menu → AI Websites"),
+            ("shift + alt + t", "Telegram"),
+            ("shift + alt + v", "Neovim"),
+            ("super + alt + s", "Screenshoter"),
+            ("super + alt + p", "Audio Switcher Menu"),
+            ("super + alt + q", "Random Wallpaper Toggle"),
+            ("super + b", "Hide/Unhide Waybar"),
+        ],
+    ),
+    (
+        "Window Management",
+        [
+            ("super + q", "Kill Window"),
+            ("super + alt + r", "Reload Hyprland"),
+            ("super + t", "Float Window"),
+            ("super + f", "Fullscreen"),
+        ],
+    ),
+    (
+        "Tmux mode",
+        [
+            ("ctrl + shift + enter", "opens tmux mode"),
+            ("ctrl + shift + l", "inline node rotation"),
+            ("ctrl + shift + b", "terminal node switch"),
+            ("ctrl + shift + [", "move between nodes back"),
+            ("ctrl + shift + ]", "move between nodes next"),
+        ],
+    ),
+    (
+        "Vim-like Navigation",
+        [
+            ("super + h", "Move ←"),
+            ("super + l", "Move →"),
+            ("super + k", "Move ↑"),
+            ("super + j", "Move ↓"),
+            ("super + shift + h", "Rotate ←"),
+            ("super + shift + l", "Rotate →"),
+            ("super + shift + k", "Rotate ↑"),
+            ("super + shift + j", "Rotate ↓"),
+            ("super + ctrl + h", "Workspace ←"),
+            ("super + ctrl + l", "Workspace →"),
+            ("super + shift + 1", "Send → WS1"),
+            ("super + shift + 2", "Send → WS2"),
+            ("super + shift + 3", "Send → WS3"),
+            ("super + shift + 4", "Send → WS4"),
+            ("super + shift + 5", "Send → WS5"),
+            ("super + shift + 6", "Send → WS6"),
+            ("super + shift + ctrl + h", "Send Node ← WS"),
+            ("super + shift + ctrl + l", "Send Node → WS"),
+            ("super + 1", "Switch → WS1"),
+            ("super + 2", "Switch → WS2"),
+            ("super + 3", "Switch → WS3"),
+            ("super + 4", "Switch → WS4"),
+            ("super + 5", "Switch → WS5"),
+            ("super + 6", "Switch → WS6"),
+            ("super + grave", "Last Window/WS"),
+        ],
+    ),
+    (
+        "Resize & Effects",
+        [
+            ("super + alt + h", "Resize ←"),
+            ("super + alt + l", "Resize →"),
+            ("super + alt + k", "Resize ↑"),
+            ("super + alt + j", "Resize ↓"),
+            ("ctrl + alt + +", "No Opacity"),
+            ("ctrl + alt + -", "Window Opacity"),
+            ("super + mouseclick left", "Move Window (Mouse)"),
+            ("super + alt + m", "Monitor Rotation"),
+            ("ctrl + alt + h", "Hide/Unhide Window"),
+            ("ctrl + alt + 0", "Toggle Blur"),
+        ],
+    ),
 ]
 
 
@@ -110,8 +124,7 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
         provider = Gtk.CssProvider()
         provider.load_from_data(self._css().encode("utf-8"))
         Gtk.StyleContext.add_provider_for_display(
-            Gdk.Display.get_default(), provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
 
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -148,8 +161,7 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
             content.append(cat)
 
             for keys, desc in items:
-                row = Gtk.Box(
-                    orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
                 row.set_hexpand(True)
                 row.add_css_class("keys-row")
 
@@ -232,8 +244,9 @@ scrolledwindow scrollbar:hover slider {{
 
 class CheatsheetApp(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id="dev.hypr.cheatsheet",
-                         flags=Gio.ApplicationFlags.FLAGS_NONE)
+        super().__init__(
+            application_id="dev.hypr.cheatsheet", flags=Gio.ApplicationFlags.FLAGS_NONE
+        )
         self.window = None
 
     def do_activate(self, *args, **kwargs):
