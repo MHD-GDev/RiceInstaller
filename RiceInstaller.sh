@@ -117,7 +117,6 @@ function install_packages() {
             1) paru -S --noconfirm nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda || false ;;
             2)
                 paru -S --noconfirm vulkan-intel intel-oneapi-basekit || false
-                # Post-install step: source oneAPI environment
                 if [[ -f /opt/intel/oneapi/setvars.sh ]]; then
                     source /opt/intel/oneapi/setvars.sh
                     echo -e "${GREEN}Intel oneAPI environment initialized.${RESET}"
@@ -134,6 +133,40 @@ function install_packages() {
                 false
                 ;;
             esac
+
+            # New branch selection step
+            echo "Select your branch type:"
+            echo "1) Gamedev"
+            echo "2) Gaming"
+            echo "3) None"
+            read -rp "Enter choice [1-3]: " branch_choice
+
+            case "$branch_choice" in
+            1)
+                if [[ -f gamedev-branch-packs.txt ]]; then
+                    paru -S --noconfirm $(<gamedev-branch-packs.txt) || false
+                else
+                    echo -e "${RED}Missing gamedev-branch-packs.txt file!${RESET}"
+                    false
+                fi
+                ;;
+            2)
+                if [[ -f gaming-branch-packs.txt ]]; then
+                    paru -S --noconfirm $(<gaming-branch-packs.txt) || false
+                else
+                    echo -e "${RED}Missing gaming-branch-packs.txt file!${RESET}"
+                    false
+                fi
+                ;;
+            3)
+                echo -e "${CYAN}Skipping additional branch packages.${RESET}"
+                ;;
+            *)
+                echo -e "${RED}Invalid branch choice.${RESET}"
+                false
+                ;;
+            esac
+
         else
             echo -e "${GREEN}You're on Gentoo. Install packages manually from Gentoo-Rice-packages.md.${RESET}"
         fi
