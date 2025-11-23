@@ -39,7 +39,7 @@
     },
     "battery": {
         "states": {
-            "warning": 20,
+            "warning": 25,
             "critical": 10
         },
         "format": "{icon} {capacity}%",
@@ -64,7 +64,7 @@
         "events": {
             "on-discharging-warning": "notify-send 'Low Battery' '20% battery remaining'",
             "on-discharging-critical": "notify-send 'Low Battery' '10% battery remaining' -u critical",
-            "on-charging-100": "notify-send 'Battery full' 'Battery is at 100%'"
+            "on-charging-95": "notify-send 'Battery full' 'Battery is at 95%'"
         }
     },
     "cpu": {
@@ -82,6 +82,7 @@
         //"format": " 󰣨 ",
         // "format": " 󰣇 ",
         // "format": " 󰓓 ",
+        // "format": "  "
         "format": "  ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
