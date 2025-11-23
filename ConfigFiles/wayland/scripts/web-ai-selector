@@ -4,10 +4,10 @@
 AI_APPS=(
     "Microsoft Copilot|https://copilot.microsoft.com"
     "DuckDuckgo AI|https://duck.ai"
-    "Deepseek|https://chat.deepseek.com/"
+    "Brave AI|https://search.brave.com/ask"
     "Gemini|https://gemini.google.com/chat"
     "MHD AI|file:///home/$(whoami)/.config/AI/LlamaUI-vMHD.html"
-    "Chat GPT|https://chat.openai.com/"
+    "Deepseek|https://chat.deepseek.com/"
 )
 
 # Function to find first available browser
