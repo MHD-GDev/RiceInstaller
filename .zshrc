@@ -20,6 +20,7 @@ export BROWSER='firefox'
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export SUDO_PROMPT="Password : "
 export BAT_THEME="base16"
+export QT_QPA_PLATFORM=wayland   
 
 # fcitx vars
 export GTK_IM_MODULE='fcitx'
