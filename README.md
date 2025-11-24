@@ -25,3 +25,7 @@ chmod +x RiceInstaller.sh && ./RiceInstaller.sh
 - note : Don't forget to download the gpu packages as well.
 
 - note 2: There are niche targeted packages for the type of os that you want, you can choose to install them after RiceInstaller script if you want.
+
+### Thanks to
+- OliveThePuffin for grub theme (https://github.com/OliveThePuffin/yorha-grub-theme)
+- stepanzubkov for sddm theme (https://github.com/stepanzubkov/where-is-my-sddm-theme)
