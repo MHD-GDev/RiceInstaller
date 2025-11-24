@@ -1,55 +1,63 @@
 # MHD RiceInstaller
 
-| Bubble | Cream |
-|--------|-------|
-| ![Bubble](demo/Bubble.gif) | ![Cream](demo/Cream.gif) |
+Welcome to the MHD RiceInstaller! This project provides a collection of beautiful rice configurations for your Linux desktop environment. Below, you can see previews of the available themes.
 
-| Frutiger | Mono |
-|----------|------|
-| ![Frutiger](demo/Frutiger.gif) | ![Mono](demo/Mono.gif) |
-
-| Pipboy | Rainbow |
+| Bubble | Rainbow |
 |--------|---------|
-| ![Pipboy](demo/Pipboy.gif) | ![Rainbow](demo/Rainbow.gif) |
+| ![Bubble](demo/Bubble.gif) | ![Rainbow](demo/Rainbow.gif) |
 
-| Redpunk | Solarized |
-|---------|-----------|
-| ![Redpunk](demo/Redpunk.gif) | ![Solarized](demo/Solarized.gif) |
+| Frutiger | WinXP |
+|----------|-------|
+| ![Frutiger](demo/Frutiger.gif) | ![WinXP](demo/WinXP.gif) |
 
-| WinXP | Yellowpunk |
-|-------|------------|
-| ![WinXP](demo/WinXP.gif) | ![Yellowpunk](demo/Yellowpunk.gif) |
+| Cream | Mono |
+|-------|------|
+| ![Cream](demo/Cream.gif) | ![Mono](demo/Mono.gif) |
+
+| Pipboy | Solarized |
+|--------|-----------|
+| ![Pipboy](demo/Pipboy.gif) | ![Solarized](demo/Solarized.gif) |
+
+| Yellowpunk | Redpunk |
+|------------|---------|
+| ![Yellowpunk](demo/Yellowpunk.gif) | ![Redpunk](demo/Redpunk.gif) |
 
 | y2k |
 |-----|
 | ![y2k](demo/y2k.gif) |
 
-## Installer Script
+## Installation
+
+To install using the automated script, run the following command:
+
 ```sh
 chmod +x RiceInstaller.sh && ./RiceInstaller.sh
 ```
 
 ## Manual Installation
 
-### If you want to copy everything manually without the installer script then this is the path for eatch file to go: 
+If you prefer to install manually without the script, follow these steps:
 
-1. "ConfigFiles" should go to .config dir.
-3. ".zshrc" should go to the /home/$(whoami).
-4. also you have to download the needed packages for the system to be a dailydrive using this command : 
-- Gentoo:
-```sh
- sudo emerge --sync && sudo emerge $(cat Gentoo-Rice-packages.md)
-```
-- note : Do not blindly install the world.txt file, check the use flags and gpu before doing it.
+1. Copy the "ConfigFiles" directory to your `.config` directory.
+2. Copy the ".zshrc" file to your home directory (`/home/$(whoami)`).
+3. Install the required packages for your system to function as a daily driver using the appropriate command below:
 
-- Arch:
-```sh
- paru -Syu --no-confirm && paru -S --no-confirm $(cat arch-rice-wayland-packs.txt)
-```
-- note : Don't forget to download the gpu packages as well.
+   - **Gentoo**:
+     ```sh
+     sudo emerge --sync && sudo emerge $(cat Gentoo-Rice-packages.md)
+     ```
+     **Note**: Do not install blindly. Please check the use flags and GPU requirements before proceeding.
 
-- note 2: There are niche targeted packages for the type of os that you want, you can choose to install them after RiceInstaller script if you want.
+   - **Arch**:
+     ```sh
+     paru -Syu --no-confirm && paru -S --no-confirm $(cat arch-rice-wayland-packs.txt)
+     ```
+     **Note**: Remember to install the appropriate GPU packages as well.
 
-### Thanks to
-- OliveThePuffin for grub theme (https://github.com/OliveThePuffin/yorha-grub-theme)
-- stepanzubkov for sddm theme (https://github.com/stepanzubkov/where-is-my-sddm-theme)
+   **Additional Note**: There are specialized packages available for specific operating system types. You may choose to install them after running the RiceInstaller script if desired.
+
+## Acknowledgments
+
+Special thanks to:
+- [OliveThePuffin](https://github.com/OliveThePuffin/yorha-grub-theme) for the GRUB theme.
+- [stepanzubkov](https://github.com/stepanzubkov/where-is-my-sddm-theme) for the SDDM theme.
