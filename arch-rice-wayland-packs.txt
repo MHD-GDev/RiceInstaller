@@ -87,5 +87,6 @@ wl-clipboard
 wget
 xorg-xrandr
 xwayland-run
+xdg-desktop-portal-wlr
 zsh
 zsh-completions
