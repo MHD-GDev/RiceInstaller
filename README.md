@@ -1,5 +1,38 @@
 # MHD RiceInstaller
 
+## Bubble
+![Bubble](demo/Bubble.gif)
+
+## Cream
+![Cream](demo/Cream.gif)
+
+## Frutiger
+![Frutiger](demo/Frutiger.gif)
+
+## Mono
+![Mono](demo/Mono.gif)
+
+## Pipboy
+![Pipboy](demo/Pipboy.gif)
+
+## Rainbow
+![Rainbow](demo/Rainbow.gif)
+
+## Redpunk
+![Redpunk](demo/Redpunk.gif)
+
+## Solarized
+![Solarized](demo/Solarized.gif)
+
+## WinXP
+![WinXP](demo/WinXP.gif)
+
+## Yellowpunk
+![Yellowpunk](demo/Yellowpunk.gif)
+
+## y2k
+![y2k](demo/y2k.gif)
+
 ## Installer Script
 ```sh
 chmod +x RiceInstaller.sh && ./RiceInstaller.sh
