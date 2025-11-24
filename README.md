@@ -1,37 +1,28 @@
 # MHD RiceInstaller
 
-## Bubble
-![Bubble](demo/Bubble.gif)
+| Bubble | Cream |
+|--------|-------|
+| ![Bubble](demo/Bubble.gif) | ![Cream](demo/Cream.gif) |
 
-## Cream
-![Cream](demo/Cream.gif)
+| Frutiger | Mono |
+|----------|------|
+| ![Frutiger](demo/Frutiger.gif) | ![Mono](demo/Mono.gif) |
 
-## Frutiger
-![Frutiger](demo/Frutiger.gif)
+| Pipboy | Rainbow |
+|--------|---------|
+| ![Pipboy](demo/Pipboy.gif) | ![Rainbow](demo/Rainbow.gif) |
 
-## Mono
-![Mono](demo/Mono.gif)
+| Redpunk | Solarized |
+|---------|-----------|
+| ![Redpunk](demo/Redpunk.gif) | ![Solarized](demo/Solarized.gif) |
 
-## Pipboy
-![Pipboy](demo/Pipboy.gif)
+| WinXP | Yellowpunk |
+|-------|------------|
+| ![WinXP](demo/WinXP.gif) | ![Yellowpunk](demo/Yellowpunk.gif) |
 
-## Rainbow
-![Rainbow](demo/Rainbow.gif)
-
-## Redpunk
-![Redpunk](demo/Redpunk.gif)
-
-## Solarized
-![Solarized](demo/Solarized.gif)
-
-## WinXP
-![WinXP](demo/WinXP.gif)
-
-## Yellowpunk
-![Yellowpunk](demo/Yellowpunk.gif)
-
-## y2k
-![y2k](demo/y2k.gif)
+| y2k |
+|-----|
+| ![y2k](demo/y2k.gif) |
 
 ## Installer Script
 ```sh
