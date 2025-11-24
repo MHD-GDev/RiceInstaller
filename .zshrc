@@ -21,14 +21,6 @@ export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export SUDO_PROMPT="Password : "
 export BAT_THEME="base16"
 
-# Wayland Fix
-export QT_QPA_PLATFORM=wayland
-export XDG_CURRENT_DESKTOP=hyprland
-export XDG_SESSION_DESKTOP=hyprland
-export XDG_CURRENT_SESSION_TYPE=wayland
-export GDK_BACKEND="wayland,x11"
-export MOZ_ENABLE_WAYLAND=1
-
 # fcitx vars
 export GTK_IM_MODULE='fcitx'
 export QT_IM_MODULE='fcitx'
