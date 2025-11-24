@@ -1,0 +1,60 @@
+* {
+    font-family: "Meslo LG M";
+    font-size: 20px;
+    min-height: 35px;
+}
+
+#waybar {
+    background-image: url("assets/background.webp");
+    background-size: 100% 100%;
+    background-repeat: repeat-x;
+}
+
+#custom-launcher {
+    background-image: url("assets/Taskbarsmall.png");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    margin-right: 25px;
+    padding-right: 100px;
+    margin-left: 14px;
+}
+
+#wireplumber,
+#battery,
+#custom-music {
+    background-image: linear-gradient(to bottom,
+            #16adf0 0%,
+            #19b9f3 5%,
+            #1290e8 20%,
+            #0d8dea 60%,
+            #0fa0ef 90%,
+            #1582dc 100%);
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+#tray {
+    background-image: linear-gradient(to bottom,
+            #16adf0 0%,
+            #19b9f3 5%,
+            #1290e8 18%,
+            #0d8dea 60%,
+            #0fa0ef 90%,
+            #1582dc 100%);
+    border-left: 0.5px solid black;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+#clock {
+    background-image: linear-gradient(to bottom,
+            #16adf0 0%,
+            #19b9f3 5%,
+            #1290e8 18%,
+            #0d8dea 60%,
+            #0fa0ef 90%,
+            #1582dc 100%);
+    padding-right: 20px;
+}
+
+#window {}
