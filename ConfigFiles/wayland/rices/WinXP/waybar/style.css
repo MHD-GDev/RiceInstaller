@@ -11,17 +11,16 @@
 }
 
 #custom-launcher {
-    background-image: url("assets/Taskbarsmall.png");
+    background-image: url("assets/Launcher.png");
     background-repeat: no-repeat;
     background-size: 100% 100%;
     margin-right: 25px;
-    padding-right: 100px;
-    margin-left: 14px;
+    padding-right: 120px;
+    margin-left: 15px;
 }
 
 #wireplumber,
-#battery,
-#custom-music {
+#battery {
     background-image: linear-gradient(to bottom,
             #16adf0 0%,
             #19b9f3 5%,
@@ -31,6 +30,7 @@
             #1582dc 100%);
     padding-left: 4px;
     padding-right: 4px;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 }
 
 #tray {
@@ -41,9 +41,11 @@
             #0d8dea 60%,
             #0fa0ef 90%,
             #1582dc 100%);
-    border-left: 0.5px solid black;
-    padding-left: 4px;
-    padding-right: 4px;
+    border-left: 0.5px solid rgb(0, 0, 0);
+    border-radius: 3px;
+    padding-left: 10px;
+    padding-right: 15px;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 }
 
 #clock {
@@ -54,7 +56,30 @@
             #0d8dea 60%,
             #0fa0ef 90%,
             #1582dc 100%);
-    padding-right: 20px;
+    padding-right: 25px;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
 }
 
-#window {}
+#window {
+    background-image: linear-gradient(0deg, #1a5a99, #2176c7);
+    border: 1px solid #174a7c;
+    box-shadow: inset 1px 1px 1px rgba(0, 0, 0, 0.4);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+tooltip {
+    background-image: linear-gradient(to bottom,
+            #16adf0 0%,
+            #19b9f3 5%,
+            #1290e8 18%,
+            #0d8dea 60%,
+            #0fa0ef 90%,
+            #1582dc 100%);
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.4);
+    padding-right: 25px;
+}

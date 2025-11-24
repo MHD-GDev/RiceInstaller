@@ -1,6 +1,5 @@
 {
     "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
-    "name": "mainbar",
     "layer": "top",
     "position": "bottom",
     "margin-left": -15,
@@ -15,7 +14,6 @@
     "modules-right": [
         "custom/traycircle",
         "tray",
-        "custom/music",
         "wireplumber",
         "battery",
         "clock"
