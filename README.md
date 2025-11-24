@@ -1,4 +1,4 @@
-# MHD RiceInstaller V1.0
+# MHD RiceInstaller
 
 ## Installer Script
 ```sh
