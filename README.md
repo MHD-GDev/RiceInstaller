@@ -1,6 +1,9 @@
 # MHD RiceInstaller
 
 Welcome to the MHD RiceInstaller! This project provides a collection of beautiful rice configurations for your Linux desktop environment. Below, you can see previews of the available themes.
+- Here is a demo:
+![Bubble](demo/Rice.mp4)
+---
 
 | Bubble | Rainbow |
 |--------|---------|
