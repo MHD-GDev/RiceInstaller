@@ -34,6 +34,7 @@ hyprwayland-scanner
 hyprshot
 hyprlock
 hypridle
+hyprpicker
 imagemagick
 imv
 jq

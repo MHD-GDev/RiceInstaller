@@ -9,9 +9,9 @@ sinks=$(wpctl status | awk '/Sinks:/{flag=1; next} /Sources:/{flag=0} flag' | gr
         -e 's/.*Analog Stereo.*/Built-in Audio/' \
         -e 's/.*Digital Stereo.*/Digital Output/' \
         -e 's/.*Controller.*//' \
-        -e 's/\[.*\]//' \
-        | xargs)
-    
+        -e 's/\[.*\]//' |
+        xargs)
+
     # Mark default sink with an asterisk
     if [[ "$desc" == *"*"* ]]; then
         echo "$id: ★ $simplified_desc"
@@ -21,12 +21,12 @@ sinks=$(wpctl status | awk '/Sinks:/{flag=1; next} /Sources:/{flag=0} flag' | gr
 done)
 
 # Let user select a sink
-selected_sink=$(echo "$sinks" | rofi -theme ~/.config/wayland/scripts/rofi-themes/power-menu.rasi -dmenu -p "Select Audio Output:" -no-show-icons -kb-cancel 'q')
+selected_sink=$(echo "$sinks" | rofi -theme ~/.config/wayland/scripts/rofi-themes/power-menu.rasi -dmenu -p "Select Audio Output:" -no-show-icons -kb-row-left "h" -kb-row-up "k" -kb-row-down "j" -kb-row-right "l" -kb-cancel "q")
 
 if [ -n "$selected_sink" ]; then
     # Extract just the numeric sink ID
     sink_id=$(echo "$selected_sink" | awk -F':' '{print $1}' | tr -d '[:space:]')
-    
+
     # Verify it's a number
     if [[ "$sink_id" =~ ^[0-9]+$ ]]; then
         wpctl set-default "$sink_id"
