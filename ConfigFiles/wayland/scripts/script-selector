@@ -1,20 +1,11 @@
 #!/bin/bash
-#
-#    _____           _       __           
-#   / ___/__________(_)___  / /_          
-#   \__ \/ ___/ ___/ / __ \/ __/          
-#  ___/ / /__/ /  / / /_/ / /_            
-# /____/\___/_/ _/_/ .___/\__/    
-#         
-#   / ___/___  / //_/ _____/ /_____  _____
-#   \__ \/ _ \/ / _ \/ ___/ __/ __ \/ ___/
-#  ___/ /  __/ /  __/ / /__/ /_/ /_/ /    
-# /____/\___/_/\___/\___/\__/\____/_/     
+
+#  ▗▄▄▖ ▗▄▄▖▗▄▄▖ ▗▄▄▄▖▗▄▄▖▗▄▄▄▖     ▗▄▄▖▗▄▄▄▖▗▖   ▗▄▄▄▖ ▗▄▄▖▗▄▄▄▖▗▄▖ ▗▄▄▖
+# ▐▌   ▐▌   ▐▌ ▐▌  █  ▐▌ ▐▌ █      ▐▌   ▐▌   ▐▌   ▐▌   ▐▌     █ ▐▌ ▐▌▐▌ ▐▌
+#  ▝▀▚▖▐▌   ▐▛▀▚▖  █  ▐▛▀▘  █       ▝▀▚▖▐▛▀▀▘▐▌   ▐▛▀▀▘▐▌     █ ▐▌ ▐▌▐▛▀▚▖
+# ▗▄▄▞▘▝▚▄▄▖▐▌ ▐▌▗▄█▄▖▐▌    █      ▗▄▄▞▘▐▙▄▄▖▐▙▄▄▖▐▙▄▄▖▝▚▄▄▖  █ ▝▚▄▞▘▐▌ ▐▌
 #
 # AUTHOR: MHD
-#
-# A rofi dmenu to select and run custom made scripts and apps
-#
 
 SCRIPTS_DIR="$HOME/.config/wayland/scripts"
 THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
@@ -82,22 +73,22 @@ if [[ -n "$selected" ]]; then
         # Execute the script directly if it's executable
         "$script_path" &
     elif [[ -f "$script_path" ]]; then
-        
+
         # Get the MIME type of the file
         MIME_TYPE=$(file -b --mime-type "$script_path")
 
         case "$MIME_TYPE" in
-            # Shell scripts (e.g., bash, sh)
-            "text/x-shellscript")
-                bash "$script_path" &
-                ;;
-            # Python scripts
-            "text/x-python")
-                python3 "$script_path" &
-                ;;
-            *)
-                rofi -e "Script is not executable and file type ($MIME_TYPE) is unknown. Please make it executable with: chmod +x $script_name"
-                ;;
+        # Shell scripts (e.g., bash, sh)
+        "text/x-shellscript")
+            bash "$script_path" &
+            ;;
+        # Python scripts
+        "text/x-python")
+            python3 "$script_path" &
+            ;;
+        *)
+            rofi -e "Script is not executable and file type ($MIME_TYPE) is unknown. Please make it executable with: chmod +x $script_name"
+            ;;
         esac
     else
         rofi -e "Script not found: $script_name"

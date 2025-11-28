@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Wallpaper selector using rofi + swaybg
+
+# ▗▖ ▗▖ ▗▄▖ ▗▖   ▗▖        ▗▄▄▖▗▄▄▄▖▗▖   ▗▄▄▄▖ ▗▄▄▖▗▄▄▄▖▗▄▖ ▗▄▄▖
+# ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌       ▐▌   ▐▌   ▐▌   ▐▌   ▐▌     █ ▐▌ ▐▌▐▌ ▐▌
+# ▐▌ ▐▌▐▛▀▜▌▐▌   ▐▌        ▝▀▚▖▐▛▀▀▘▐▌   ▐▛▀▀▘▐▌     █ ▐▌ ▐▌▐▛▀▚▖
+# ▐▙█▟▌▐▌ ▐▌▐▙▄▄▖▐▙▄▄▖    ▗▄▄▞▘▐▙▄▄▖▐▙▄▄▖▐▙▄▄▖▝▚▄▄▖  █ ▝▚▄▞▘▐▌ ▐▌
+#
 # AUTHOR: MHD
+#
+# Wallpaper selector using rofi + swaybg
 
 set -euo pipefail
 

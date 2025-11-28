@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#  ▗▄▖ ▗▖  ▗▖▗▖   ▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖     ▗▄▖ ▗▄▄▄▖
+# ▐▌ ▐▌▐▛▚▖▐▌▐▌     █  ▐▛▚▖▐▌▐▌       ▐▌ ▐▌  █
+# ▐▌ ▐▌▐▌ ▝▜▌▐▌     █  ▐▌ ▝▜▌▐▛▀▀▘    ▐▛▀▜▌  █
+# ▝▚▄▞▘▐▌  ▐▌▐▙▄▄▖▗▄█▄▖▐▌  ▐▌▐▙▄▄▖    ▐▌ ▐▌▗▄█▄▖
+#
+# AUTHOR: MHD
+
 # Define AI applications and URLs
 AI_APPS=(
     "Microsoft Copilot|https://copilot.microsoft.com"

@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
 
+# ▗▖  ▗▖ ▗▄▖ ▗▖ ▗▖ ▗▄▖     ▗▖    ▗▄▖  ▗▄▄▖
+# ▐▛▚▞▜▌▐▌ ▐▌▐▌▗▞▘▐▌ ▐▌    ▐▌   ▐▌ ▐▌▐▌
+# ▐▌  ▐▌▐▛▀▜▌▐▛▚▖ ▐▌ ▐▌    ▐▌   ▐▌ ▐▌▐▌▝▜▌
+# ▐▌  ▐▌▐▌ ▐▌▐▌ ▐▌▝▚▄▞▘    ▐▙▄▄▖▝▚▄▞▘▝▚▄▞▘
+#
+# AUTHOR: MHD
+
 LOGFILE="/tmp/mako-cache.log"
 
 # Create the cache file if it does not exist; ensure writable
 if [ ! -e "$LOGFILE" ]; then
-  touch "$LOGFILE"
+    touch "$LOGFILE"
 fi
 chmod 600 "$LOGFILE"
 
 # Listen on the session bus for Notify calls and parse summary/body
 dbus-monitor --session "interface='org.freedesktop.Notifications',member='Notify'" |
-awk -v LOGFILE="$LOGFILE" '
+    awk -v LOGFILE="$LOGFILE" '
   function write_log() {
     if (summary != "" || body != "") {
       cmd = "date +\"%Y-%m-%d %H:%M:%S\""

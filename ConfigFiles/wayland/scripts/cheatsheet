@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-# Hyprland Cheatsheet Window (GTK4, Dark Dashboard + ANSI Title)
+
+# ▗▖ ▗▖▗▖  ▗▖▗▄▄▖ ▗▄▄▖      ▗▄▄▖▗▖ ▗▖▗▄▄▄▖ ▗▄▖▗▄▄▄▖▗▄▄▖▗▖ ▗▖▗▄▄▄▖▗▄▄▄▖▗▄▄▄▖
+# ▐▌ ▐▌ ▝▚▞▘ ▐▌ ▐▌▐▌ ▐▌    ▐▌   ▐▌ ▐▌▐▌   ▐▌ ▐▌ █ ▐▌   ▐▌ ▐▌▐▌   ▐▌     █
+# ▐▛▀▜▌  ▐▌  ▐▛▀▘ ▐▛▀▚▖    ▐▌   ▐▛▀▜▌▐▛▀▀▘▐▛▀▜▌ █  ▝▀▚▖▐▛▀▜▌▐▛▀▀▘▐▛▀▀▘  █
+# ▐▌ ▐▌  ▐▌  ▐▌   ▐▌ ▐▌    ▝▚▄▄▖▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌ █ ▗▄▄▞▘▐▌ ▐▌▐▙▄▄▖▐▙▄▄▖  █
+#
+# AUTHOR: MHD
 
 import sys
 from gi.repository import Gtk, Gdk, Gio, Pango

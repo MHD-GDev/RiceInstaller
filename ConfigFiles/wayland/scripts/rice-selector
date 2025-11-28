@@ -1,18 +1,11 @@
 #!/bin/bash
-#
-#     ____  _
-#    / __ \(_)_______
-#   / /_/ / / ___/ _ \
-#  / _, _/ / /__/  __/
-# /_/_|_/_/\___/\___/       __
-#   / ___/___  / /__  _____/ /_____  _____
-#   \__ \/ _ \/ / _ \/ ___/ __/ __ \/ ___/
-#  ___/ /  __/ /  __/ /__/ /_/ /_/ / /
-# /____/\___/_/\___/\___/\__/\____/_/
+
+# ▗▄▄▖ ▗▄▄▄▖ ▗▄▄▖▗▄▄▄▖     ▗▄▄▖▗▄▄▄▖▗▖   ▗▄▄▄▖ ▗▄▄▖▗▄▄▄▖▗▄▖ ▗▄▄▖
+# ▐▌ ▐▌  █  ▐▌   ▐▌       ▐▌   ▐▌   ▐▌   ▐▌   ▐▌     █ ▐▌ ▐▌▐▌ ▐▌
+# ▐▛▀▚▖  █  ▐▌   ▐▛▀▀▘     ▝▀▚▖▐▛▀▀▘▐▌   ▐▛▀▀▘▐▌     █ ▐▌ ▐▌▐▛▀▚▖
+# ▐▌ ▐▌▗▄█▄▖▝▚▄▄▖▐▙▄▄▖    ▗▄▄▞▘▐▙▄▄▖▐▙▄▄▖▐▙▄▄▖▝▚▄▄▖  █ ▝▚▄▞▘▐▌ ▐▌
 #
 # Author: MHD
-#
-# Rice selector for Hyprland
 
 RICE_DIR="$HOME/.config/wayland/rices"
 STATE_FILE="$HOME/.config/wayland/.current_rice"
@@ -202,7 +195,6 @@ apply_rice() {
     waybar -c "$HOME/.config/wayland/waybar/config.jsonc" -s "$HOME/.config/wayland/waybar/style.css" >/dev/null 2>&1 &
     mako -c "$HOME/.config/wayland/mako/config.ini" >/dev/null 2>&1 &
 
-    reload_nvim_colorscheme
     ~/.config/wayland/tmux/update-colors.sh 2>/dev/null || true
 
     local new_cache_dir="$HOME/.cache/$USER/$rice_name"

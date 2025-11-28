@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#  ▗▄▖ ▗▖ ▗▖▗▄▄▄  ▗▄▄▄▖ ▗▄▖      ▗▄▄▖▗▖ ▗▖▗▄▄▄▖▗▄▄▄▖▗▄▄▖▗▖ ▗▖▗▄▄▄▖▗▄▄▖
+# ▐▌ ▐▌▐▌ ▐▌▐▌  █   █  ▐▌ ▐▌    ▐▌   ▐▌ ▐▌  █    █ ▐▌   ▐▌ ▐▌▐▌   ▐▌ ▐▌
+# ▐▛▀▜▌▐▌ ▐▌▐▌  █   █  ▐▌ ▐▌     ▝▀▚▖▐▌ ▐▌  █    █ ▐▌   ▐▛▀▜▌▐▛▀▀▘▐▛▀▚▖
+# ▐▌ ▐▌▝▚▄▞▘▐▙▄▄▀ ▗▄█▄▖▝▚▄▞▘    ▗▄▄▞▘▐▙█▟▌▗▄█▄▖  █ ▝▚▄▄▖▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌
+#
+# AUTHOR: MHD
+
 # Get list of all audio sinks with simplified names
 sinks=$(wpctl status | awk '/Sinks:/{flag=1; next} /Sources:/{flag=0} flag' | grep -v "Sinks:" | grep -v "^\s*$" | sed -e 's/[│├─└┬]//g' -e 's/^[[:space:]]*//' -e 's/^\*//' | sed -E 's/^([0-9]+)\. (.*)/\1 \2/' | while read -r id desc; do
     # Simplify the names

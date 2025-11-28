@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-import curses, json
+
+# ▗▄▄▄▖▗▄▖ ▗▄▄▄   ▗▄▖      ▗▄▖ ▗▄▄▖ ▗▄▄▖
+#   █ ▐▌ ▐▌▐▌  █ ▐▌ ▐▌    ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌
+#   █ ▐▌ ▐▌▐▌  █ ▐▌ ▐▌    ▐▛▀▜▌▐▛▀▘ ▐▛▀▘
+#   █ ▝▚▄▞▘▐▙▄▄▀ ▝▚▄▞▘    ▐▌ ▐▌▐▌   ▐▌
+#
+# Author: MHD
+
+
+import curses, json, curses.textpad
 from pathlib import Path
 
 # Config
@@ -7,6 +16,7 @@ COLUMNS = ["To-Do", "Doing", "Done"]
 DATA_DIR = Path.home() / ".local" / "share" / "todo"
 SAVE_FILE = DATA_DIR / "board.json"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def load_board():
     if SAVE_FILE.exists():
@@ -16,27 +26,27 @@ def load_board():
             pass
     return {col: [] for col in COLUMNS}
 
+
 def save_board(board):
     try:
         SAVE_FILE.write_text(json.dumps(board, indent=2))
     except Exception:
         pass
 
+
 def clamp_index(board, col_idx, desired_row):
-    n = len(board[COLUMNS[col_idx]])
-    if n == 0:
-        return 0, desired_row
-    task_idx = max(0, min(desired_row, n - 1))
+    task_idx = max(0, desired_row)
     return task_idx, desired_row
+
 
 def main(stdscr):
     curses.curs_set(0)
     curses.start_color()
     curses.use_default_colors()
 
-    curses.init_pair(1, curses.COLOR_WHITE, -1)   # normal text
-    curses.init_pair(2, curses.COLOR_CYAN, -1)    # status line
-    curses.init_pair(3, curses.COLOR_GREEN, -1)   # column titles
+    curses.init_pair(1, curses.COLOR_WHITE, -1)  # normal text
+    curses.init_pair(2, curses.COLOR_CYAN, -1)  # status line
+    curses.init_pair(3, curses.COLOR_GREEN, -1)  # column titles
     curses.init_pair(4, curses.COLOR_YELLOW, -1)  # move mode highlight
 
     stdscr.nodelay(False)
@@ -45,26 +55,40 @@ def main(stdscr):
     col_idx = 0
     desired_row = 0
     task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+    scroll_offset = 0
 
     move_mode, held_task = False, None
+    undo_stack = []
+    gg_mode = False
 
     while True:
         stdscr.erase()
         h, w = stdscr.getmaxyx()
-        col_width = max(20, w // len(COLUMNS))
+        col_width = w // len(COLUMNS)
+        visible_rows = h - 4
+
+        # Adjust scroll_offset to keep selected task visible
+        if task_idx < scroll_offset:
+            scroll_offset = task_idx
+        elif task_idx >= scroll_offset + visible_rows:
+            scroll_offset = max(0, task_idx - visible_rows + 1)
 
         # Draw columns with vertical separators
         for i, col in enumerate(COLUMNS):
             x = i * col_width
             try:
-                stdscr.addstr(0, x + 1, col.center(col_width - 2),
-                              curses.color_pair(3) | curses.A_BOLD | curses.A_UNDERLINE)
+                stdscr.addstr(
+                    0,
+                    x + 1,
+                    col.center(col_width - 2),
+                    curses.color_pair(3) | curses.A_BOLD | curses.A_UNDERLINE,
+                )
             except curses.error:
                 pass
 
             n = len(board[col])
             max_rows = max(n, desired_row + 1)
-            for j in range(max_rows):
+            for j in range(scroll_offset, min(max_rows, scroll_offset + visible_rows)):
                 if j < n:
                     text = f" {board[col][j]}"
                 else:
@@ -75,68 +99,180 @@ def main(stdscr):
                         attr = curses.color_pair(4) | curses.A_REVERSE | curses.A_BOLD
                     else:
                         attr |= curses.A_REVERSE
+                y = j - scroll_offset + 2
                 try:
-                    stdscr.addnstr(j + 2, x + 1, text.ljust(col_width - 2), col_width - 2, attr)
+                    stdscr.addnstr(
+                        y, x + 1, text.ljust(col_width - 2), col_width - 2, attr
+                    )
                 except curses.error:
                     pass
 
             if i < len(COLUMNS) - 1:
                 for y in range(1, h - 3):
                     try:
-                        stdscr.addch(y, x + col_width, '|', curses.color_pair(2))
+                        stdscr.addch(y, x + col_width, "|", curses.color_pair(2))
                     except curses.error:
                         pass
 
-        status = "-- MOVE MODE -- press m to drop" if move_mode \
-                 else "[a] Add  [d] Delete  [hjkl] Navigate  [m] Move  [q] Quit"
+        status = (
+            "-- MOVE MODE -- press m to drop"
+            if move_mode
+            else "[a] Add  [d] Delete  [i] Insert/Edit  [hjkl] Navigate  [m] Move  [s] Sort  [u] Undo  [q] Quit"
+        )
         try:
-            stdscr.addstr(h - 2, 1, status.center(w - 2), curses.color_pair(2) | curses.A_BOLD)
+            stdscr.addstr(
+                h - 2, 1, status.center(w - 2), curses.color_pair(2) | curses.A_BOLD
+            )
         except curses.error:
             pass
 
         key = stdscr.getch()
-        if key == ord('q'):
+        if key == ord("q"):
             break
-        elif key == ord('l') and col_idx < len(COLUMNS) - 1:
+        elif key == ord("l") and col_idx < len(COLUMNS) - 1:
             col_idx += 1
             task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif key == ord('h') and col_idx > 0:
+        elif key == ord("h") and col_idx > 0:
             col_idx -= 1
             task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif key == ord('j'):
+        elif key == ord("j"):
             desired_row += 1
             task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif key == ord('k'):
+        elif key == ord("k"):
             desired_row = max(0, desired_row - 1)
             task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif key == ord('m'):
-            if not move_mode and len(board[COLUMNS[col_idx]]) > 0:
+        elif key == ord("m"):
+            if (
+                not move_mode
+                and len(board[COLUMNS[col_idx]]) > 0
+                and task_idx < len(board[COLUMNS[col_idx]])
+            ):
                 held_task = board[COLUMNS[col_idx]].pop(task_idx)
                 move_mode = True
                 task_idx, desired_row = clamp_index(board, col_idx, desired_row)
             elif move_mode:
-                insert_pos = task_idx + 1 if len(board[COLUMNS[col_idx]]) > 0 else 0
+                insert_pos = min(task_idx, len(board[COLUMNS[col_idx]]))
                 board[COLUMNS[col_idx]].insert(insert_pos, held_task)
                 held_task, move_mode = None, False
                 desired_row = insert_pos
                 task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif not move_mode and key == ord('a'):
+        elif not move_mode and key == ord("a"):
             curses.echo()
             try:
+                stdscr.move(h - 1, 0)
+                stdscr.clrtoeol()
                 stdscr.addstr(h - 1, 1, "New task: ", curses.color_pair(2))
                 task = stdscr.getstr(h - 1, 11).decode()
             finally:
                 curses.noecho()
             if task:
-                board[COLUMNS[col_idx]].append(task)
+                board[COLUMNS[col_idx]].insert(
+                    min(task_idx, len(board[COLUMNS[col_idx]])), task
+                )
                 task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-        elif not move_mode and key == ord('d'):
-            if len(board[COLUMNS[col_idx]]) > 0:
+        elif not move_mode and key == ord("d"):
+            if len(board[COLUMNS[col_idx]]) > 0 and task_idx < len(
+                board[COLUMNS[col_idx]]
+            ):
+                undo_stack.append(
+                    (
+                        "delete",
+                        COLUMNS[col_idx],
+                        task_idx,
+                        board[COLUMNS[col_idx]][task_idx],
+                    )
+                )
                 board[COLUMNS[col_idx]].pop(task_idx)
                 task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+        elif not move_mode and key == ord("i"):
+            if len(board[COLUMNS[col_idx]]) > 0 and task_idx < len(
+                board[COLUMNS[col_idx]]
+            ):
+                current_task = board[COLUMNS[col_idx]][task_idx]
+                undo_stack.append(("edit", COLUMNS[col_idx], task_idx, current_task))
+                stdscr.move(h - 1, 0)
+                stdscr.clrtoeol()
+                stdscr.addstr(h - 1, 1, "Edit: ", curses.color_pair(2))
+                edit_win = curses.newwin(1, w - 12, h - 1, 12)
+                edit_win.addstr(0, 0, current_task)
+                tb = curses.textpad.Textbox(edit_win)
+                canceled = [False]
+
+                def validator(ch):
+                    if ch == 27:  # Esc
+                        canceled[0] = True
+                        return 7  # exit
+                    return ch
+
+                tb.edit(validator)
+                if not canceled[0]:
+                    edited = tb.gather().strip()
+                    if edited:
+                        board[COLUMNS[col_idx]][task_idx] = edited
+                    else:
+                        # If empty, undo the append
+                        undo_stack.pop()
+                else:
+                    # If canceled, undo the append
+                    undo_stack.pop()
+                del edit_win
+        elif not move_mode and key == ord("s"):
+            board[COLUMNS[col_idx]].sort(key=str.lower)
+            desired_row = 0
+            task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+        elif not move_mode and key == ord("u"):
+            if undo_stack:
+                action, *data = undo_stack.pop()
+                if action == "delete":
+                    col, idx, task = data
+                    board[col].insert(idx, task)
+                    if col == COLUMNS[col_idx]:
+                        desired_row = idx
+                        task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+                elif action == "edit":
+                    col, idx, old_task = data
+                    board[col][idx] = old_task
+            gg_mode = False
+        elif not move_mode and key == ord("g"):
+            if gg_mode:
+                desired_row = 0
+                task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+                gg_mode = False
+            else:
+                gg_mode = True
+        elif not move_mode and key == ord("G"):
+            n = len(board[COLUMNS[col_idx]])
+            desired_row = n - 1 if n > 0 else 0
+            task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+            gg_mode = False
+        elif not move_mode and key == ord("/"):
+            curses.echo()
+            try:
+                stdscr.move(h - 1, 0)
+                stdscr.clrtoeol()
+                stdscr.addstr(h - 1, 1, "Search: ", curses.color_pair(2))
+                search_term = stdscr.getstr(h - 1, 9).decode()
+            finally:
+                curses.noecho()
+            if search_term:
+                n = len(board[COLUMNS[col_idx]])
+                if n > 0:
+                    start = (task_idx + 1) % n
+                    for i in range(n):
+                        idx = (start + i) % n
+                        if search_term.lower() in board[COLUMNS[col_idx]][idx].lower():
+                            desired_row = idx
+                            task_idx, desired_row = clamp_index(
+                                board, col_idx, desired_row
+                            )
+                            break
+            gg_mode = False
+
+        if key != ord("g"):
+            gg_mode = False
 
         save_board(board)
 
+
 if __name__ == "__main__":
     curses.wrapper(main)
-

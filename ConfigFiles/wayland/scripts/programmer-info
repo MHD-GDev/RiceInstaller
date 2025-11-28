@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# ▗▄▄▄  ▗▄▄▄▖▗▖  ▗▖    ▗▄▄▄▖▗▖  ▗▖▗▄▄▄▖ ▗▄▖
+# ▐▌  █ ▐▌   ▐▌  ▐▌      █  ▐▛▚▖▐▌▐▌   ▐▌ ▐▌
+# ▐▌  █ ▐▛▀▀▘▐▌  ▐▌      █  ▐▌ ▝▜▌▐▛▀▀▘▐▌ ▐▌
+# ▐▙▄▄▀ ▐▙▄▄▖ ▝▚▞▘     ▗▄█▄▖▐▌  ▐▌▐▌   ▝▚▄▞▘
+#
+# AUTHOR: MHD
+
 # Utility function to check if a command exists
 has() { command -v "$1" >/dev/null 2>&1; }
 
@@ -27,22 +34,22 @@ LOAD="$(uptime | awk -F'load average: ' '{print $2}' 2>/dev/null || echo "N/A")"
 CPU_MODEL="N/A"
 CPU_VENDOR="N/A"
 if has lscpu; then
-  CPU_MODEL="$(lscpu | awk -F: '/Model name/ {gsub(/^ +/,"",$2); print $2; exit}')"
-  CPU_VENDOR="$(lscpu | awk -F: '/Vendor ID/ {gsub(/^ +/,"",$2); print $2; exit}')"
+    CPU_MODEL="$(lscpu | awk -F: '/Model name/ {gsub(/^ +/,"",$2); print $2; exit}')"
+    CPU_VENDOR="$(lscpu | awk -F: '/Vendor ID/ {gsub(/^ +/,"",$2); print $2; exit}')"
 elif [ -r /proc/cpuinfo ]; then
-  CPU_MODEL="$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)"
-  CPU_VENDOR="$(awk -F': ' '/^vendor_id/ {print $2; exit}' /proc/cpuinfo)"
+    CPU_MODEL="$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)"
+    CPU_VENDOR="$(awk -F': ' '/^vendor_id/ {print $2; exit}' /proc/cpuinfo)"
 elif has sysctl; then
-  CPU_MODEL="$(sysctl -n hw.model 2>/dev/null || echo "N/A")"
-  CPU_VENDOR="$(sysctl -n machdep.cpu.vendor 2>/dev/null || echo "N/A")"
+    CPU_MODEL="$(sysctl -n hw.model 2>/dev/null || echo "N/A")"
+    CPU_VENDOR="$(sysctl -n machdep.cpu.vendor 2>/dev/null || echo "N/A")"
 fi
 
 # GPU Info
 GPU="N/A"
 if has nvidia-smi; then
-  GPU="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 || echo "N/A")"
+    GPU="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1 || echo "N/A")"
 elif has lspci && lspci -k | grep -i --color=never vga >/dev/null; then
-  GPU="$(lspci -k | awk '/VGA/ { getline; print }' | awk -F': ' '{$1=""; print $0}' | head -1 | sed 's/^[ \t]*//')"
+    GPU="$(lspci -k | awk '/VGA/ { getline; print }' | awk -F': ' '{$1=""; print $0}' | head -1 | sed 's/^[ \t]*//')"
 fi
 
 # Memory / Disk
@@ -52,9 +59,9 @@ DISK=$(df -h / | awk 'NR==2 {print $3 "/" $2 " (" $5 ")"}') || DISK="N/A"
 # Network
 IP_ADDRESS="N/A"
 if has ip; then
-  IP_ADDRESS="$(ip a | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | cut -d/ -f1)"
+    IP_ADDRESS="$(ip a | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | cut -d/ -f1)"
 elif has ifconfig; then
-  IP_ADDRESS="$(ifconfig | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | sed 's/addr://')"
+    IP_ADDRESS="$(ifconfig | awk '/inet / && !/127.0.0.1/ {print $2; exit}' | sed 's/addr://')"
 fi
 
 # --- C / C++ Toolchains & Build Systems ---
@@ -70,22 +77,22 @@ MESON=$(has meson && meson --version | head -1 | awk '{print "Meson " $2}' || ec
 
 # --- Deep Learning / HPC / GPU Toolchains ---
 if has nvcc; then
-  CUDA_VER="$(nvcc --version | awk '/Cuda compilation tools/ {print $NF}')"
+    CUDA_VER="$(nvcc --version | awk '/Cuda compilation tools/ {print $NF}')"
 else
-  CUDA_VER=$(cat /usr/local/cuda/version.txt 2>/dev/null || echo "N/A")
+    CUDA_VER=$(cat /usr/local/cuda/version.txt 2>/dev/null || echo "N/A")
 fi
 
 CUDNN_VER="N/A"
 if [ -f "/usr/include/cudnn_version.h" ]; then
-  CUDNN_VER=$(grep CUDNN_MAJOR /usr/include/cudnn_version.h | awk '{print $NF"."}')
-  CUDNN_VER+="$(grep CUDNN_MINOR /usr/include/cudnn_version.h | awk '{print $NF"."}')"
-  CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/include/cudnn_version.h | awk '{print $NF}')"
-  CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//')
+    CUDNN_VER=$(grep CUDNN_MAJOR /usr/include/cudnn_version.h | awk '{print $NF"."}')
+    CUDNN_VER+="$(grep CUDNN_MINOR /usr/include/cudnn_version.h | awk '{print $NF"."}')"
+    CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/include/cudnn_version.h | awk '{print $NF}')"
+    CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//')
 elif [ -d "/usr/local/cuda/include" ]; then
-  CUDNN_VER=$(grep CUDNN_MAJOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')
-  CUDNN_VER+="$(grep CUDNN_MINOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')"
-  CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF}')"
-  CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//' || echo "N/A")
+    CUDNN_VER=$(grep CUDNN_MAJOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')
+    CUDNN_VER+="$(grep CUDNN_MINOR /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF"."}')"
+    CUDNN_VER+="$(grep CUDNN_PATCHLEVEL /usr/local/cuda/include/cudnn_version.h 2>/dev/null | awk '{print $NF}')"
+    CUDNN_VER=$(echo $CUDNN_VER | sed 's/\.\.$//' || echo "N/A")
 fi
 
 ROCM_VER=$(has rocminfo && rocminfo 2>/dev/null | awk '/Runtime Version/ {print $NF; exit}' || echo "N/A")
@@ -177,119 +184,119 @@ NODE_PATH_ENV="${NODE_PATH:-N/A}"
 
 # --- Build Report ---
 REPORT="$(
-  header 'SYSTEM OVERVIEW'
-  kv "OS/Kernel/Arch" "$OS / $KERNEL / $ARCH"
-  kv "Uptime" "$UPTIME"
-  kv "System Load (1/5/15)" "$LOAD"
-  kv "Local IP" "$IP_ADDRESS"
-  kv "CPU Vendor" "$CPU_VENDOR"
-  kv "CPU Model" "$CPU_MODEL"
-  kv "GPU (Primary)" "$GPU"
-  kv "Memory (Used/Total)" "$MEM"
-  kv "Disk (Root /)" "$DISK"
+    header 'SYSTEM OVERVIEW'
+    kv "OS/Kernel/Arch" "$OS / $KERNEL / $ARCH"
+    kv "Uptime" "$UPTIME"
+    kv "System Load (1/5/15)" "$LOAD"
+    kv "Local IP" "$IP_ADDRESS"
+    kv "CPU Vendor" "$CPU_VENDOR"
+    kv "CPU Model" "$CPU_MODEL"
+    kv "GPU (Primary)" "$GPU"
+    kv "Memory (Used/Total)" "$MEM"
+    kv "Disk (Root /)" "$DISK"
 
-  header 'C / C++ TOOLCHAINS'
-  kv "GCC" "$GCC"
-  kv "G++" "$GXX"
-  kv "Clang" "$CLANG"
-  kv "Clang++" "$CLANGXX"
-  kv "CMake" "$CMAKE"
-  kv "Make" "$MAKE"
-  kv "Ninja" "$NINJA"
-  kv "Meson" "$MESON"
+    header 'C / C++ TOOLCHAINS'
+    kv "GCC" "$GCC"
+    kv "G++" "$GXX"
+    kv "Clang" "$CLANG"
+    kv "Clang++" "$CLANGXX"
+    kv "CMake" "$CMAKE"
+    kv "Make" "$MAKE"
+    kv "Ninja" "$NINJA"
+    kv "Meson" "$MESON"
 
-  header 'AI / HPC / GPU TOOLCHAINS'
-  kv "OpenCL" "$OPENCL_VER"
-  printf "\n${CYAN}--- NVIDIA (CUDA/cuDNN) ---${RESET}\n"
-  kv "CUDA Toolkit Ver" "$CUDA_VER"
-  kv "cuDNN Ver" "$CUDNN_VER"
-  kv "NVIDIA Driver" "$(has nvidia-smi && nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1 || echo "N/A")"
+    header 'AI / HPC / GPU TOOLCHAINS'
+    kv "OpenCL" "$OPENCL_VER"
+    printf "\n${CYAN}--- NVIDIA (CUDA/cuDNN) ---${RESET}\n"
+    kv "CUDA Toolkit Ver" "$CUDA_VER"
+    kv "cuDNN Ver" "$CUDNN_VER"
+    kv "NVIDIA Driver" "$(has nvidia-smi && nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1 || echo "N/A")"
 
-  printf "\n${CYAN}--- AMD (ROCm/HIP) ---${RESET}\n"
-  kv "ROCm Runtime Ver" "$ROCM_VER"
-  kv "HIP Compiler" "$HIPCC_VER"
+    printf "\n${CYAN}--- AMD (ROCm/HIP) ---${RESET}\n"
+    kv "ROCm Runtime Ver" "$ROCM_VER"
+    kv "HIP Compiler" "$HIPCC_VER"
 
-  printf "\n${CYAN}--- Intel (oneAPI) ---${RESET}\n"
-  kv "Intel C Compiler (ICX)" "$ICX_VER"
-  kv "Intel Fortran (IFX)" "$IFX_VER"
-  kv "DPC++ Compiler" "$DPCPP_VER"
-  kv "MKL Library Ver" "$MKL_VER"
+    printf "\n${CYAN}--- Intel (oneAPI) ---${RESET}\n"
+    kv "Intel C Compiler (ICX)" "$ICX_VER"
+    kv "Intel Fortran (IFX)" "$IFX_VER"
+    kv "DPC++ Compiler" "$DPCPP_VER"
+    kv "MKL Library Ver" "$MKL_VER"
 
-  header 'GAMING / GRAPHICS STACK'
-  kv "OpenGL" "$OPENGL_VER"
-  kv "Vulkan" "$VULKAN_VER"
-  kv "Mesa" "$MESA_VER"
-  kv "SDL2" "$SDL2_VER"
-  kv "Wine" "$WINE_VER"
-  kv "Proton" "$PROTON_VER"
-  kv "glmark2" "$GLMARK2_VER"
-  kv "vkcube" "$VKCUBE_VER"
-  kv "Unigine Benchmark" "$UNIGINE_VER"
-  kv "Steam" "$STEAM_VER"
+    header 'GAMING / GRAPHICS STACK'
+    kv "OpenGL" "$OPENGL_VER"
+    kv "Vulkan" "$VULKAN_VER"
+    kv "Mesa" "$MESA_VER"
+    kv "SDL2" "$SDL2_VER"
+    kv "Wine" "$WINE_VER"
+    kv "Proton" "$PROTON_VER"
+    kv "glmark2" "$GLMARK2_VER"
+    kv "vkcube" "$VKCUBE_VER"
+    kv "Unigine Benchmark" "$UNIGINE_VER"
+    kv "Steam" "$STEAM_VER"
 
-  header 'RUST DEVELOPMENT'
-  kv "Rustc" "$RUSTC"
-  kv "Cargo" "$CARGO"
-  kv "Toolchain (Host)" "$RUST_TOOLCHAIN"
-  printf "  ${GREEN}Installed Targets:${RESET} $RUST_TARGETS\n"
+    header 'RUST DEVELOPMENT'
+    kv "Rustc" "$RUSTC"
+    kv "Cargo" "$CARGO"
+    kv "Toolchain (Host)" "$RUST_TOOLCHAIN"
+    printf "  ${GREEN}Installed Targets:${RESET} $RUST_TARGETS\n"
 
-  header 'GO DEVELOPMENT'
-  kv "Go" "$GO"
-  kv "GOROOT" "$GOROOT"
-  kv "GOPATH" "$GOPATH"
-  kv "Go Modules" "$GO_MODULES"
+    header 'GO DEVELOPMENT'
+    kv "Go" "$GO"
+    kv "GOROOT" "$GOROOT"
+    kv "GOPATH" "$GOPATH"
+    kv "Go Modules" "$GO_MODULES"
 
-  header 'PYTHON DEVELOPMENT'
-  kv "Python3" "$PYTHON"
-  kv "Pip3" "$PIP"
-  kv "Virtual Env" "${PY_VENV:-None}"
-  kv "User Site" "$PY_SITE"
-  printf "  ${GREEN}Top Python Packages:${RESET} $PY_PACKAGES\n"
+    header 'PYTHON DEVELOPMENT'
+    kv "Python3" "$PYTHON"
+    kv "Pip3" "$PIP"
+    kv "Virtual Env" "${PY_VENV:-None}"
+    kv "User Site" "$PY_SITE"
+    printf "  ${GREEN}Top Python Packages:${RESET} $PY_PACKAGES\n"
 
-  header 'NODE.JS / JAVASCRIPT'
-  kv "Node.js" "$NODE"
-  kv "V8 Engine" "$NODE_V8"
-  kv "Node Version Mgr" "$NODE_MGR"
-  kv "Corepack (Package Proxy)" "$COREPACK"
-  kv "npm" "$NPM"
-  kv "yarn" "$YARN"
-  kv "pnpm" "$PNPM"
-  kv "bun" "$BUN"
-  kv "deno" "$DENO"
-  printf "  ${GREEN}Global npm packages (Top):${RESET} $NPM_GLOBAL\n"
+    header 'NODE.JS / JAVASCRIPT'
+    kv "Node.js" "$NODE"
+    kv "V8 Engine" "$NODE_V8"
+    kv "Node Version Mgr" "$NODE_MGR"
+    kv "Corepack (Package Proxy)" "$COREPACK"
+    kv "npm" "$NPM"
+    kv "yarn" "$YARN"
+    kv "pnpm" "$PNPM"
+    kv "bun" "$BUN"
+    kv "deno" "$DENO"
+    printf "  ${GREEN}Global npm packages (Top):${RESET} $NPM_GLOBAL\n"
 
-  header 'JAVA / JVM'
-  kv "Java Runtime" "$JAVA"
-  kv "Javac" "$JAVAC"
-  kv "Maven" "$MAVEN"
-  kv "Gradle" "$GRADLE"
+    header 'JAVA / JVM'
+    kv "Java Runtime" "$JAVA"
+    kv "Javac" "$JAVAC"
+    kv "Maven" "$MAVEN"
+    kv "Gradle" "$GRADLE"
 
-  header 'OTHER LANGUAGES'
-  kv "Zig" "$ZIG"
-  kv "Ruby" "$RUBY"
-  kv "Gem" "$GEM"
-  kv "Bundler" "$BUNDLER"
-  printf "  ${GREEN}Top Ruby Gems:${RESET} $GEMS\n"
+    header 'OTHER LANGUAGES'
+    kv "Zig" "$ZIG"
+    kv "Ruby" "$RUBY"
+    kv "Gem" "$GEM"
+    kv "Bundler" "$BUNDLER"
+    printf "  ${GREEN}Top Ruby Gems:${RESET} $GEMS\n"
 
-  header 'DEV OPS / CONTAINERS'
-  kv "Git" "$GIT"
-  kv "Docker" "$DOCKER"
-  kv "Podman" "$PODMAN"
-  kv "Kubectl (Client)" "$KUBECTL"
+    header 'DEV OPS / CONTAINERS'
+    kv "Git" "$GIT"
+    kv "Docker" "$DOCKER"
+    kv "Podman" "$PODMAN"
+    kv "Kubectl (Client)" "$KUBECTL"
 
-  header 'ENVIRONMENT VARIABLES'
-  kv "SHELL" "$SHELL_PROG"
-  kv "TERM_PROGRAM" "$TERM_PROGRAM"
-  kv "CPATH (C/C++ Includes)" "$CPATH"
-  kv "C_INCLUDE_PATH" "$C_INCLUDE_PATH"
-  kv "CPLUS_INCLUDE_PATH" "$CPLUS_INCLUDE_PATH"
-  kv "LIBRARY_PATH (C/C++ Libs)" "$LIBRARY_PATH"
-  kv "LD_LIBRARY_PATH (Runtime Libs)" "$LD_LIBRARY_PATH"
-  kv "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH"
-  kv "NODE_PATH" "$NODE_PATH_ENV"
-  printf "  ${GREEN}PATH:${RESET}\n    $(echo "$ENV_PATH" | tr ':' '\n    ')\n"
+    header 'ENVIRONMENT VARIABLES'
+    kv "SHELL" "$SHELL_PROG"
+    kv "TERM_PROGRAM" "$TERM_PROGRAM"
+    kv "CPATH (C/C++ Includes)" "$CPATH"
+    kv "C_INCLUDE_PATH" "$C_INCLUDE_PATH"
+    kv "CPLUS_INCLUDE_PATH" "$CPLUS_INCLUDE_PATH"
+    kv "LIBRARY_PATH (C/C++ Libs)" "$LIBRARY_PATH"
+    kv "LD_LIBRARY_PATH (Runtime Libs)" "$LD_LIBRARY_PATH"
+    kv "PKG_CONFIG_PATH" "$PKG_CONFIG_PATH"
+    kv "NODE_PATH" "$NODE_PATH_ENV"
+    printf "  ${GREEN}PATH:${RESET}\n    $(echo "$ENV_PATH" | tr ':' '\n    ')\n"
 
-  header '=============================================================='
+    header '=============================================================='
 )"
 
 # --- Display with bat if available ---

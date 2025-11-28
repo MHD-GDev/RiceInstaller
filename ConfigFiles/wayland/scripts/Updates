@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-#    __  __          __      __
-#   / / / /___  ____/ /___ _/ /____  _____
-#  / / / / __ \/ __  / __ `/ __/ _ \/ ___/
-# / /_/ / /_/ / /_/ / /_/ / /_/  __(__  )
-# \____/ .___/\__,_/\__,_/\__/\___/____/
-#     /_/
+
+# ▗▖ ▗▖▗▄▄▖ ▗▄▄▄   ▗▄▖▗▄▄▄▖▗▄▄▄▖     ▗▄▖ ▗▄▄▖ ▗▄▄▖
+# ▐▌ ▐▌▐▌ ▐▌▐▌  █ ▐▌ ▐▌ █  ▐▌       ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌
+# ▐▌ ▐▌▐▛▀▘ ▐▌  █ ▐▛▀▜▌ █  ▐▛▀▀▘    ▐▛▀▜▌▐▛▀▘ ▐▛▀▘
+# ▝▚▄▞▘▐▌   ▐▙▄▄▀ ▐▌ ▐▌ █  ▐▙▄▄▖    ▐▌ ▐▌▐▌   ▐▌
+#
+# AUTHOR: MHD
+#
 # Script to check for new updates in Gentoo or Arch Linux.
 # Name-specific ignore: exact matches only, except patterns ending with -*.
-# AUTHOR: MHD
 
 # -------------------------------
 # IGNORE LIST (permanent)
