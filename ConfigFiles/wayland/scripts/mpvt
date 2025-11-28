@@ -1,0 +1,457 @@
+#!/usr/bin/env python3
+
+import math, random, json, sys, subprocess, curses, os, argparse
+
+
+def get_music_files(directory):
+    extensions = [".mp3", ".flac", ".wav", ".ogg", ".m4a"]
+    music_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if any(file.lower().endswith(ext) for ext in extensions):
+                music_files.append(os.path.join(root, file))
+    return sorted(music_files)
+
+
+def send_mpv_command(socket_path, command):
+    try:
+        cmd = json.dumps({"command": command}) + "\n"
+        result = subprocess.run(
+            ["socat", "-", f"UNIX-CONNECT:{socket_path}"],
+            input=cmd,
+            text=True,
+            capture_output=True,
+            timeout=2,
+        )
+        return result.stdout.strip()
+    except:
+        return None
+
+
+def get_mpv_property(socket_path, prop):
+    response = send_mpv_command(socket_path, ["get_property", prop])
+    if response:
+        try:
+            data = json.loads(response)
+            if "data" in data:
+                return data["data"]
+        except:
+            pass
+    return None
+
+
+def main(stdscr, directory):
+    curses.curs_set(0)
+    stdscr.keypad(True)
+    stdscr.timeout(16)  # Refresh every ~16ms for ~60 FPS smoothness
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)  # Red for border
+    curses.init_pair(2, curses.COLOR_GREEN, -1)  # Green for progress bar
+    curses.init_pair(3, curses.COLOR_YELLOW, -1)  # Yellow for titles and highlights
+    curses.init_pair(4, curses.COLOR_BLUE, -1)  # Blue for low bars
+    curses.init_pair(5, curses.COLOR_MAGENTA, -1)  # Magenta for high bars
+
+    music_files = get_music_files(directory)
+    if not music_files:
+        stdscr.addstr(0, 0, "No music files found in the directory.")
+        stdscr.getch()
+        return
+
+    current_index = 0
+    search_mode = False
+    search_query = ""
+    playing = False
+    current_song = None
+    socket_path = "/tmp/mpv-tui-socket"
+    status_message = ""
+    message_timer = 0
+    mpv_process = None
+    loop_enabled = False
+    visualizer_bars = [random.randint(1, 10) for _ in range(20)]
+    visualizer_directions = [random.choice([-1, 1]) for _ in range(20)]
+    frame_counter = 0
+    angle_offset = 0.0
+    visualizer_mode = "ellipse"
+
+    while True:
+        stdscr.clear()
+        height, width = stdscr.getmaxyx()
+        content_width = width - 2
+
+        # Update visualizer
+        frame_counter += 1
+        paused = get_mpv_property(socket_path, "pause") or False if playing else False
+        if playing and not paused and frame_counter % 4 == 0:
+            for i in range(len(visualizer_bars)):
+                visualizer_bars[i] += visualizer_directions[i]
+                if visualizer_bars[i] >= 10:
+                    visualizer_bars[i] = 10
+                    visualizer_directions[i] = -1
+                elif visualizer_bars[i] <= 1:
+                    visualizer_bars[i] = 1
+                    visualizer_directions[i] = 1
+            angle_offset += 0.1
+
+        # Draw colored border with solid lines
+        stdscr.addstr(0, 0, "┌", curses.color_pair(1))
+        stdscr.addstr(0, width - 1, "┐", curses.color_pair(1))
+        stdscr.addstr(height - 1, 0, "└", curses.color_pair(1))
+        for i in range(1, width - 1):
+            stdscr.addstr(0, i, "─", curses.color_pair(1))
+            if i < width - 2:
+                stdscr.addstr(height - 1, i, "─", curses.color_pair(1))
+        for i in range(1, height - 1):
+            stdscr.addstr(i, 0, "│", curses.color_pair(1))
+            if i < height - 2:
+                stdscr.addstr(i, width - 1, "│", curses.color_pair(1))
+        content_width = width - 2
+        content_height = height - 2
+
+        if playing:
+            # Display playing song
+            song_name = os.path.basename(current_song or "").rsplit(".", 1)[0]
+            song_x = max(1, (content_width - len(song_name)) // 2 + 1)
+            stdscr.addstr(1, song_x, song_name, curses.color_pair(3) | curses.A_BOLD)
+
+            # Draw visualizer based on mode
+            center_x = content_width // 2
+            center_y = (height - 2) // 2
+            amplitude = (
+                sum(visualizer_bars)
+                / len(visualizer_bars)
+                / 10.0
+                * min(content_width, height - 2)
+                / 4
+            )
+            if visualizer_mode == "ellipse":
+                half_w = content_width // 4
+                half_h = (height - 2) // 4
+                num_points = 100
+                for i in range(num_points):
+                    angle = i * 2 * math.pi / num_points + angle_offset
+                    radius = (visualizer_bars[i % len(visualizer_bars)] / 10.0) * min(
+                        half_w, half_h
+                    )
+                    x = int(center_x + radius * math.cos(angle))
+                    y = int(center_y + radius * math.sin(angle))
+                    if 1 <= x < content_width and 1 <= y < height - 3:
+                        color = (
+                            curses.color_pair(1) | curses.A_BOLD
+                            if radius > min(half_w, half_h) * 0.7
+                            else (
+                                curses.color_pair(5)
+                                if radius > min(half_w, half_h) * 0.4
+                                else (
+                                    curses.color_pair(2)
+                                    if radius > min(half_w, half_h) * 0.2
+                                    else curses.color_pair(4)
+                                )
+                            )
+                        )
+                        stdscr.addstr(y, x, ".", color)
+            elif visualizer_mode == "wave":
+                for x in range(1, content_width - 1):
+                    y_offset = int(amplitude * math.sin(x * 0.1 + angle_offset))
+                    y = center_y + y_offset
+                    if 1 <= y < height - 3:
+                        color = curses.color_pair(2)
+                        stdscr.addstr(y, x, "~", color)
+            elif visualizer_mode == "wave_filled":
+                for x in range(1, content_width - 1):
+                    y_offset = int(amplitude * math.sin(x * 0.1 + angle_offset))
+                    for yy in range(
+                        center_y,
+                        (
+                            center_y + y_offset + 1
+                            if y_offset >= 0
+                            else center_y + y_offset
+                        ),
+                        1 if y_offset >= 0 else -1,
+                    ):
+                        if 1 <= yy < height - 3:
+                            color = curses.color_pair(2)
+                            stdscr.addstr(yy, x, "|", color)
+            elif visualizer_mode == "spectrum":
+                vis_start_y = max(3, (height // 2) - 5)
+                vis_width = min(40, content_width)
+                vis_x = max(1, (content_width - vis_width) // 2 + 1)
+                for i in range(vis_width):
+                    bar_height = visualizer_bars[min(i, len(visualizer_bars) - 1)]
+                    color = (
+                        curses.color_pair(1) | curses.A_BOLD
+                        if bar_height > 7
+                        else (
+                            curses.color_pair(5)
+                            if bar_height > 4
+                            else (
+                                curses.color_pair(2)
+                                if bar_height > 2
+                                else curses.color_pair(4)
+                            )
+                        )
+                    )
+                    for j in range(bar_height):
+                        y_pos = vis_start_y + (10 - j)
+                        if y_pos < height - 7:
+                            stdscr.addstr(y_pos, vis_x + i, "|", color)
+            elif visualizer_mode == "spectrum_smooth":
+                vis_start_y = max(3, (height // 2) - 5)
+                vis_width = min(40, content_width)
+                vis_x = max(1, (content_width - vis_width) // 2 + 1)
+                chars = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "█"]
+                for i in range(vis_width):
+                    bar_height = visualizer_bars[min(i, len(visualizer_bars) - 1)]
+                    color = (
+                        curses.color_pair(1) | curses.A_BOLD
+                        if bar_height > 7
+                        else (
+                            curses.color_pair(5)
+                            if bar_height > 4
+                            else (
+                                curses.color_pair(2)
+                                if bar_height > 2
+                                else curses.color_pair(4)
+                            )
+                        )
+                    )
+                    for j in range(bar_height):
+                        y_pos = vis_start_y + (10 - j)
+                        if y_pos < height - 7:
+                            char = chars[min(j + 1, 9)]
+                            stdscr.addstr(y_pos, vis_x + i, char, color)
+            # Get progress
+            pos = get_mpv_property(socket_path, "time-pos") or 0
+            dur = get_mpv_property(socket_path, "duration") or 1
+            paused = get_mpv_property(socket_path, "pause") or False
+
+            if mpv_process and mpv_process.poll() is not None:
+                if os.path.exists(socket_path):
+                    os.remove(socket_path)
+                playing = False
+                current_song = None
+                status_message = ""
+                mpv_process = None
+                continue
+
+            eof = get_mpv_property(socket_path, "eof-reached") or False
+            if loop_enabled and eof:
+                send_mpv_command(socket_path, ["seek", 0])
+
+            if not loop_enabled and eof:
+                send_mpv_command(socket_path, ["quit"])
+                if mpv_process:
+                    mpv_process.terminate()
+                    mpv_process.wait()
+                if os.path.exists(socket_path):
+                    os.remove(socket_path)
+                playing = False
+                current_song = None
+                status_message = ""
+                mpv_process = None
+
+            if dur > 0:
+                percent = int((pos / dur) * 100)
+                bar_width = content_width - 20
+                filled = int((percent / 100) * bar_width)
+                bar = "[" + "#" * filled + " " * (bar_width - filled) + "]"
+                bar_line = f"{bar} {percent}%"
+                bar_x = max(1, (content_width - len(bar_line)) // 2 + 1)
+                if height - 5 >= 1:
+                    stdscr.addstr(height - 5, bar_x, bar_line, curses.color_pair(2))
+                if status_message and height - 6 >= 1:
+                    msg_x = max(1, (content_width - len(status_message)) // 2 + 1)
+                    stdscr.addstr(
+                        height - 6, msg_x, status_message, curses.color_pair(1)
+                    )
+                time_line = f"Time: {int(pos)}s / {int(dur)}s {'(Paused)' if paused else ''} Loop: {'On' if loop_enabled else 'Off'}"
+                time_x = max(1, (content_width - len(time_line)) // 2 + 1)
+                if height - 4 >= 1:
+                    stdscr.addstr(height - 4, time_x, time_line)
+
+                stdscr.addstr(height - 3, 1, "")
+                guide = "Space/P: Pause | L: Loop | h/l: Seek | T: Vis Mode | Q: Quit"
+                guide_x = max(1, (content_width - len(guide)) // 2 + 1)
+                if height - 2 >= 1:
+                    stdscr.addstr(height - 2, guide_x, guide, curses.color_pair(3))
+        else:
+            # Display title
+            title = "MPV TUI"
+            title_x = max(1, (content_width - len(title)) // 2 + 1)
+            stdscr.addstr(1, title_x, title, curses.color_pair(3) | curses.A_BOLD)
+
+            # Display music files
+            start_index = max(0, current_index - content_height // 2)
+            end_index = min(len(music_files), start_index + content_height - 4)
+
+            for i in range(start_index, end_index):
+                y = i - start_index + 3
+                song_name = os.path.basename(music_files[i]).rsplit(".", 1)[0]
+                max_name_len = content_width - 3
+                if len(song_name) > max_name_len:
+                    song_name = song_name[: max_name_len - 3] + "..."
+                if i == current_index:
+                    stdscr.addstr(
+                        y, 1, f"> {song_name}", curses.color_pair(3) | curses.A_REVERSE
+                    )
+                else:
+                    stdscr.addstr(y, 1, f"  {song_name}")
+
+            # Display search prompt if in search mode
+            if search_mode:
+                stdscr.addstr(height - 2, 1, f"/{search_query}")
+
+        stdscr.refresh()
+
+        if message_timer > 0:
+            message_timer -= 1
+            if message_timer == 0:
+                status_message = ""
+
+        key = stdscr.getch()
+
+        if key == ord("t") or key == ord("T"):
+            if visualizer_mode == "ellipse":
+                visualizer_mode = "wave"
+            elif visualizer_mode == "wave":
+                visualizer_mode = "wave_filled"
+            elif visualizer_mode == "wave_filled":
+                visualizer_mode = "spectrum"
+            elif visualizer_mode == "spectrum":
+                visualizer_mode = "spectrum_smooth"
+            else:
+                visualizer_mode = "ellipse"
+            status_message = f"Visualizer: {visualizer_mode}"
+            message_timer = 20
+
+        if playing:
+            if key == ord(" ") or key == ord("p"):
+                send_mpv_command(socket_path, ["cycle", "pause"])
+            elif key == ord("L"):
+                loop_enabled = not loop_enabled
+                send_mpv_command(
+                    socket_path, ["set_property", "loop-file", loop_enabled]
+                )
+            elif key == ord("h"):
+                pos = get_mpv_property(socket_path, "time-pos") or 0
+                dur = get_mpv_property(socket_path, "duration") or 1
+                if loop_enabled and pos + 10 >= dur:
+                    send_mpv_command(socket_path, ["seek", 0])
+                else:
+                    send_mpv_command(socket_path, ["seek", -10])
+            elif key == ord("l"):
+                pos = get_mpv_property(socket_path, "time-pos") or 0
+                dur = get_mpv_property(socket_path, "duration") or 1
+                if (pos / dur) * 100 >= 97:
+                    pass  # Do not seek forward at 97% or more
+                elif loop_enabled and pos + 10 >= dur:
+                    send_mpv_command(socket_path, ["seek", 0])
+                else:
+                    send_mpv_command(socket_path, ["seek", 10])
+            elif key == ord("q"):
+                send_mpv_command(socket_path, ["quit"])
+                if mpv_process:
+                    mpv_process.terminate()
+                    mpv_process.wait()
+                if os.path.exists(socket_path):
+                    os.remove(socket_path)
+                playing = False
+                current_song = None
+                status_message = ""
+                mpv_process = None
+                loop_enabled = False
+
+        elif search_mode:
+            if key == 10:  # Enter
+                search_mode = False
+                if search_query:
+                    for i, file in enumerate(music_files):
+                        if search_query.lower() in os.path.basename(file).lower():
+                            current_index = i
+                            break
+                search_query = ""
+            elif key == 27:  # Escape
+                search_mode = False
+                search_query = ""
+            elif key == curses.KEY_BACKSPACE or key == 127:
+                search_query = search_query[:-1]
+            elif 32 <= key <= 126:
+                search_query += chr(key)
+        else:
+            if key == ord("q"):
+                break
+            elif key == ord("j") or key == curses.KEY_DOWN:
+                current_index = min(current_index + 1, len(music_files) - 1)
+            elif key == ord("k") or key == curses.KEY_UP:
+                current_index = max(current_index - 1, 0)
+            elif key == ord("g"):
+                # Check for gg
+                stdscr.timeout(1000)  # Wait up to 1s for second g
+                next_key = stdscr.getch()
+                stdscr.timeout(500)
+                if next_key == ord("g"):
+                    current_index = 0
+                # If not gg or timeout, do nothing
+            elif key == ord("G"):
+                current_index = len(music_files) - 1
+            elif key == ord("/"):
+                search_mode = True
+            elif key == 10 or key == ord(" "):  # Enter or Space
+                # Play selected song
+                selected_file = music_files[current_index]
+                try:
+                    # Start mpv with IPC in background if not already
+                    if not playing:
+                        if os.path.exists(socket_path):
+                            os.remove(socket_path)
+                        mpv_process = subprocess.Popen(
+                            [
+                                "mpv",
+                                "--quiet",
+                                "--no-terminal",
+                                "--osd-level=0",
+                                "--no-video",
+                                "--audio-display=no",
+                                "--input-ipc-server=" + socket_path,
+                                selected_file,
+                            ],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+                        import time
+
+                        time.sleep(0.5)
+                    else:
+                        # If already playing, load the new file
+                        send_mpv_command(socket_path, ["loadfile", selected_file])
+                    playing = True
+                    current_song = selected_file
+                    status_message = ""
+                except FileNotFoundError:
+                    stdscr.addstr(
+                        height - 1,
+                        0,
+                        "mpv or socat not found. Please install mpv and socat.",
+                    )
+                    stdscr.getch()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="MPV TUI for music playback")
+    parser.add_argument("-d", "--directory", help="Path to music directory for TUI")
+
+    args = parser.parse_args()
+
+    if args.directory:
+        if not os.path.isdir(args.directory):
+            print(f"Error: {args.directory} is not a valid directory")
+            sys.exit(1)
+
+        music_files = get_music_files(args.directory)
+        if not music_files:
+            print("No music files found in the specified directory.")
+            sys.exit(1)
+
+        curses.wrapper(main, args.directory)
+    else:
+        parser.error("-d is required")
