@@ -57,13 +57,14 @@ window#waybar {
 #workspaces button.empty {
     color: #7AA2F7;
 }
+
 #window {
     padding: 0 15px;
     margin: 5px 2px;
     color: #E6EEF3;
 }
 
-#custom-logout{
+#custom-logout {
     padding: 0 20px;
     margin: 3px 5px;
     color: #7AA2F7;
@@ -73,7 +74,6 @@ window#waybar {
 
 #cpu,
 #disk,
-#custom-music,
 #memory {
     padding: 0 12px;
     margin: 5px 2px;
@@ -91,7 +91,7 @@ window#waybar {
 }
 
 #battery,
-#clock{
+#clock {
     padding: 0 12px;
     margin: 5px 2px;
     color: #B8D0FA;

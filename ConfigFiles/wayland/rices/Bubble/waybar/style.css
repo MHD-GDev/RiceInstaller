@@ -36,7 +36,7 @@ window#waybar {
     border-radius: 15px;
 }
 
-#workspaces button.empty{
+#workspaces button.empty {
     color: #828dc7;
 }
 
@@ -46,7 +46,6 @@ window#waybar {
 #memory,
 #wireplumber,
 #clock,
-#custom-music,
 #custom-launcher,
 #custom-logout,
 #battery {

@@ -18,11 +18,10 @@
         "memory"
     ],
     "modules-right": [
-        "custom/music",
         "wireplumber",
         "disk",
         "battery",
         "clock",
-        "custom/logout",
+        "custom/logout"
     ]
 }

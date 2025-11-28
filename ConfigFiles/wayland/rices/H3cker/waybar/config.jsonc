@@ -27,9 +27,7 @@
         "modules-right": [
             "custom/separator",
             "custom/skills",
-            "custom/music",
             "wireplumber",
-            "network",
             "clock",
             "custom/logout",
             "custom/separator-right"
@@ -74,5 +72,5 @@
         "custom/separator-left": {
             "format": "|"
         }
-}
+    }
 ]

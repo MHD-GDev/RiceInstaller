@@ -1,116 +1,99 @@
 [
-  {
-    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
-    "layer": "top",
-    "position": "top",
-    "name": "topbar",
-    "mode": "dock",
-    "height": 30,
-
-    "modules-right": [
-      "custom/spacer1",
-      "custom/music",
-      "wireplumber",
-      "custom/spacer3",
-      "cpu",
-      "memory",
-      "disk",
-      "battery",
-      "custom/spacer4",
-      "custom/logout"
-    ],
-
-    "custom/spacer": {
-      "format": " ",
-      "tooltip": false
+    {
+        "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "layer": "top",
+        "position": "top",
+        "name": "topbar",
+        "mode": "dock",
+        "height": 30,
+        "modules-right": [
+            "custom/spacer1",
+            "wireplumber",
+            "custom/spacer3",
+            "cpu",
+            "memory",
+            "disk",
+            "battery",
+            "custom/spacer4",
+            "custom/logout"
+        ],
+        "custom/spacer": {
+            "format": " ",
+            "tooltip": false
+        },
+        "custom/spacer1": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer2": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer3": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer4": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer5": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer6": {
+            "format": "",
+            "tooltip": false
+        }
     },
-
-    "custom/spacer1": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer2": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer3": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer4": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer5": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer6": {
-      "format": "",
-      "tooltip": false
+    {
+        "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "layer": "top",
+        "position": "bottom",
+        "name": "bottombar",
+        "mode": "dock",
+        "height": 30,
+        "modules-left": [
+            "custom/launcher",
+            "custom/spacer2",
+            "hyprland/workspaces",
+            "custom/spacer3",
+            "hyprland/window",
+            "custom/spacer4",
+            "tray",
+            "custom/spacer7"
+        ],
+        "custom/spacer": {
+            "format": " ",
+            "tooltip": false
+        },
+        "custom/spacer1": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer2": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer3": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer4": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer5": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer6": {
+            "format": "",
+            "tooltip": false
+        },
+        "custom/spacer7": {
+            "format": " ",
+            "tooltip": false
+        }
     }
-  },
-  {
-    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
-    "layer": "top",
-    "position": "bottom",
-    "name": "bottombar",
-    "mode": "dock",
-    "height": 30,
-    "modules-left": [
-        "custom/launcher",
-        "custom/spacer2",
-        "hyprland/workspaces",
-        "custom/spacer3",
-        "hyprland/window",
-        "custom/spacer4",
-        "tray",
-        "custom/spacer7"
-    ],
-
-    "custom/spacer": {
-      "format": " ",
-      "tooltip": false
-    },
-
-    "custom/spacer1": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer2": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer3": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer4": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer5": {
-      "format": "",
-      "tooltip": false
-    },
-
-    "custom/spacer6": {
-      "format": "",
-      "tooltip": false
-    },
-    
-    "custom/spacer7": {
-      "format": " ",
-      "tooltip": false
-    }
-  }
 ]

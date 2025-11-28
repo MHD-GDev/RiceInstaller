@@ -1,92 +1,107 @@
 /* Reset */
 * {
-  border: none;
-  border-radius: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  box-shadow: none;
-  text-shadow: none;
+    border: none;
+    border-radius: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 /* Main bar */
-#waybar{
-  background: transparent;
-  font-family: "Meslo LG M";
-  font-size: 16pt;
-  font-weight: 600;
-  color: #839496;
+#waybar {
+    background: transparent;
+    font-family: "Meslo LG M";
+    font-size: 16pt;
+    font-weight: 600;
+    color: #839496;
 }
 
 #waybar button {
-  font-family: "Meslo LG M";
-  font-size: 12pt;
-  font-weight: 600;
-  color: #839496;
+    font-family: "Meslo LG M";
+    font-size: 12pt;
+    font-weight: 600;
+    color: #839496;
 }
 
 /* Module colors */
 #cpu,
 #memory,
 #disk {
-  color: #268bd2; /* Blue */
-  background: #002b36; /* color8 */
+    color: #268bd2;
+    /* Blue */
+    background: #002b36;
+    /* color8 */
 }
 
-#custom-music,
 #wireplumber {
-  color: #cb4b16; /* color9 (orange/red) */
-  background: #073642; /* color0 */
+    color: #cb4b16;
+    /* color9 (orange/red) */
+    background: #073642;
+    /* color0 */
 }
 
-#battery{
-  color: #859900; /* Green */
-  background: #002b36; /* color8 */
+#battery {
+    color: #859900;
+    /* Green */
+    background: #002b36;
+    /* color8 */
 }
 
 #custom-logout {
-  color: #6c71c4; /* Magenta */
-  background: #073642; /* color0 */
+    color: #6c71c4;
+    /* Magenta */
+    background: #073642;
+    /* color0 */
 }
 
 #custom-launcher {
-  color: #cb4b16; /* Orange */
-  background: #002b36; /* color8 */
+    color: #cb4b16;
+    /* Orange */
+    background: #002b36;
+    /* color8 */
 }
 
 #window {
-  color: #6c71c4; /* Magenta */
-  background: #002b36; /* color8 */
-  font-style: italic;
+    color: #6c71c4;
+    /* Magenta */
+    background: #002b36;
+    /* color8 */
+    font-style: italic;
 }
 
 #tray {
-  color: #6c71c4; /* Magenta */
-  background: #073642; /* color0 */
+    color: #6c71c4;
+    /* Magenta */
+    background: #073642;
+    /* color0 */
 }
 
 /* Workspaces */
 
 #workspaces {
-  padding-left: 4px;
-  padding-right: 4px;
-  margin-bottom: -4px;
-  margin-top: -4px;
-  background-color: #073642;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-bottom: -4px;
+    margin-top: -4px;
+    background-color: #073642;
 }
 
 #workspaces button {
-  color: #839496; /* Foreground */
-  background: #073642; /* color0 */
-  font-style: italic;
-  margin-left: 4px;
-  margin-right: 4px;
+    color: #839496;
+    /* Foreground */
+    background: #073642;
+    /* color0 */
+    font-style: italic;
+    margin-left: 4px;
+    margin-right: 4px;
 }
 
 #workspaces button.active {
-  color: #859900;
-  background: #073642;
-  border-bottom:8px solid #657b83;
+    color: #859900;
+    background: #073642;
+    border-bottom: 8px solid #657b83;
 }
 
 #workspaces button.empty {
@@ -101,68 +116,68 @@
 #custom-spacer5,
 #custom-spacer6,
 #custom-spacer7 {
-  font-size: 16pt;
-  font-weight: bold;
-  color: transparent;
-  padding-left: 4px;
-  padding-right: 4px;
-  margin-bottom: -4px;
-  margin-top: -4px;
+    font-size: 16pt;
+    font-weight: bold;
+    color: transparent;
+    padding-left: 4px;
+    padding-right: 4px;
+    margin-bottom: -4px;
+    margin-top: -4px;
 }
 
 #custom-spacer1 {
-  background-image: linear-gradient(63.435deg,
-      transparent 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      #073642 52.5%);
+    background-image: linear-gradient(63.435deg,
+            transparent 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            #073642 52.5%);
 }
 
 #custom-spacer2 {
-  background-image: linear-gradient(63.435deg,
-      #002b36 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      #073642 52.5%);
+    background-image: linear-gradient(63.435deg,
+            #002b36 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            #073642 52.5%);
 }
 
 #custom-spacer3 {
-  background-image: linear-gradient(63.435deg,
-      #073642 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      #002b36 52.5%);
+    background-image: linear-gradient(63.435deg,
+            #073642 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            #002b36 52.5%);
 }
 
 #custom-spacer4 {
-  background-image: linear-gradient(63.435deg,
-      #002b36 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      #073642 52.5%);
+    background-image: linear-gradient(63.435deg,
+            #002b36 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            #073642 52.5%);
 }
 
 #custom-spacer5 {
-  background-image: linear-gradient(-63.435deg,
-      transparent 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      transparent 52.5%);
+    background-image: linear-gradient(-63.435deg,
+            transparent 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            transparent 52.5%);
 }
 
 #custom-spacer6 {
-  background-image: linear-gradient(-63.435deg,
-      transparent 47.5%,
-      #657b83 47.6%,
-      #657b83 52.4%,
-      transparent 52.5%);
+    background-image: linear-gradient(-63.435deg,
+            transparent 47.5%,
+            #657b83 47.6%,
+            #657b83 52.4%,
+            transparent 52.5%);
 }
 
 #custom-spacer7 {
-  background-image: linear-gradient(63.435deg,
-      #073642 47.5%,
-      #657b83 54.6%,
-      #657b83 54.4%,
-      #657b83 54.8%,
-      transparent 52.5%);
+    background-image: linear-gradient(63.435deg,
+            #073642 47.5%,
+            #657b83 54.6%,
+            #657b83 54.4%,
+            #657b83 54.8%,
+            transparent 52.5%);
 }

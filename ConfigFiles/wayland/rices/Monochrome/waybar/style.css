@@ -16,7 +16,7 @@ window#waybar {
     padding-left: 0.7em;
 }
 
-#workspaces button.empty{
+#workspaces button.empty {
     color: #aaaaaa;
 }
 
@@ -33,7 +33,6 @@ window#waybar {
     color: #E6EEF3;
 }
 
-#custom-music,
 #wireplumber,
 #battery,
 #disk,
@@ -45,4 +44,3 @@ window#waybar {
 #custom-launcher {
     font-size: 38px;
 }
-

@@ -15,15 +15,13 @@
     border-bottom: 4px solid #41ec55;
 }
 
-#custom-music,
 #wireplumber,
 #disk,
 #tray,
 #clock,
 #cpu,
 #memory,
-#battery,
-#network {
+#battery {
     padding: 2px 12px;
     padding-top: 2px;
     color: #41EC55;
@@ -39,6 +37,10 @@
     padding-left: 2px;
     font-size: 24px;
     font-weight: bold;
+}
+
+#custom-skills {
+    padding-right: 16px;
 }
 
 #custom-separator,

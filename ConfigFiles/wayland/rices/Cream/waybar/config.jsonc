@@ -11,15 +11,12 @@
     "modules-left": [
         "custom/launcher",
         "hyprland/workspaces",
-        "gamemode",
         "tray"
     ],
     "modules-center": [
         "hyprland/window"
     ],
     "modules-right": [
-        "custom/music",
-        "custom/separator",
         "battery",
         "custom/separator",
         "cpu",

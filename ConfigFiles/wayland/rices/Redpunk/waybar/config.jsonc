@@ -62,7 +62,6 @@
         "modules-center": [
             "custom/launcher",
             "tray",
-            "custom/music",
             "wireplumber",
             "battery",
             "custom/logout"
@@ -107,7 +106,7 @@
             "events": {
                 "on-discharging-warning": "notify-send 'Low Battery' '20% battery remaining'",
                 "on-discharging-critical": "notify-send 'Low Battery' '10% battery remaining' -u critical",
-                "on-charging-100": "notify-send 'Battery full' 'Battery is at 100%'"
+                "on-charging-95": "notify-send 'Battery full' 'Battery is at 95%'"
             }
         }
     }

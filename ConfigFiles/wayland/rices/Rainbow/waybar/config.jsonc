@@ -9,7 +9,6 @@
         "margin-bottom": 6,
         "modules-left": [
             "custom/launcher",
-            "custom/music",
             "wireplumber",
             "tray"
         ],

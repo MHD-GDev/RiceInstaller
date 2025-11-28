@@ -109,11 +109,6 @@
         "format-disconnected": "Disconnected ⚠",
         "tooltip": false
     },
-    "custom/music": {
-        "format": "   ",
-        "on-click": "kitty -c ~/.config/wayland/kitty/kitty.conf sh ~/.config/wayland/scripts/mpv-tui",
-        "tooltip": false
-    },
     "tray": {
         "spacing": 10,
         "icon-size": 24,
