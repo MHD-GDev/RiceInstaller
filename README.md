@@ -3,6 +3,17 @@
 Welcome to the MHD RiceInstaller! This project provides a collection of beautiful rice configurations for your Linux desktop environment. Below, you can see previews of the available themes.
 - Here is a demo:
 ![Rice](demo/Rice.webp)
+
+## Features
+
+- **Complete Wayland Setup**: Pre-configured Hyprland, Hyprlock, Hypridle, Kitty terminal, Mako notifications, Waybar, and more
+- **Productivity Scripts**: Custom scripts for audio switching, cheatsheets, keyboard layouts, power menu, wallpaper management, and rice selection
+- **Neovim IDE**: Fully configured Neovim with plugins for coding, LSP support, and productivity
+- **Zsh Shell**: Enhanced Zsh with syntax highlighting, autosuggestions, and history substring search
+- **Automated Installer**: One-command installation script for easy setup
+- **Rice Creator**: You can create your own custom rice using the rice creator command. Here is a demonstration:
+![Rice-creator](demo/Rice-creator.webp)
+
 ---
 
 | Bubble | Rainbow |
