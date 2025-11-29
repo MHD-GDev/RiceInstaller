@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# ▗▄▄▄▖▗▄▖ ▗▄▄▄   ▗▄▖      ▗▄▖ ▗▄▄▖ ▗▄▄▖
-#   █ ▐▌ ▐▌▐▌  █ ▐▌ ▐▌    ▐▌ ▐▌▐▌ ▐▌▐▌ ▐▌
-#   █ ▐▌ ▐▌▐▌  █ ▐▌ ▐▌    ▐▛▀▜▌▐▛▀▘ ▐▛▀▘
-#   █ ▝▚▄▞▘▐▙▄▄▀ ▝▚▄▞▘    ▐▌ ▐▌▐▌   ▐▌
+# ┌─ TODO ─┐
 #
 # Author: MHD
 
@@ -59,6 +56,7 @@ def main(stdscr):
 
     move_mode, held_task = False, None
     undo_stack = []
+    redo_stack = []
     gg_mode = False
 
     while True:
@@ -117,7 +115,7 @@ def main(stdscr):
         status = (
             "-- MOVE MODE -- press m to drop"
             if move_mode
-            else "[a] Add  [d] Delete  [i] Insert/Edit  [hjkl] Navigate  [m] Move  [s] Sort  [u] Undo  [q] Quit"
+            else "[a] Add  [d] Delete  [i] Insert/Edit  [hjkl] Navigate  [m] Move  [s] Sort  [u] Undo  [r] Redo  [q] Quit"
         )
         try:
             stdscr.addstr(
@@ -183,6 +181,7 @@ def main(stdscr):
                     )
                 )
                 board[COLUMNS[col_idx]].pop(task_idx)
+                redo_stack.clear()
                 task_idx, desired_row = clamp_index(board, col_idx, desired_row)
         elif not move_mode and key == ord("i"):
             if len(board[COLUMNS[col_idx]]) > 0 and task_idx < len(
@@ -209,6 +208,8 @@ def main(stdscr):
                     edited = tb.gather().strip()
                     if edited:
                         board[COLUMNS[col_idx]][task_idx] = edited
+                        undo_stack[-1] = ("edit", COLUMNS[col_idx], task_idx, current_task, edited)
+                        redo_stack.clear()
                     else:
                         # If empty, undo the append
                         undo_stack.pop()
@@ -222,16 +223,32 @@ def main(stdscr):
             task_idx, desired_row = clamp_index(board, col_idx, desired_row)
         elif not move_mode and key == ord("u"):
             if undo_stack:
-                action, *data = undo_stack.pop()
-                if action == "delete":
-                    col, idx, task = data
+                action = undo_stack.pop()
+                redo_stack.append(action)
+                if action[0] == "delete":
+                    col, idx, task = action[1:]
                     board[col].insert(idx, task)
                     if col == COLUMNS[col_idx]:
                         desired_row = idx
                         task_idx, desired_row = clamp_index(board, col_idx, desired_row)
-                elif action == "edit":
-                    col, idx, old_task = data
+                elif action[0] == "edit":
+                    col, idx, old_task, new_task = action[1:]
                     board[col][idx] = old_task
+            gg_mode = False
+        elif not move_mode and key == ord("r"):
+            if redo_stack:
+                action = redo_stack.pop()
+                undo_stack.append(action)
+                if action[0] == "delete":
+                    col, idx, task = action[1:]
+                    board[col].pop(idx)
+                    if col == COLUMNS[col_idx] and task_idx >= idx:
+                        task_idx = max(0, task_idx - 1)
+                        desired_row = task_idx
+                        task_idx, desired_row = clamp_index(board, col_idx, desired_row)
+                elif action[0] == "edit":
+                    col, idx, old_task, new_task = action[1:]
+                    board[col][idx] = new_task
             gg_mode = False
         elif not move_mode and key == ord("g"):
             if gg_mode:

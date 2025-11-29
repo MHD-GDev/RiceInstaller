@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# ┌─ MPV TUIV1 ─┐
+#
+# AUTHOR: MHD
+
 # TUI interface for mpv
 
 # --- Colors and styles ---
