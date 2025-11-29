@@ -12,7 +12,7 @@ Welcome to the MHD RiceInstaller! This project provides a collection of beautifu
 - **Zsh Shell**: Enhanced Zsh with syntax highlighting, autosuggestions, and history substring search
 - **Automated Installer**: One-command installation script for easy setup
 - **Rice Creator**: You can create your own custom rice using the rice creator command. Here is a demonstration:
-![Rice-creator](demo/Rice-creator.webp)
+![Rice-creator](demo/Rice-Creator.webp)
 
 ---
 
