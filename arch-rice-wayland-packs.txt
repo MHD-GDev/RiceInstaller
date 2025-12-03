@@ -43,6 +43,7 @@ kwayland
 kwayland-integration
 lame
 libnotify
+lazygit
 maim
 mako
 mpv
@@ -60,7 +61,6 @@ python-pillow
 python-gobject
 pacman-contrib
 qbittorrent
-ranger
 rofi
 rsync
 rtkit
@@ -89,5 +89,7 @@ wget
 xorg-xrandr
 xwayland-run
 xdg-desktop-portal-wlr
+yazi
 zsh
 zsh-completions
+7zip
