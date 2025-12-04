@@ -11,12 +11,9 @@ return {
 				bash = { "beautysh" },
 				sh = { "beautysh" },
 				css = { "prettier" },
-				html = { "prettier" },
-				json = { "prettier" },
 				markdown = { "prettier" },
 				python = { "black", "isort" },
 				cpp = { "clang-format" },
-				csharp = { "clang-format" },
 			},
 			format_on_save = {
 				lsp_fallback = true,
@@ -24,12 +21,5 @@ return {
 				timout_ms = 1000,
 			},
 		})
-		vim.keymap.set({ "n", "v" }, "<leader>gf", function()
-			conform.format({
-				lsp_fallback = true,
-				async = false,
-				timeout_ms = 500,
-			})
-		end, { desc = "Format file or range (in visual mode)" })
 	end,
 }
