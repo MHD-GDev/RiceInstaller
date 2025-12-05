@@ -144,7 +144,8 @@ function install_packages() {
             echo "2) Intel"
             echo "3) AMD"
             echo "4) Hybrid(AMD & Nvidia)"
-            read -rp "Enter choice [1-4]: " gpu_choice
+            echo "5) Skip"
+            read -rp "Enter choice [1-5]: " gpu_choice
 
             case "$gpu_choice" in
             1) paru -S --noconfirm nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda || false ;;
@@ -160,6 +161,9 @@ function install_packages() {
             3) paru -S --noconfirm amdsmi amdvlk radeontop radeontool || false ;;
             4)
                 paru -S --noconfirm amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda || false
+                ;;
+            5)
+                echo -e "${CYAN}Skipping GPU packages installation.${RESET}"
                 ;;
             *)
                 echo -e "${RED}Invalid GPU choice.${RESET}"
