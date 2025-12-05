@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# ┌─ CHEATSHEET SELECTOR ─┐
+#
+# AUTHOR: MHD
+
+SCRIPTS_DIR="$HOME/.config/wayland/scripts/cheatsheets"
+THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/web-ai-menu.rasi"
+
+# Check if scripts directory exists
+if [[ ! -d "$SCRIPTS_DIR" ]]; then
+    rofi -e "Scripts directory not found: $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Check if theme file exists
+if [[ ! -f "$THEME_PATH" ]]; then
+    rofi -e "Theme file not found: $THEME_PATH"
+    exit 1
+fi
+
+# Find all cheatsheet files
+cheatsheets=$(find "$SCRIPTS_DIR" -name "*cheatsheet*" -type f -printf "%f\n" | sort)
+
+# Create list
+cheatsheet_list=""
+while IFS= read -r cs; do
+    cs_path="$SCRIPTS_DIR/$cs"
+    if [[ -x "$cs_path" ]] || [[ -f "$cs_path" ]]; then
+        # Extract appname
+        appname=$(echo "$cs" | sed 's/_cheatsheet$//' | sed 's/^cheatsheet$/hypr/')
+        cheatsheet_list+="$appname\n"
+    fi
+done <<<"$cheatsheets"
+
+# Check if any cheatsheets were found
+if [[ -z "$cheatsheet_list" ]]; then
+    rofi -e "No cheatsheets found in $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Show rofi menu and get user selection
+selected=$(echo -e "$cheatsheet_list" | rofi -dmenu -theme "$THEME_PATH" -kb-row-left "h" -kb-row-up "k" -kb-row-down "j" -kb-row-right "l" -kb-cancel "q")
+
+# Process selection
+if [[ -n "$selected" ]]; then
+    appname="$selected"
+    cs_path="$SCRIPTS_DIR/${appname}_cheatsheet"
+
+    if [[ -x "$cs_path" ]]; then
+        # Execute the cheatsheet
+        "$cs_path" &
+    elif [[ -f "$cs_path" ]]; then
+        # If not executable, try to run with python3
+        python3 "$cs_path" &
+    else
+        rofi -e "Cheatsheet not found: $cs_path"
+    fi
+fi

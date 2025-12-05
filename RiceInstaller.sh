@@ -7,6 +7,13 @@ MAGENTA='\e[35m'
 CYAN='\e[36m'
 RESET='\e[0m'
 
+function check_sudo() {
+    if [ "$(id -u)" = 0 ]; then
+        echo -e "${RED}Do not run this script as root!${RESET}"
+        exit 1
+    fi
+}
+
 function show_banner() {
     echo -e "${MAGENTA}"
     cat <<"EOF"
@@ -24,7 +31,7 @@ EOF
 }
 
 function show_notice() {
-    echo -e "${RED}NOTICE:${RESET} This script will modify your ${CYAN}Neovim (nvim)${RESET} configuration and ${CYAN}Hyprland.conf${RESET}."
+    echo -e "${RED}NOTICE:${RESET} This script will modify your ${CYAN}Neovim (nvim), VSCode and Hyprland ${RESET} configuration ${RESET}."
     echo -e "If you already have custom configs, they may be overwritten."
     echo -e "${YELLOW}Tip:${RESET} If you do not want these changes, you can comment out the relevant parts of the script."
     echo
@@ -47,13 +54,6 @@ function show_notice() {
         exit 1
         ;;
     esac
-}
-
-function check_sudo() {
-    if [ "$(id -u)" = 0 ]; then
-        echo -e "${RED}Do not run this script as root!${RESET}"
-        exit 1
-    fi
 }
 
 function choose_build_type() {
@@ -142,7 +142,7 @@ function install_packages() {
             echo "1) Nvidia"
             echo "2) Intel"
             echo "3) AMD"
-            echo "4) Hybrid"
+            echo "4) Hybrid(AMD & Nvidia)"
             read -rp "Enter choice [1-4]: " gpu_choice
 
             case "$gpu_choice" in
@@ -215,7 +215,7 @@ function copy_configs() {
     until {
         echo -e "${YELLOW}Copying rice directories...${RESET}"
         if [[ -d ConfigFiles ]]; then
-            cp -r mhd-theme ~/.vscode/extensions
+            rm -rf ConfigFiles/README.md
             rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
             rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
             if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then
@@ -236,6 +236,44 @@ function copy_configs() {
         sleep 2
     done
     echo -e "${GREEN}Config directories copied!${RESET}"
+    sleep 3
+    clear
+}
+function vscode_rice() {
+    until {
+        echo -e "${YELLOW}Setting up VSCode rice...${RESET}"
+        mkdir -p ~/.config/Code
+
+        # Install extensions if extensions.txt exists
+        if [[ -f IDE/User/extensions.txt ]]; then
+            cp -r IDE/User ~/.config/Code
+            cat IDE/User/extensions.txt | xargs -L 1 code --install-extension
+        else
+            echo -e "${YELLOW}No extensions.txt found, skipping extension installation.${RESET}"
+        fi
+    }; do
+        echo -e "${RED}VSCode rice setup failed, retrying...${RESET}"
+        sleep 2
+    done
+    echo -e "${GREEN}VSCode rice setup complete!${RESET}"
+    sleep 3
+    clear
+}
+
+function nvim() {
+    until {
+        echo -e "${YELLOW}Setting up Neovim rice...${RESET}"
+        if [[ -d IDE/nvim ]]; then
+            cp -r IDE/nvim ~/.config
+        else
+            echo -e "${RED}Missing nvim directory!${RESET}"
+            false
+        fi
+    }; do
+        echo -e "${RED}Neovim rice setup failed, retrying...${RESET}"
+        sleep 2
+    done
+    echo -e "${GREEN}Neovim rice setup complete!${RESET}"
     sleep 3
     clear
 }
@@ -453,13 +491,17 @@ function finish_and_restart() {
 #-----------------------#
 # RUN SCRIPT SECTIONS   #
 #-----------------------#
+check_sudo
 show_banner
 show_notice
-check_sudo
 choose_build_type
 create_user_dirs
 install_packages
 copy_configs
+if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then
+    vscode_rice
+fi
+nvim
 copy_zshrc
 install_sddm_theme
 install_grub_theme

@@ -5,6 +5,7 @@
 # AUTHOR: MHD
 
 import sys
+import difflib
 from gi.repository import Gtk, Gdk, Gio, Pango
 
 APP_NAME = "Neovim Cheatsheet"
@@ -19,14 +20,6 @@ COLORS = {
     "cyan": "#56b6c2",
 }
 
-TITLE_ASCII = (
-    "███╗░░██╗███████╗░█████╗░██╗░░░██╗██╗███╗░░░███╗\n"
-    "████╗░██║██╔════╝██╔══██╗██║░░░██║██║████╗░████║\n"
-    "██╔██╗██║█████╗░░██║░░██║╚██╗░██╔╝██║██╔████╔██║\n"
-    "██║╚████║██╔══╝░░██║░░██║░╚████╔╝░██║██║╚██╔╝██║\n"
-    "██║░╚███║███████╗╚█████╔╝░░╚██╔╝░░██║██║░╚═╝░██║\n"
-    "╚═╝░░╚══╝╚══════╝░╚════╝░░░░╚═╝░░░╚═╝╚═╝░░░░░╚═╝"
-)
 
 CHEATSHEET = [
     (
@@ -104,6 +97,10 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
         self.set_title(APP_NAME)
         self.set_default_size(1000, 700)
         self.set_decorated(False)
+        self.set_focusable(True)
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.on_key_pressed)
+        self.add_controller(key_controller)
 
         provider = Gtk.CssProvider()
         provider.load_from_data(self._css().encode("utf-8"))
@@ -115,14 +112,19 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
         outer.add_css_class("cheatsheet")
         self.set_child(outer)
 
-        # ANSI ASCII Title
-        lbl_title = Gtk.Label(label=TITLE_ASCII)
-        lbl_title.add_css_class("title")
-        lbl_title.set_xalign(0.5)
-        lbl_title.set_wrap(False)  # prevent wrapping
-        lbl_title.set_ellipsize(Pango.EllipsizeMode.NONE)  # don’t truncate
-        lbl_title.set_use_markup(False)  # treat ASCII literally
-        outer.append(lbl_title)
+        # App Icon
+        icon = Gtk.Image.new_from_icon_name("nvim")
+        icon.set_pixel_size(128)
+        icon.set_halign(0.8)
+        outer.append(icon)
+
+        # Search entry
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Fuzzy search...")
+        self.search_entry.set_visible(False)
+        self.search_entry.add_css_class("search-entry")
+        self.search_entry.connect("search-changed", self.on_search_changed)
+        outer.append(self.search_entry)
 
         # Scrollable content
         scroll = Gtk.ScrolledWindow()
@@ -136,6 +138,8 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
         content.set_hexpand(True)
         content.set_vexpand(True)
         scroll.set_child(content)
+
+        self.all_rows = []
 
         # Sections
         for section, items in CHEATSHEET:
@@ -162,6 +166,19 @@ class CheatsheetWindow(Gtk.ApplicationWindow):
                 row.append(left)
                 row.append(right)
                 content.append(row)
+                self.all_rows.append(row)
+
+    def on_key_pressed(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_q:
+            self.destroy()
+        elif keyval == Gdk.KEY_slash:
+            self.search_entry.set_visible(True)
+            self.search_entry.grab_focus()
+        elif keyval == Gdk.KEY_Escape:
+            self.search_entry.set_visible(False)
+            self.search_entry.set_text("")
+            for row in self.all_rows:
+                row.set_visible(True)
 
     def _css(self):
         c = COLORS
@@ -223,14 +240,40 @@ scrolledwindow scrollbar:hover slider {{
   min-width: 8px;
   background-color: {c['green']};
 }}
+.search-entry {{
+  background-color: {c['bg']};
+  color: {c['fg']};
+  border: 1px solid {c['green']};
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-family: "Meslo LG M", monospace;
+  font-size: 0.9rem;
+}}
+.search-entry:focus {{
+  border-color: {c['blue']};
+  box-shadow: 0 0 5px {c['blue']};
+}}
 """
+
+    def on_search_changed(self, entry):
+        query = entry.get_text().strip().lower()
+        if not query:
+            for row in self.all_rows:
+                row.set_visible(True)
+            return
+        for row in self.all_rows:
+            desc = row.get_first_child().get_label().lower()
+            keys = row.get_last_child().get_label().lower()
+            if difflib.get_close_matches(query, [desc, keys], n=1, cutoff=0.4):
+                row.set_visible(True)
+            else:
+                row.set_visible(False)
 
 
 class CheatsheetApp(Gtk.Application):
     def __init__(self):
-        super().__init__(
-            application_id="dev.hypr.cheatsheet", flags=Gio.ApplicationFlags.FLAGS_NONE
-        )
+        super().__init__(flags=Gio.ApplicationFlags.FLAGS_NONE)
         self.window = None
 
     def do_activate(self, *args, **kwargs):

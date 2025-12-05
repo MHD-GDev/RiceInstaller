@@ -9,6 +9,9 @@ THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
 
 # Scripts to ignore (add script names here)
 IGNORE_SCRIPTS=(
+    "mpvt"
+    "mpv-tuiv1"
+    "cheatsheet-selector"
     "mako-logging"
     "todo"
     "programmer-info"
@@ -53,12 +56,12 @@ formatted_scripts=""
 while IFS= read -r script; do
     script_path="$SCRIPTS_DIR/$script"
     if [[ -x "$script_path" ]]; then
-        formatted_scripts+="󱜧 $script\n"
+        formatted_scripts+="$script\n"
     fi
 done <<<"$scripts"
 
 # Show rofi menu and get user selection
-selected=$(echo -e "$formatted_scripts" | rofi -dmenu -i -p "Select Script" -theme "$THEME_PATH" -kb-cancel "q")
+selected=$(echo -e "$formatted_scripts" | rofi -dmenu -i -theme "$THEME_PATH" -kb-cancel "q" -markup)
 
 # Process selection
 if [[ -n "$selected" ]]; then

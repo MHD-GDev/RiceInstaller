@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+
+# ┌─ C++ GAME DEV CHEATSHEET ─┐
+#
+# AUTHOR: MHD
+
+import sys
+import difflib
+from gi.repository import Gtk, Gdk, Gio, Pango
+
+APP_NAME = "C++ Game Dev Cheatsheet"
+
+COLORS = {
+    "bg": "#0f0f14",
+    "fg": "#d8d8d8",
+    "red": "#e06c75",
+    "green": "#98c379",
+    "blue": "#61afef",
+    "magenta": "#c678dd",
+    "cyan": "#56b6c2",
+}
+
+
+CHEATSHEET = [
+    (
+        "Basics",
+        [
+            ("int x = 5;", "Declare an integer variable"),
+            ("for(int i = 0; i < 10; i++) { }", "For loop for iteration"),
+            ("if(condition) { } else { }", "Conditional statement"),
+            ("void function() { }", "Function declaration"),
+            ("#include <iostream>", "Include header for input/output"),
+        ],
+    ),
+    (
+        "Classes",
+        [
+            (
+                "class GameObject { public: void update(); };",
+                "Define a class with member function",
+            ),
+            ("GameObject obj;", "Instantiate a class object"),
+            ("class Player : public GameObject { };", "Inheritance for game entities"),
+            ("virtual void draw() = 0;", "Pure virtual function for polymorphism"),
+            (
+                "std::unique_ptr<GameObject> ptr;",
+                "Smart pointer for resource management",
+            ),
+        ],
+    ),
+    (
+        "Memory",
+        [
+            (
+                "int* ptr = new int(10); delete ptr;",
+                "Manual memory allocation and deallocation",
+            ),
+            ("std::vector<int> vec;", "Dynamic array container"),
+            (
+                "std::shared_ptr<int> sp = std::make_shared<int>(5);",
+                "Shared ownership smart pointer",
+            ),
+            ("RAII", "Resource Acquisition Is Initialization principle"),
+            ("Avoid raw pointers in game loops", "Best practice to prevent leaks"),
+        ],
+    ),
+    (
+        "Game Loops",
+        [
+            (
+                "while(window.isOpen()) { update(); render(); }",
+                "Main game loop structure",
+            ),
+            (
+                "sf::Clock clock; float deltaTime = clock.restart().asSeconds();",
+                "Time delta for frame-independent updates",
+            ),
+            ("event polling", "Handle user input in loop"),
+            ("60 FPS cap", "Limit frame rate for consistent performance"),
+            ("State machines", "Manage game states like menu, playing"),
+        ],
+    ),
+    (
+        "STL and Algorithms",
+        [
+            ("std::vector<Entity> entities;", "Container for game objects"),
+            (
+                "std::sort(entities.begin(), entities.end());",
+                "Sort entities for rendering",
+            ),
+            ("std::find_if", "Search for specific object"),
+            ("Lambda functions", "Inline functions for callbacks"),
+            ("std::map for configurations", "Associative container for game settings"),
+        ],
+    ),
+    (
+        "Best Practices",
+        [
+            ("Use const for immutable data", "Improve code safety"),
+            ("Avoid global variables", "Encapsulate state in classes"),
+            ("Profile performance", "Use tools to identify bottlenecks"),
+            ("Modular design", "Separate concerns like physics, graphics"),
+            ("Exception safety", "Handle errors without crashes"),
+        ],
+    ),
+]
+
+
+class CheatsheetWindow(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app)
+        self.set_title(APP_NAME)
+        self.set_default_size(1000, 700)
+        self.set_decorated(False)
+        self.set_focusable(True)
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.on_key_pressed)
+        self.add_controller(key_controller)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(self._css().encode("utf-8"))
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        outer.add_css_class("cheatsheet")
+        self.set_child(outer)
+
+        # App Icon
+        icon = Gtk.Label(label="\ue61d")
+        icon.set_halign(0.5)
+        icon.add_css_class("icon")
+        outer.append(icon)
+
+        # Search entry
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Fuzzy search...")
+        self.search_entry.set_visible(False)
+        self.search_entry.add_css_class("search-entry")
+        self.search_entry.connect("search-changed", self.on_search_changed)
+        outer.append(self.search_entry)
+
+        # Scrollable content
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_hexpand(True)
+        scroll.set_vexpand(True)
+        outer.append(scroll)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content.add_css_class("content")
+        content.set_hexpand(True)
+        content.set_vexpand(True)
+        scroll.set_child(content)
+
+        self.all_rows = []
+
+        # Sections
+        for section, items in CHEATSHEET:
+            cat = Gtk.Label(label=section.upper())
+            cat.add_css_class("category")
+            cat.set_xalign(0.0)
+            content.append(cat)
+
+            for keys, desc in items:
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row.set_hexpand(True)
+                row.add_css_class("keys-row")
+
+                left = Gtk.Label(label=desc)
+                left.add_css_class("keys")
+                left.set_xalign(0.0)
+                left.set_hexpand(True)
+
+                right = Gtk.Label(label=keys)
+                right.add_css_class("keys-alt")
+                right.set_xalign(1.0)
+                right.set_hexpand(False)
+
+                row.append(left)
+                row.append(right)
+                content.append(row)
+                self.all_rows.append(row)
+
+    def on_key_pressed(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_q:
+            self.destroy()
+        elif keyval == Gdk.KEY_slash:
+            self.search_entry.set_visible(True)
+            self.search_entry.grab_focus()
+        elif keyval == Gdk.KEY_Escape:
+            self.search_entry.set_visible(False)
+            self.search_entry.set_text("")
+            for row in self.all_rows:
+                row.set_visible(True)
+
+    def _css(self):
+        c = COLORS
+        return f"""
+.cheatsheet {{
+  background-color: {c['bg']};
+  border-radius: 8px;
+}}
+.icon {{
+  font-family: "Meslo LG M", monospace;
+  font-size: 8rem;
+  color: {c['blue']};
+  margin: 1rem;
+  text-shadow: 0 0 6px {c['blue']};
+}}
+.title {{
+  font-family: "Meslo LG M", monospace;
+  font-weight: 900;
+  font-size: 0.7rem;
+  color: {c['blue']};
+  margin: 1rem;
+  text-shadow: 0 0 6px {c['blue']};
+}}
+.content {{
+  margin: 1rem 2rem;
+}}
+.category {{
+  font-family: "Meslo LG M", monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 1rem 0 0.5rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, {c['magenta']}, rgba(198,120,221,0.2));
+  color: #ffffff; /* ✅ readable text */
+}}
+.keys-row {{
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}}
+.keys-row:hover {{
+  background-color: rgba(97,175,239,0.1);
+}}
+.keys {{
+  font-family: "Meslo LG M", monospace;
+  font-size: 0.95rem;
+  color: {c['fg']};
+}}
+.keys-alt {{
+  font-family: "Meslo LG M", monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: {c['bg']};
+  background-color: {c['green']};
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+}}
+scrolledwindow scrollbar slider {{
+  min-width: 4px;
+  border-radius: 9999px;
+  background-color: {c['green']};
+}}
+scrolledwindow scrollbar:hover slider {{
+  min-width: 8px;
+  background-color: {c['green']};
+}}
+.search-entry {{
+  background-color: {c['bg']};
+  color: {c['fg']};
+  border: 1px solid {c['green']};
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-family: "Meslo LG M", monospace;
+  font-size: 0.9rem;
+}}
+.search-entry:focus {{
+  border-color: {c['blue']};
+  box-shadow: 0 0 5px {c['blue']};
+}}
+"""
+
+    def on_search_changed(self, entry):
+        query = entry.get_text().strip().lower()
+        if not query:
+            for row in self.all_rows:
+                row.set_visible(True)
+            return
+        for row in self.all_rows:
+            desc = row.get_first_child().get_label().lower()
+            keys = row.get_last_child().get_label().lower()
+            if difflib.get_close_matches(query, [desc, keys], n=1, cutoff=0.4):
+                row.set_visible(True)
+            else:
+                row.set_visible(False)
+
+
+class CheatsheetApp(Gtk.Application):
+    def __init__(self):
+        super().__init__(flags=Gio.ApplicationFlags.FLAGS_NONE)
+        self.window = None
+
+    def do_activate(self, *args, **kwargs):
+        if not self.window:
+            self.window = CheatsheetWindow(self)
+        self.window.present()
+
+
+def main():
+    app = CheatsheetApp()
+    app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    main()

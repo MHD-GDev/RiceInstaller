@@ -1,0 +1,373 @@
+#!/usr/bin/env python3
+
+# ┌─ VS CODE CHEATSHEET ─┐
+#
+# AUTHOR: MHD
+
+import sys
+import difflib
+from gi.repository import Gtk, Gdk, Gio, Pango
+
+APP_NAME = "VS Code Cheatsheet"
+
+COLORS = {
+    "bg": "#0f0f14",
+    "fg": "#d8d8d8",
+    "red": "#e06c75",
+    "green": "#98c379",
+    "blue": "#61afef",
+    "magenta": "#c678dd",
+    "cyan": "#56b6c2",
+}
+
+
+CHEATSHEET = [
+    (
+        "General",
+        [
+            ("Ctrl+Shift+P, F1", "Show Command Palette"),
+            ("Ctrl+P", "Quick Open, Go to File..."),
+            ("Ctrl+Shift+N", "New window/instance"),
+            ("Ctrl+W", "Close window/instance"),
+            ("Ctrl+,", "User Settings"),
+            ("Ctrl+K Ctrl+S", "Keyboard Shortcuts"),
+        ],
+    ),
+    (
+        "Multi-cursor and selection",
+        [
+            ("Alt+Click", "Insert cursor*"),
+            ("Shift+Alt+ ↑ / ↓", "Insert cursor above/below"),
+            ("Shift+Alt+I", "Insert cursor at end of each line selected"),
+            ("Ctrl+U", "Undo last cursor operation"),
+            ("Ctrl+L", "Select current line"),
+            ("Ctrl+Shift+L", "Select all occurrences of current selection"),
+            ("Ctrl+F2", "Select all occurrences of current word"),
+            ("Shift+Alt + →", "Expand selection"),
+            ("Shift+Alt + ←", "Shrink selection"),
+            ("Shift+Alt + drag mouse", "Column (box) selection"),
+        ],
+    ),
+    (
+        "Editor management",
+        [
+            ("Ctrl+W", "Close editor"),
+            ("Ctrl+K F", "Close folder"),
+            ("Ctrl+\\", "Split editor"),
+            ("Ctrl+ 1 / 2 / 3", "Focus into 1st, 2nd, 3rd editor group"),
+            ("Ctrl+K Ctrl + ←", "Focus into previous editor group"),
+            ("Ctrl+K Ctrl + →", "Focus into next editor group"),
+            ("Ctrl+Shift+PgUp", "Move editor left"),
+            ("Ctrl+Shift+PgDn", "Move editor right"),
+            ("Ctrl+K ←", "Move active editor group left/up"),
+            ("Ctrl+K →", "Move active editor group right/down"),
+        ],
+    ),
+    (
+        "Display",
+        [
+            ("F11", "Toggle full screen"),
+            ("Ctrl+ = / -", "Zoom in/out"),
+            ("Ctrl+B", "Toggle Sidebar visibility"),
+            ("Shift+Alt+0", "Toggle editor layout (horizontal/vertical)"),
+        ],
+    ),
+    (
+        "File management",
+        [
+            ("Ctrl+N", "New File"),
+            ("Ctrl+O", "Open File..."),
+            ("Ctrl+S", "Save"),
+            ("Ctrl+Shift+S", "Save As..."),
+            ("Ctrl+W", "Close"),
+            ("Ctrl+K Ctrl+W", "Close All"),
+            ("Ctrl+Shift+T", "Reopen closed editor"),
+            ("Ctrl+K P", "Copy path of active file"),
+            ("Ctrl+K R", "Reveal active file in Explorer"),
+            ("Ctrl+K O", "Show active file in new window/instance"),
+        ],
+    ),
+    (
+        "Basic editing",
+        [
+            ("Ctrl+X", "Cut line (empty selection)"),
+            ("Ctrl+C", "Copy line (empty selection)"),
+            ("Alt+ ↓ / ↑", "Move line down/up"),
+            ("Ctrl+Shift+K", "Delete line"),
+            ("Ctrl+Enter / Ctrl+Shift+Enter", "Insert line below/ above"),
+            ("Ctrl+Shift+\\", "Jump to matching bracket"),
+            ("Ctrl+] / Ctrl+[", "Indent/Outdent line"),
+            ("Home / End", "Go to beginning/end of line"),
+            ("Ctrl+ Home / End", "Go to beginning/end of file"),
+            ("Ctrl+ ↑ / ↓", "Scroll line up/down"),
+            ("Alt+ PgUp / PgDn", "Scroll page up/down"),
+            ("Ctrl+Shift+ [ / ]", "Fold/unfold region"),
+            ("Ctrl+K Ctrl+ [ / ]", "Fold/unfold all subregions"),
+            ("Ctrl+K Ctrl+0 / Ctrl+K Ctrl+J", "Fold/Unfold all regions"),
+            ("Ctrl+K Ctrl+C", "Add line comment"),
+            ("Ctrl+K Ctrl+U", "Remove line comment"),
+            ("Ctrl+/", "Toggle line comment"),
+            ("Ctrl+Shift+A", "Toggle block comment"),
+            ("Ctrl+K Ctrl+X", "Trim trailing whitespace"),
+            ("Alt+Z", "Toggle word wrap"),
+        ],
+    ),
+    (
+        "Search and replace",
+        [
+            ("Ctrl+F", "Find"),
+            ("Ctrl+H", "Replace"),
+            ("F3 / Shift+F3", "Find next/previous"),
+            ("Alt+Enter", "Select all occurrences of Find match"),
+            ("Ctrl+D", "Add selection to next Find match"),
+            ("Ctrl+K Ctrl+D", "Move last selection to next Find match"),
+            ("Ctrl+Shift+F", "Show Search"),
+            ("Ctrl+Shift+H", "Replace in files"),
+            ("Ctrl+Shift+J", "Toggle Search details"),
+        ],
+    ),
+    (
+        "Rich languages editing",
+        [
+            ("Ctrl+Space, Ctrl+I", "Trigger suggestion"),
+            ("Ctrl+Shift+Space", "Trigger parameter hints"),
+            ("Ctrl+Shift+I", "Format document"),
+            ("Ctrl+K Ctrl+F", "Format selection"),
+            ("F12", "Go to Definition"),
+            ("Ctrl+Shift+F10", "Peek Definition"),
+            ("Shift+F12", "Show References"),
+            ("F2", "Rename Symbol"),
+            ("Ctrl+K Ctrl+I", "Show hover"),
+            ("Ctrl+.", "Quick Fix"),
+        ],
+    ),
+    (
+        "Navigation",
+        [
+            ("Ctrl+T", "Show all Symbols"),
+            ("Ctrl+G", "Go to Line..."),
+            ("Ctrl+P", "Go to File..."),
+            ("Ctrl+Shift+O", "Go to Symbol..."),
+            ("F8", "Go to next error or warning"),
+            ("Shift+F8", "Go to previous error or warning"),
+            ("Ctrl+Shift+Tab", "Navigate editor group history"),
+            ("Ctrl+Alt+-", "Go back"),
+            ("Ctrl+Shift+-", "Go forward"),
+            ("Ctrl+M", "Toggle Tab moves focus"),
+            ("Ctrl+K M", "Change file language"),
+        ],
+    ),
+    (
+        "Integrated terminal",
+        [
+            ("Ctrl+`", "Show integrated terminal"),
+            ("Ctrl+Shift+`", "Create new terminal"),
+            ("Ctrl+Shift+C", "Copy selection"),
+            ("Ctrl+Shift+V", "Paste into active terminal"),
+            ("Shift+ PgUp / PgDn", "Scroll page up/down"),
+        ],
+    ),
+    (
+        "Debug",
+        [
+            ("F9", "Toggle breakpoint"),
+            ("F5", "Start / Continue"),
+            ("F11 / Shift+F11", "Step into/out"),
+            ("F10", "Step over"),
+            ("Shift+F5", "Stop"),
+        ],
+    ),
+]
+
+
+class CheatsheetWindow(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(application=app)
+        self.set_title(APP_NAME)
+        self.set_default_size(1000, 700)
+        self.set_decorated(False)
+        self.set_focusable(True)
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.on_key_pressed)
+        self.add_controller(key_controller)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(self._css().encode("utf-8"))
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        outer.add_css_class("cheatsheet")
+        self.set_child(outer)
+
+        # App Icon
+        icon = Gtk.Image.new_from_icon_name("visual-studio-code")
+        icon.set_pixel_size(128)
+        icon.set_halign(0.5)
+        outer.append(icon)
+
+        # Search entry
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("Fuzzy search...")
+        self.search_entry.set_visible(False)
+        self.search_entry.add_css_class("search-entry")
+        self.search_entry.connect("search-changed", self.on_search_changed)
+        outer.append(self.search_entry)
+
+        # Scrollable content
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_hexpand(True)
+        scroll.set_vexpand(True)
+        outer.append(scroll)
+
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        content.add_css_class("content")
+        content.set_hexpand(True)
+        content.set_vexpand(True)
+        scroll.set_child(content)
+
+        self.all_rows = []
+
+        # Sections
+        for section, items in CHEATSHEET:
+            cat = Gtk.Label(label=section.upper())
+            cat.add_css_class("category")
+            cat.set_xalign(0.0)
+            content.append(cat)
+
+            for keys, desc in items:
+                row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+                row.set_hexpand(True)
+                row.add_css_class("keys-row")
+
+                left = Gtk.Label(label=desc)
+                left.add_css_class("keys")
+                left.set_xalign(0.0)
+                left.set_hexpand(True)
+
+                right = Gtk.Label(label=keys)
+                right.add_css_class("keys-alt")
+                right.set_xalign(1.0)
+                right.set_hexpand(False)
+
+                row.append(left)
+                row.append(right)
+                content.append(row)
+                self.all_rows.append(row)
+
+    def on_key_pressed(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_q:
+            self.destroy()
+        elif keyval == Gdk.KEY_slash:
+            self.search_entry.set_visible(True)
+            self.search_entry.grab_focus()
+        elif keyval == Gdk.KEY_Escape:
+            self.search_entry.set_visible(False)
+            self.search_entry.set_text("")
+            for row in self.all_rows:
+                row.set_visible(True)
+
+    def _css(self):
+        c = COLORS
+        return f"""
+.cheatsheet {{
+  background-color: {c['bg']};
+  border-radius: 8px;
+}}
+
+.content {{
+  margin: 1rem 2rem;
+}}
+.category {{
+  font-family: "Meslo LG M", monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 1rem 0 0.5rem 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, {c['magenta']}, rgba(198,120,221,0.2));
+  color: #ffffff; /* ✅ readable text */
+}}
+.keys-row {{
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}}
+.keys-row:hover {{
+  background-color: rgba(97,175,239,0.1);
+}}
+.keys {{
+  font-family: "Meslo LG M", monospace;
+  font-size: 0.95rem;
+  color: {c['fg']};
+}}
+.keys-alt {{
+  font-family: "Meslo LG M", monospace;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: {c['bg']};
+  background-color: {c['green']};
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+}}
+scrolledwindow scrollbar slider {{
+  min-width: 4px;
+  border-radius: 9999px;
+  background-color: {c['green']};
+}}
+scrolledwindow scrollbar:hover slider {{
+  min-width: 8px;
+  background-color: {c['green']};
+}}
+.search-entry {{
+  background-color: {c['bg']};
+  color: {c['fg']};
+  border: 1px solid {c['green']};
+  border-radius: 4px;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-family: "Meslo LG M", monospace;
+  font-size: 0.9rem;
+}}
+.search-entry:focus {{
+  border-color: {c['blue']};
+  box-shadow: 0 0 5px {c['blue']};
+}}
+"""
+
+    def on_search_changed(self, entry):
+        query = entry.get_text().strip().lower()
+        if not query:
+            for row in self.all_rows:
+                row.set_visible(True)
+            return
+        for row in self.all_rows:
+            desc = row.get_first_child().get_label().lower()
+            keys = row.get_last_child().get_label().lower()
+            if difflib.get_close_matches(query, [desc, keys], n=1, cutoff=0.4):
+                row.set_visible(True)
+            else:
+                row.set_visible(False)
+
+
+class CheatsheetApp(Gtk.Application):
+    def __init__(self):
+        super().__init__(flags=Gio.ApplicationFlags.FLAGS_NONE)
+        self.window = None
+
+    def do_activate(self, *args, **kwargs):
+        if not self.window:
+            self.window = CheatsheetWindow(self)
+        self.window.present()
+
+
+def main():
+    app = CheatsheetApp()
+    app.run(sys.argv)
+
+
+if __name__ == "__main__":
+    main()
