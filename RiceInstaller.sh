@@ -222,7 +222,7 @@ function copy_configs() {
         if [[ -d ConfigFiles ]]; then
             rm -rf ConfigFiles/README.md
             rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
-            rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
+            rm -rf ~/.config/fcitx5/profile && mkdir -p ~/.config/fcitx5 && cp -r profile ~/.config/fcitx5
             hyprctl reload
             if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then
                 echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf >/dev/null
