@@ -132,11 +132,12 @@ function install_packages() {
 
             if [[ -f arch-rice-wayland-packs.txt ]]; then
                 paru -S --noconfirm $(<arch-rice-wayland-packs.txt) || false
-                rustup default stable
             else
                 echo -e "${RED}Missing arch-rice-wayland-packs.txt file!${RESET}"
                 false
             fi
+            sleep 3
+            clear
 
             echo "Select your GPU:"
             echo "1) Nvidia"
@@ -218,6 +219,7 @@ function copy_configs() {
             rm -rf ConfigFiles/README.md
             rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
             rm -rf ~/.config/fcitx5/profile && cp -r profile ~/.config/fcitx5
+            hyprctl reload
             if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then
                 echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf >/dev/null
                 sudo systemctl restart nix-daemon
