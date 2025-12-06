@@ -56,6 +56,14 @@ def main(stdscr, directory):
     curses.init_pair(4, curses.COLOR_BLUE, -1)  # Blue for low bars
     curses.init_pair(5, curses.COLOR_MAGENTA, -1)  # Magenta for high bars
 
+    config_file = "/tmp/mpvt_config.json"
+    try:
+        with open(config_file, 'r') as f:
+            config = json.load(f)
+            visualizer_mode = config.get('visualizer_mode', 'ellipse')
+    except FileNotFoundError:
+        visualizer_mode = 'ellipse'
+
     music_files = get_music_files(directory)
     if not music_files:
         stdscr.addstr(0, 0, "No music files found in the directory.")
@@ -76,7 +84,6 @@ def main(stdscr, directory):
     visualizer_directions = [random.choice([-1, 1]) for _ in range(20)]
     frame_counter = 0
     angle_offset = 0.0
-    visualizer_mode = "ellipse"
 
     while True:
         stdscr.clear()
@@ -129,26 +136,29 @@ def main(stdscr, directory):
                 / 4
             )
             if visualizer_mode == "ellipse":
-                half_w = content_width // 4
-                half_h = (height - 2) // 4
-                num_points = 100
+                half_w = (width - 2) // 3
+                half_h = content_height // 3
+                num_points = 200
                 for i in range(num_points):
                     angle = i * 2 * math.pi / num_points + angle_offset
-                    radius = (visualizer_bars[i % len(visualizer_bars)] / 10.0) * min(
-                        half_w, half_h
-                    )
-                    x = int(center_x + radius * math.cos(angle))
-                    y = int(center_y + radius * math.sin(angle))
+                    radius_x = (
+                        visualizer_bars[i % len(visualizer_bars)] / 10.0
+                    ) * half_w
+                    radius_y = (
+                        visualizer_bars[i % len(visualizer_bars)] / 10.0
+                    ) * half_h
+                    x = int(center_x + radius_x * math.cos(angle))
+                    y = int(center_y + radius_y * math.sin(angle))
                     if 1 <= x < content_width and 1 <= y < height - 3:
                         color = (
                             curses.color_pair(1) | curses.A_BOLD
-                            if radius > min(half_w, half_h) * 0.7
+                            if radius_x > half_w * 0.7
                             else (
                                 curses.color_pair(5)
-                                if radius > min(half_w, half_h) * 0.4
+                                if radius_x > half_w * 0.4
                                 else (
                                     curses.color_pair(2)
-                                    if radius > min(half_w, half_h) * 0.2
+                                    if radius_x > half_w * 0.2
                                     else curses.color_pair(4)
                                 )
                             )
@@ -177,11 +187,14 @@ def main(stdscr, directory):
                             color = curses.color_pair(2)
                             stdscr.addstr(yy, x, "|", color)
             elif visualizer_mode == "spectrum":
-                vis_start_y = max(3, (height // 2) - 5)
-                vis_width = min(40, content_width)
-                vis_x = max(1, (content_width - vis_width) // 2 + 1)
+                vis_width = 60
+                vis_start_y = (height // 2) - 5
+                vis_x = (content_width - vis_width) // 2
+
                 for i in range(vis_width):
-                    bar_height = visualizer_bars[min(i, len(visualizer_bars) - 1)]
+                    bar_idx = int(i * len(visualizer_bars) / vis_width)
+                    bar_height = min(visualizer_bars[bar_idx], 10)
+
                     color = (
                         curses.color_pair(1) | curses.A_BOLD
                         if bar_height > 7
@@ -195,17 +208,19 @@ def main(stdscr, directory):
                             )
                         )
                     )
+
                     for j in range(bar_height):
-                        y_pos = vis_start_y + (10 - j)
-                        if y_pos < height - 7:
+                        y_pos = vis_start_y + (9 - j)  # Fill from bottom up
+                        if y_pos >= 1 and y_pos < height - 1:
                             stdscr.addstr(y_pos, vis_x + i, "|", color)
             elif visualizer_mode == "spectrum_smooth":
                 vis_start_y = max(3, (height // 2) - 5)
-                vis_width = min(40, content_width)
+                vis_width = min(60, content_width)
                 vis_x = max(1, (content_width - vis_width) // 2 + 1)
                 chars = [" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█", "█"]
                 for i in range(vis_width):
-                    bar_height = visualizer_bars[min(i, len(visualizer_bars) - 1)]
+                    bar_idx = int(i * len(visualizer_bars) / vis_width)
+                    bar_height = visualizer_bars[bar_idx]
                     color = (
                         curses.color_pair(1) | curses.A_BOLD
                         if bar_height > 7
@@ -327,6 +342,8 @@ def main(stdscr, directory):
                 visualizer_mode = "ellipse"
             status_message = f"Visualizer: {visualizer_mode}"
             message_timer = 20
+            with open(config_file, 'w') as f:
+                json.dump({'visualizer_mode': visualizer_mode}, f)
 
         if playing:
             if key == ord(" ") or key == ord("p"):
