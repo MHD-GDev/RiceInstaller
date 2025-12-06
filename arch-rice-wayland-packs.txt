@@ -49,6 +49,7 @@ mako
 mpv
 neovim
 nodejs
+noto-fonts-cjk
 openssh
 pavucontrol
 pipewire
@@ -75,7 +76,6 @@ timeshift
 telegram-desktop
 tmux
 ttf-meslo-nerd
-ttf-noto-sans-cjk-vf
 ttf-noto-emoji-monochrome
 unrar
 unzip
@@ -89,6 +89,7 @@ wget
 xorg-xrandr
 xwayland-run
 xdg-desktop-portal-wlr
+xdg-desktop-portal-hyprland
 yazi
 zsh
 zsh-completions
