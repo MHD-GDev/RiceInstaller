@@ -26,6 +26,7 @@ return {
 			vim.lsp.config("lua_ls", { capabilities = capabilities })
 			vim.lsp.config("clangd", { capabilities = capabilities })
 			vim.lsp.config("marksman", { capabilities = capabilities })
+			vim.lsp.config("gdscript", { capabilities = capabilities })
 
 			-- keymaps
 			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})

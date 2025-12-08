@@ -91,3 +91,7 @@ map(
 	'<cmd>lua require("spectre").open_file_search({select_word=true})<CR>',
 	{ desc = "Search on current file", noremap = true }
 )
+
+-- move page down and up with centering the cursor
+map("n", "<C-j>", "<C-d>zz")
+map("n", "<C-k>", "<C-u>zz")
