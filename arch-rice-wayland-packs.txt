@@ -35,6 +35,7 @@ hyprshot
 hyprlock
 hypridle
 hyprpicker
+hyprpwcenter
 imagemagick
 imv
 jq
