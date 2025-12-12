@@ -117,6 +117,10 @@
         "break",
         {
             "type": "colors"
+            "symbol": "circle",
+            "padding": {
+                "left": 2
+            }
         },
         "break"
     ]
