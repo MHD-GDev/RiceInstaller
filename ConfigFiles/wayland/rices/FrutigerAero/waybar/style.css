@@ -1,7 +1,7 @@
 * {
     font-family: "Meslo LG M";
     font-weight: bolder;
-    font-size: 16px;
+    font-size: 22px;
     border: none;
     min-height: 0;
     padding: 0px;
@@ -12,7 +12,6 @@
 
 window#waybar.mainbar {
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.35)0%, rgba(0, 0, 0, 0.6)50%, rgba(0, 0, 0, 0.7)50%);
-    padding: 0px;
 }
 
 window#waybar.launcherbar {
@@ -21,16 +20,15 @@ window#waybar.launcherbar {
 }
 
 #custom-launcher {
-    background-image: linear-gradient(to bottom, rgb(127, 186, 245), rgb(6, 81, 140), rgb(46, 140, 190));
-    border-radius: 999px;
-    min-height: 64px;
-    min-width: 64px;
-    margin-left: 0px;
-    font-size: 28px;
+    background-image: url("assets/tux-normal.png");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    padding: 24px;
+    padding-right: 39px;
 }
 
 #custom-launcher:hover {
-    background-image: linear-gradient(to bottom, rgb(127, 174, 245), rgb(6, 71, 140), rgb(46, 130, 190));
+    background-image: url("assets/tux-shine.png");
 }
 
 tooltip {

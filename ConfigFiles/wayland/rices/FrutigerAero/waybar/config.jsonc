@@ -39,11 +39,17 @@
         "mode": "dock",
         "position": "bottom",
         "height": 0,
-        "margin-bottom": -52,
+        "margin-top": 4,
+        "margin-bottom": -64,
         "margin-right": 1820,
         "margin-left": 18,
         "modules-left": [
             "custom/launcher"
-        ]
+        ],
+        "custom/launcher": {
+            "format": " ",
+            "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+            "tooltip": false
+        }
     }
 ]
