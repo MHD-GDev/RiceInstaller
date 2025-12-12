@@ -116,7 +116,7 @@
         },
         "break",
         {
-            "type": "colors"
+            "type": "colors",
             "symbol": "circle",
             "padding": {
                 "left": 2
