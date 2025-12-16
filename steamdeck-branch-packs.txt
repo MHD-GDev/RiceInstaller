@@ -18,7 +18,6 @@ mesa
 mesa-utils
 vulkan-icd-loader
 vulkan-radeon
-vulkan-mesa-device-select
 ffmpeg
 ffmpeg4.4
 ffmpegthumbnailer
