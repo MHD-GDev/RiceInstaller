@@ -16,7 +16,7 @@ AI_APPS=(
 
 # Function to find first available browser
 find_browser() {
-    local browsers=("firefox" "chromium" "vivaldi-stable" "google-chrome" "brave-browser" "epiphany")
+    local browsers=("qutebrowser" "zen-browser" "firefox" "chromium" "vivaldi-stable" "google-chrome" "brave-browser" "epiphany" "libre-wolf")
     for browser in "${browsers[@]}"; do
         command -v "$browser" &>/dev/null && echo "$browser" && return 0
     done

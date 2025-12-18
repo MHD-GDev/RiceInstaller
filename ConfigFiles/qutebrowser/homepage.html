@@ -1,0 +1,284 @@
+<!-- Author: MHD -->
+<!-- Desc: My Custom Homepage for qutebrowser -->
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Home — MHD</title>
+
+<style>
+  /* Nord palette (minimal subset) */
+  :root{
+    --nord0:#2E3440;  /* polar night 0 */
+    --nord1:#3B4252;  /* polar night 1 */
+    --nord2:#434C5E;  /* polar night 2 */
+    --nord3:#4C566A;  /* polar night 3 */
+    --nord4:#D8DEE9;  /* snow storm 1 */
+    --nord5:#E5E9F0;  /* snow storm 2 */
+    --nord6:#8FBCBB;  /* frost */
+    --nord7:#88C0D0;  /* frost */
+    --nord8:#81A1C1;  /* frost */
+    --accent:#A3BE8C; /* green accent (optional) */
+  }
+
+  /* Reset + layout */
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+   body{
+     font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+     background: linear-gradient(180deg, var(--nord0) 0%, var(--nord1) 45%, var(--nord2) 100%);
+     color:var(--nord5);
+     -webkit-font-smoothing:antialiased;
+     -moz-osx-font-smoothing:grayscale;
+     display:flex;
+     flex-direction:column;
+     align-items:center;
+     justify-content:center;
+     padding:48px;
+     gap:20px;
+   }
+
+   /* Main card */
+   .card{
+     width:fit-content;
+     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+     border:1px solid rgba(255,255,255,0.04);
+     border-radius:14px;
+     padding:10px 14px;
+     backdrop-filter: blur(6px);
+     box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+     display:flex;
+     flex-direction:column;
+     gap:20px;
+     align-items:center;
+     margin-top:20px;
+   }
+
+  /* Left: greeting + search + quicklinks */
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+   .greeting{
+     line-height:1;
+     text-align:center;
+   }
+   .greeting h1{
+     font-size:48px;
+     color:var(--nord5);
+     font-weight:700;
+     letter-spacing:-0.02em;
+     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+   }
+   .greeting p{
+     margin-top:6px;
+     color:var(--nord4);
+     opacity:0.9;
+     font-size:15px;
+   }
+
+   .mhd{
+     color:#EBCB8B;
+   }
+
+   /* Search */
+   .search{
+     display:flex;
+     gap:12px;
+     align-items:center;
+   }
+  .search form{
+    flex:1;
+  }
+   .input{
+     width:100%;
+     display:flex;
+     align-items:center;
+     background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+     border:1px solid rgba(255,255,255,0.04);
+     padding:10px 14px;
+     border-radius:10px;
+     color:var(--nord5);
+     outline:none;
+     transition:box-shadow .12s, border-color .12s;
+   }
+  .input:focus-within{
+    border-color:var(--nord7);
+    box-shadow:0 6px 18px rgba(66,102,130,0.08);
+  }
+   .input input{
+     background:transparent;
+     border:0;
+     color:inherit;
+     font-size:15px;
+     width:100%;
+     outline:none;
+   }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid rgba(255,255,255,0.04);
+    color:var(--nord5);
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:14px;
+  }
+
+   /* Quicklinks */
+   .links{
+     display:flex;
+     gap:12px;
+     flex-wrap:wrap;
+     margin-top:20px;
+   }
+  .link{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    border:1px solid rgba(255,255,255,0.04);
+    padding:10px 14px;
+    border-radius:10px;
+    color:var(--nord5);
+    font-size:14px;
+    text-decoration:none;
+    display:inline-flex;
+    gap:10px;
+    align-items:center;
+  }
+  .link .dot{
+    width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px rgba(163,190,140,0.12);
+  }
+
+  /* Right: shortcuts + info */
+  .right{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+    border:1px solid rgba(255,255,255,0.04);
+    padding:14px;
+    border-radius:10px;
+  }
+  .panel h3{
+    font-size:13px;
+    color:var(--nord4);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .tiles{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+  .tile{
+    padding:10px;
+    border-radius:8px;
+    background:linear-gradient(180deg, rgba(136,192,208,0.06), rgba(136,192,208,0.02));
+    color:var(--nord5);
+    font-size:13px;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+
+  /* Footer small */
+  .meta{
+    display:flex;
+    gap:10px;
+    color:var(--nord4);
+    font-size:13px;
+    justify-content:flex-end;
+  }
+
+   /* Lightning animation */
+   .lightning{
+     position:fixed;
+     top:0;
+     right:0;
+     width:100%;
+     height:100%;
+     color:#D4AF37;
+     filter: drop-shadow(0 0 20px #000000);
+     pointer-events:none;
+     z-index: -1;
+     opacity: 0.8;
+     transform-origin: top right;
+   }
+
+   /* Small screens */
+   @media (max-width:880px){
+     .card{grid-template-columns:1fr; padding:28px}
+     .right{order:2}
+   }
+</style>
+</head>
+ <body>
+
+  <div class="greeting">
+    <h1>Welcome back<br><span class="mhd">MHD</span></h1>
+  </div>
+
+  <div class="card">
+    <div class="search" aria-label="search">
+    <!-- qutebrowser search: enter a search engine name + query, e.g., :open google duckduckgo -->
+    <!-- This form performs a web search via DuckDuckGo by default. Adjust action if you prefer a different engine. -->
+    <form action="https://duckduckgo.com/" method="get" target="_blank">
+      <label class="input" for="q" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="margin-right:10px;opacity:.85">
+          <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <input id="q" name="q" placeholder="Search the web or type a URL" autocomplete="off" />
+      </label>
+    </form>
+  </div>
+  </div>
+
+  <div class="links" role="navigation" aria-label="quick links">
+    <a class="link" href="https://github.com/MHD-GDev" target="_blank"><span class="dot" style="background:#BF616A"></span> Github</a>
+    <a class="link" href="https://mail.google.com/" target="_blank"><span class="dot" style="background:#81A1C1"></span> Mail</a>
+    <a class="link" href="https://www.reddit.com/r/unixporn" target="_blank"><span class="dot" style="background:#A3BE8C"></span> Reddit</a>
+    <a class="link" href="https://youtube.com" target="_blank"><span class="dot" style="background:#EBCB8B"></span> Youtube</a>
+  </div>
+
+    <script>
+      // Submit search on Enter (opens in new tab)
+      document.querySelector('form').addEventListener('submit', e=>{
+        // open in new tab and prevent navigating current page
+        e.preventDefault();
+        const q = document.getElementById('q').value.trim();
+        if(!q) return;
+        const url = 'https://duckduckgo.com/?q=' + encodeURIComponent(q);
+        window.open(url, '_blank');
+      });
+
+      // Generate lightning elements symmetrically based on screen width
+      const spacing = 400;
+      const num = Math.ceil((window.innerWidth + spacing) / spacing);
+      for(let i = -num; i <= num; i++){
+        const div = document.createElement('div');
+        div.className = 'lightning';
+        div.style.left = `${i * spacing}px`;
+        document.body.appendChild(div);
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '0.6');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M 100 0 L 0 100');
+        svg.appendChild(path);
+        div.appendChild(svg);
+      }
+    </script>
+</body>
+</html>

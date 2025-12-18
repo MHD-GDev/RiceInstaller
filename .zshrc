@@ -16,7 +16,7 @@ eval "$(starship init zsh)"
 export VISUAL="${EDITOR}"
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
-export BROWSER='firefox'
+export BROWSER='qutebrowser'
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export SUDO_PROMPT="Password : "
 export BAT_THEME="base16"
