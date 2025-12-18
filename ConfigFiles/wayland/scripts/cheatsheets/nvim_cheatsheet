@@ -55,6 +55,7 @@ CHEATSHEET = [
     (
         "Buffers",
         [
+            ("Normal: Ctrl + /", "Inline Terminal"),
             ("Normal: Tab", "Move to next tab"),
             ("Normal: Shift + Tab", "Move to previous tab"),
             ("Normal: Space + x", "Close buffer"),
