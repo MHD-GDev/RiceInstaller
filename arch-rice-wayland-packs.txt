@@ -17,7 +17,6 @@ fcitx5-qt
 fcitx5-gtk
 fastfetch
 ffmpeg
-firefox
 fzf
 wxwidgets-gtk3
 gtk4-layer-shell
@@ -63,6 +62,7 @@ python-pillow
 python-gobject
 pacman-contrib
 qbittorrent
+qutebrowser
 rofi
 rsync
 rtkit
