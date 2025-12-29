@@ -73,6 +73,7 @@ sshfs
 starship
 swaybg
 socat
+tlp
 timeshift
 telegram-desktop
 tmux
