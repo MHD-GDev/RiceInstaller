@@ -6,16 +6,17 @@ config = config
 
 # Autoloads this config on startup
 config.load_autoconfig()
-config.source('styles/nordtheme.py')
+config.source('styles/mhdtheme.py')
 config.source('keys-unbind.py')
 
 # start page ui
-c.url.start_pages = ['file:///home/mhd/.config/qutebrowser/homepage.html']
-c.url.default_page = 'file:///home/mhd/.config/qutebrowser/homepage.html'
+c.url.start_pages = ['file:///home/mhd/.config/qutebrowser/mhdhomepage.html']
+c.url.default_page = 'file:///home/mhd/.config/qutebrowser/mhdhomepage.html'
 
 # tabs
 c.tabs.title.format = "{audio}{current_title}"
 c.fonts.web.size.default = 20
+c.downloads.remove_finished = 5000
 
 # Search Engines
 c.url.searchengines = {
@@ -36,12 +37,14 @@ config.set("content.geolocation", False)
 
 # Cosmetics
 c.tabs.show = 'always'
-c.tabs.position = 'top'
+c.tabs.position = 'bottom'
 c.tabs.width = '7%'
 c.statusbar.show = 'always'
 c.statusbar.position = 'bottom'
 c.content.user_stylesheets = ["~/.config/qutebrowser/styles/youtube-tweaks.css"]
-c.tabs.padding = {'top': 5, 'bottom': 5, 'left': 9, 'right': 9}
+c.tabs.padding = {'top': 7, 'bottom': 7, 'left': 9, 'right': 9}
+c.statusbar.padding = {'top': 5, 'bottom': 5, "left": 0, "right": 0}
+
 c.tabs.indicator.width = 0
 c.window.transparent = False
 
@@ -65,6 +68,7 @@ config.bind('tl', 'tab-move -')
 config.bind(' h', 'history')
 config.bind(' ch', 'history-clear')
 config.bind('dd', 'tab-close')
+config.bind('rr', 'reload')
 config.bind('dt', 'devtools')
 config.bind('<Ctrl+U>', 'undo')
 config.bind('bl', 'bookmark-list')
