@@ -61,6 +61,7 @@ pulsemixer
 python-pillow
 python-gobject
 pacman-contrib
+poppler
 qbittorrent
 qutebrowser
 rofi

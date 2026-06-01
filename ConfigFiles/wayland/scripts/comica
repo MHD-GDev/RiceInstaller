@@ -1,0 +1,445 @@
+#!/usr/bin/env python3
+import curses, tempfile, zipfile, subprocess, shutil, json, os, threading
+from pathlib import Path
+import sys
+
+IMG_EXTS = [".png", ".jpg", ".jpeg", ".webp"]
+
+PDF_DPI = int(os.environ.get("COMICA_PDF_DPI", "120"))
+PDF_FMT = os.environ.get("COMICA_PDF_FMT", "jpeg").lower()
+PDF_JPEG_QUALITY = int(os.environ.get("COMICA_PDF_JPEGQ", "85"))
+
+
+class ArchiveReader:
+    def __init__(self, path):
+        self.path = Path(path)
+        suf = self.path.suffix.lower()
+
+        self.is_cbz = suf == ".cbz"
+        self.is_cbr = suf == ".cbr"
+        self.is_pdf = suf == ".pdf"
+
+        if not (self.is_cbz or self.is_cbr or self.is_pdf):
+            raise SystemExit("Unsupported archive")
+
+        self.tmp = Path(tempfile.mkdtemp(prefix="comica-"))
+        self.filelist = []
+        self.z = None
+
+        self._prefetch_thread = None
+        self._prefetch_stop = threading.Event()
+        self._pdf_lock = threading.Lock()
+
+        if self.is_cbz:
+            self.z = zipfile.ZipFile(self.path, "r")
+            self.filelist = sorted(
+                f for f in self.z.namelist()
+                if Path(f).suffix.lower() in IMG_EXTS
+            )
+
+        elif self.is_cbr:
+            result = subprocess.run(
+                ["unrar", "lb", str(self.path)],
+                capture_output=True,
+                text=True
+            )
+            self.filelist = sorted(
+                f for f in result.stdout.splitlines()
+                if Path(f).suffix.lower() in IMG_EXTS
+            )
+
+        else:
+            r = subprocess.run(
+                ["pdfinfo", str(self.path)],
+                capture_output=True,
+                text=True
+            )
+            if r.returncode != 0:
+                msg = (r.stderr or r.stdout or "").strip()
+                raise SystemExit("pdfinfo failed. Is poppler-utils available?\n" + msg)
+
+            pages = None
+            for line in r.stdout.splitlines():
+                if line.lower().startswith("pages:"):
+                    try:
+                        pages = int(line.split(":", 1)[1].strip())
+                    except:
+                        pages = None
+                    break
+
+            if not pages or pages <= 0:
+                raise SystemExit("Could not determine PDF page count")
+
+            self.filelist = list(range(pages))
+
+    def _pdf_dest_for(self, idx: int) -> Path:
+        page_num = idx + 1
+        ext = "jpg" if PDF_FMT == "jpeg" else "png"
+        return self.tmp / f"page-{page_num:06d}.{ext}"
+
+    def _render_pdf_page(self, idx: int) -> Path:
+        dest = self._pdf_dest_for(idx)
+        if dest.exists():
+            return dest
+
+        page_num = idx + 1
+
+        with self._pdf_lock:
+            if dest.exists():
+                return dest
+
+            prefix = self.tmp / f"page-{page_num:06d}"
+
+            cmd = [
+                "pdftoppm",
+                "-f", str(page_num),
+                "-l", str(page_num),
+                "-r", str(PDF_DPI),
+                "-hide-annotations",
+            ]
+
+            if PDF_FMT == "jpeg":
+                cmd += ["-jpeg", "-jpegopt", f"quality={PDF_JPEG_QUALITY}"]
+            else:
+                cmd += ["-png"]
+
+            cmd += [str(self.path), str(prefix)]
+
+            r = subprocess.run(cmd, capture_output=True, text=True)
+            if r.returncode != 0:
+                msg = (r.stderr or r.stdout or "").strip()
+                raise SystemExit("pdftoppm failed.\n" + msg)
+
+            produced = self.tmp / f"page-{page_num:06d}-1.{'jpg' if PDF_FMT=='jpeg' else 'png'}"
+            if not produced.exists():
+                matches = sorted(self.tmp.glob(f"page-{page_num:06d}-*.{'jpg' if PDF_FMT=='jpeg' else 'png'}"))
+                if not matches:
+                    raise SystemExit("pdftoppm produced no output")
+                produced = matches[0]
+
+            try:
+                produced.replace(dest)
+            except:
+                dest = produced
+
+        return dest
+
+    def prefetch(self, idx: int):
+        if not self.is_pdf:
+            return
+        if idx < 0 or idx >= self.page_count():
+            return
+
+        if self._prefetch_thread and self._prefetch_thread.is_alive():
+            self._prefetch_stop.set()
+
+        self._prefetch_stop = threading.Event()
+
+        def worker():
+            if self._prefetch_stop.is_set():
+                return
+            try:
+                self._render_pdf_page(idx)
+            except:
+                pass
+
+        self._prefetch_thread = threading.Thread(target=worker, daemon=True)
+        self._prefetch_thread.start()
+
+    def extract_page(self, idx):
+        if self.is_pdf:
+            return self._render_pdf_page(idx)
+
+        name = self.filelist[idx]
+        dest = self.tmp / Path(name).name
+
+        if dest.exists():
+            return dest
+
+        if self.is_cbz:
+            with self.z.open(name) as src, open(dest, "wb") as dst:
+                dst.write(src.read())
+        else:
+            subprocess.run([
+                "unrar", "e", "-inul",
+                str(self.path),
+                name,
+                str(self.tmp)
+            ])
+
+        return dest
+
+    def page_count(self):
+        return len(self.filelist)
+
+    def cleanup(self):
+        if self.z:
+            self.z.close()
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+
+def show_image(img, place):
+    subprocess.run(["kitty", "+kitten", "icat", "--clear"])
+    subprocess.run([
+        "kitty", "+kitten", "icat",
+        "--place", place,
+        "--scale-up",
+        "--transfer-mode=stream",
+        str(img)
+    ])
+
+
+def show_two(img1, img2, w, h):
+    subprocess.run(["kitty", "+kitten", "icat", "--clear"])
+
+    w2 = w // 2
+
+    subprocess.run([
+        "kitty", "+kitten", "icat",
+        "--place", f"{w2}x{h}@0x1",
+        "--scale-up",
+        "--transfer-mode=stream",
+        str(img1)
+    ])
+
+    if img2:
+        subprocess.run([
+            "kitty", "+kitten", "icat",
+            "--place", f"{w2}x{h}@{w2}x1",
+            "--scale-up",
+            "--transfer-mode=stream",
+            str(img2)
+        ])
+
+
+def prompt_search(stdscr, prompt):
+    curses.echo()
+    stdscr.addstr(0, 0, prompt)
+    stdscr.clrtoeol()
+    stdscr.refresh()
+
+    try:
+        s = stdscr.getstr(0, len(prompt), 256).decode().strip()
+        curses.noecho()
+        return s
+    except:
+        curses.noecho()
+        return None
+
+
+def select_manga(stdscr, files, initial_sel=0):
+    curses.curs_set(0)
+    stdscr.keypad(True)
+
+    sel = initial_sel if 0 <= initial_sel < len(files) else 0
+    n = len(files)
+
+    while True:
+        stdscr.clear()
+        h, w = stdscr.getmaxyx()
+
+        start = max(0, sel - h // 2)
+        visible = files[start:start + h - 3]
+
+        stdscr.addstr(0, 0, "Select comic:  / search  Enter open  q quit\n")
+
+        for i, f in enumerate(visible):
+            idx = start + i
+            prefix = "→ " if idx == sel else "  "
+            name = f.name[:w - 4]
+            stdscr.addstr(i + 2, 0, prefix + name)
+
+        stdscr.refresh()
+
+        k = stdscr.getch()
+
+        if k in (curses.KEY_UP, ord("k")):
+            sel = (sel - 1) % n
+
+        elif k in (curses.KEY_DOWN, ord("j")):
+            sel = (sel + 1) % n
+
+        elif k in (10, 13):
+            return files[sel], sel
+
+        elif k == ord("/"):
+            q = prompt_search(stdscr, "/")
+            if q:
+                ql = q.lower()
+                for i, f in enumerate(files):
+                    if ql in f.name.lower():
+                        sel = i
+                        break
+
+        elif k in (27, ord("q")):
+            return None, sel
+
+
+def get_resume_path(archive):
+    return Path(archive).parent / ".comica_resume.json"
+
+
+def load_resume(archive):
+    rp = get_resume_path(archive)
+    if not rp.exists():
+        return 0
+
+    try:
+        data = json.loads(rp.read_text())
+        idx = data.get(str(Path(archive).resolve()), 0)
+        if isinstance(idx, int) and idx >= 0:
+            return idx
+    except:
+        pass
+
+    return 0
+
+
+def save_resume(archive, idx):
+    rp = get_resume_path(archive)
+    data = {}
+
+    if rp.exists():
+        try:
+            data = json.loads(rp.read_text())
+            if not isinstance(data, dict):
+                data = {}
+        except:
+            data = {}
+
+    data[str(Path(archive).resolve())] = idx
+    rp.write_text(json.dumps(data, indent=2))
+
+
+def reader_main(stdscr, archive):
+    ar = ArchiveReader(archive)
+
+    pages = ar.page_count()
+    idx = load_resume(archive)
+
+    if idx >= pages:
+        idx = max(0, pages - 1)
+
+    double = False
+
+    curses.curs_set(0)
+    stdscr.keypad(True)
+
+    if ar.is_pdf:
+        ar.prefetch(idx)
+        ar.prefetch(idx + 1)
+
+    try:
+        while True:
+            stdscr.clear()
+            h, w = stdscr.getmaxyx()
+
+            mode = "Two" if double else "One"
+            stdscr.addstr(
+                0, 0,
+                f"{mode} | page {idx+1}/{pages}  ← →  / page  t toggle  q quit"
+            )
+            stdscr.refresh()
+
+            if double:
+                left = ar.extract_page(idx)
+                right = ar.extract_page(idx + 1) if idx + 1 < pages else None
+                show_two(left, right, w, h - 1)
+                if ar.is_pdf:
+                    ar.prefetch(idx + 2)
+                    ar.prefetch(idx + 3)
+            else:
+                img = ar.extract_page(idx)
+                show_image(img, f"{w}x{h-1}@0x1")
+                if ar.is_pdf:
+                    ar.prefetch(idx + 1)
+                    ar.prefetch(idx + 2)
+
+            k = stdscr.getch()
+
+            if k in (ord("q"), 27):
+                break
+
+            if k in (curses.KEY_LEFT, ord("h")):
+                idx = max(0, idx - (2 if double else 1))
+
+            elif k in (curses.KEY_RIGHT, ord("l")):
+                if double:
+                    idx = min(max(0, pages - 2), idx + 2)
+                else:
+                    idx = min(pages - 1, idx + 1)
+
+            elif k == ord("/"):
+                q = prompt_search(stdscr, "/ page: ")
+                if q and q.isdigit():
+                    p = int(q)
+                    if 1 <= p <= pages:
+                        idx = p - 1
+                        if double and idx == pages - 1:
+                            idx = max(0, pages - 2)
+                        if ar.is_pdf:
+                            ar.prefetch(idx)
+                            ar.prefetch(idx + 1)
+
+            elif k == ord("t"):
+                double = not double
+                if double and idx == pages - 1:
+                    idx = max(0, pages - 2)
+                if ar.is_pdf:
+                    ar.prefetch(idx)
+                    ar.prefetch(idx + 1)
+                    if double:
+                        ar.prefetch(idx + 2)
+
+    except KeyboardInterrupt:
+        pass
+
+    save_resume(archive, idx)
+    ar.cleanup()
+    subprocess.run(["kitty", "+kitten", "icat", "--clear"])
+
+
+def parse_args(args):
+    if len(args) != 3:
+        raise SystemExit("usage: comica -o file.cbz|file.cbr|file.pdf OR -d dir")
+
+    flag, val = args[1], args[2]
+    p = Path(val)
+
+    if flag == "-o":
+        if not p.is_file():
+            raise SystemExit("file not found")
+        return [p], False
+
+    if flag == "-d":
+        if not p.is_dir():
+            raise SystemExit("dir not found")
+
+        arcs = sorted(
+            f for f in p.iterdir()
+            if f.suffix.lower() in [".cbz", ".cbr", ".pdf"]
+        )
+
+        if not arcs:
+            raise SystemExit("no archives")
+
+        return arcs, True
+
+    raise SystemExit("unknown option")
+
+
+def main(stdscr, archives, dir_mode):
+    if dir_mode:
+        last_sel = 0
+        while True:
+            picked, last_sel = select_manga(stdscr, archives, last_sel)
+            if picked is None:
+                return
+            reader_main(stdscr, picked)
+    else:
+        reader_main(stdscr, archives[0])
+
+
+if __name__ == "__main__":
+    archives, dir_mode = parse_args(sys.argv)
+    curses.wrapper(main, archives, dir_mode)
