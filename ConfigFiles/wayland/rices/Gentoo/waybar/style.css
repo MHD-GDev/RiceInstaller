@@ -1,0 +1,65 @@
+* {
+    font-family: "Meslo LG M";
+    font-size: 14px;
+    border: none;
+}
+
+window#waybar {
+    background: rgba(110, 91, 170, 0.5);
+    color: #eee9ff;
+    border-bottom: 2px solid #c9bfff;
+    box-shadow: 0 0 8px #c9bfff;
+}
+
+#workspaces {
+    margin-left: 12px;
+}
+
+
+#workspaces button {
+    color: #b8a8f5;
+    background: transparent;
+    padding: 0 10px;
+    margin-right: 4px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+
+#workspaces button.active {
+    background: #6E5BAA;
+    color: #f3f0ff;
+}
+
+#workspaces button.empty {
+    color: #3a3352;
+}
+
+#window,
+#tray,
+#cpu,
+#memory,
+#wireplumber,
+#clock,
+#custom-music,
+#custom-launcher,
+#custom-logout,
+#battery {
+    color: #eee9ff;
+    padding: 0 10px;
+    margin-right: 6px;
+    border-radius: 8px;
+}
+
+#custom-launcher {
+    color: #927fd4;
+    font-size: 18px;
+}
+
+#custom-logout {
+    color: #c9bfff;
+}
+
+#clock {
+    margin-right: 12px;
+}

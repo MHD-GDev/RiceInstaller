@@ -1,3 +1,4 @@
+meld
 steam
 steam-native-runtime
 proton-ge-custom-bin

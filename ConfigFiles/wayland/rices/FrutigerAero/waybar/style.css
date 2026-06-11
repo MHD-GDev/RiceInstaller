@@ -45,12 +45,12 @@ tooltip label {
     color: #ffffff;
 }
 
+#disk,
 #window,
 #tray,
 #cpu,
 #memory,
 #wireplumber,
-#disk,
 #custom-logout,
 #battery {
     background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(0, 0, 0, 0.025));

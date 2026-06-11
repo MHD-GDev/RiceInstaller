@@ -94,9 +94,9 @@ function create_user_dirs() {
         echo -e "${YELLOW}Creating user directories...${RESET}"
         mkdir -p ~/Downloads ~/Documents ~/Pictures ~/Videos ~/Music ~/Desktop ~/Templates ~/MyNotes
         case "$BUILD_TYPE" in
-        gaming) mkdir -p ~/Games ~/Emulations ;;
+        gaming) mkdir -p ~/Games ~/Emulations ~/Comics ~/Manga ;;
         programming) mkdir -p ~/Projects ;;
-        both) mkdir -p ~/Projects ~/Games ~/Emulations ;;
+        both) mkdir -p ~/Projects ~/Games ~/Emulations ~/Comics ~/Manga ;;
         none) ;; # Do nothing extra
         esac
     } do
@@ -175,8 +175,9 @@ function install_packages() {
             echo "Select your branch type:"
             echo "1) Gamedev"
             echo "2) Gaming"
-            echo "3) None"
-            read -rp "Enter choice [1-3]: " branch_choice
+            echo "3) Programmer"
+            echo "4) None"
+            read -rp "Enter choice [1-4]: " branch_choice
 
             case "$branch_choice" in
             1)
@@ -196,6 +197,14 @@ function install_packages() {
                 fi
                 ;;
             3)
+                if [[ -f Programmer-branch-packs.txt ]]; then
+                    paru -S --noconfirm $(<Programmer-branch-packs.txt) || false
+                else
+                    echo -e "${RED}Missing Programmer-branch-packs.txt file!${RESET}"
+                    false
+                fi
+                ;;
+            4)
                 echo -e "${CYAN}Skipping additional branch packages.${RESET}"
                 ;;
             *)
@@ -221,7 +230,7 @@ function copy_configs() {
         echo -e "${YELLOW}Copying rice directories...${RESET}"
         if [[ -d ConfigFiles ]]; then
             rm -rf ConfigFiles/README.md
-            rm -rf ~/.config/hypr && cp -r ConfigFiles/* ~/.config
+            cp ~/.config/hypr ~/.config/hypr.bak  && cp -r ConfigFiles/* ~/.config
             mkdir -p ~/.config/fcitx5 && cp -r profile ~/.config/fcitx5
             hyprctl reload
             if [[ "$BUILD_TYPE" == "programming" || "$BUILD_TYPE" == "both" ]]; then
@@ -444,9 +453,9 @@ function add_llama_ui() {
 function write_notes() {
     until {
         echo -e "${CYAN}Writing installation notes...${RESET}"
-        echo -e "- REMEMBER: Copy your AI models into ~/.local/share/AI-Models" >>~/Templates/IMPORTANT-README.md
-        echo -e "- Use llama.cpp via the LlamaUI-vMHD.html in your browser." >>~/Templates/IMPORTANT-README.md
-        echo -e "- Plans and notes in ~/MyNotes, also you can use todo command." >>~/Templates/IMPORTANT-README.md
+        echo -e ". REMEMBER: Copy your AI models into ~/.local/share/AI-Models" >>~/Templates/IMPORTANT-README.md
+        echo -e ". Use llama.cpp via the LlamaUI-vMHD.html in your browser." >>~/Templates/IMPORTANT-README.md
+        echo -e ". Plans and notes in ~/MyNotes, also you can use todo command." >>~/Templates/IMPORTANT-README.md
     }; do
         echo -e "${RED}Writing notes failed, retrying...${RESET}"
         sleep 2

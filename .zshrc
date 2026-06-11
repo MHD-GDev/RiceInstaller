@@ -6,8 +6,6 @@
 #
 # AUTHOR = MHD
 
-# llama.cpp
-
 # Starts Starship
 export STARSHIP_CONFIG="$HOME/.config/wayland/zsh/starship.toml"
 eval "$(starship init zsh)"
@@ -16,7 +14,7 @@ eval "$(starship init zsh)"
 export VISUAL="${EDITOR}"
 export EDITOR="nvim"
 export SUDO_EDITOR="$EDITOR"
-export BROWSER='qutebrowser'
+export BROWSER='firefox'
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..)"
 export SUDO_PROMPT="Password : "
 export BAT_THEME="base16"
@@ -131,10 +129,11 @@ alias vi='nvim'
 alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
 alias reflector='sudo reflector --protocol https --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
-alias update="~/.config/wayland/scripts/update_system"
+alias update="~/.config/wayland/scripts/Updates"
 alias todo="~/.config/wayland/scripts/todo"
 alias programmer='sh ~/.config/wayland/scripts/programmer-info'
 alias icat='kitten icat'
+alias comica='python ~/.config/wayland/scripts/comica'
 
 #     ___         __       _____ __             __ 
 #    /   | __  __/ /_____ / ___// /_____ ______/ /_

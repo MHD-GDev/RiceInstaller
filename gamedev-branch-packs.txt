@@ -1,3 +1,4 @@
+go
 git
 cmake
 ninja
@@ -16,7 +17,6 @@ mono
 jdk-openjdk
 openjdk-doc
 godot
-unreal-engine
 blender
 krita
 aseprite

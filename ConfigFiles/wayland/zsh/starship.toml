@@ -1,5 +1,7 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+scan_timeout = 100
+
 format = """
 [](bright-black)\
 $os\
@@ -36,6 +38,7 @@ Linux = "󰌽"
 Gentoo = "󰣨"
 Android = ""
 Arch = "󰌽"
+CachyOS = ""
 # Arch = "󰣇"
 
 [username]

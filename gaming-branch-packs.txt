@@ -1,7 +1,4 @@
 steam-native-runtime
-lutris
-heroic-games-launcher-bin
-minigalaxy
 protonup-qt
 protontricks
 wine
@@ -18,6 +15,7 @@ mangohud
 lib32-mangohud-git
 gamescope
 vkbasalt
+ananicy-cpp
 lib32-vkbasalt
 openrgb
 corectrl
@@ -33,5 +31,3 @@ citra
 ppsspp
 mupen64plus
 desmume
-mednafen
-legendary

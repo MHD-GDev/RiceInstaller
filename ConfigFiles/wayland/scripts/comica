@@ -370,7 +370,7 @@ def reader_main(stdscr, archive):
                     idx = min(pages - 1, idx + 1)
 
             elif k == ord("/"):
-                q = prompt_search(stdscr, "/ page: ")
+                q = prompt_search(stdscr, "page: ")
                 if q and q.isdigit():
                     p = int(q)
                     if 1 <= p <= pages:
@@ -397,7 +397,6 @@ def reader_main(stdscr, archive):
     save_resume(archive, idx)
     ar.cleanup()
     subprocess.run(["kitty", "+kitten", "icat", "--clear"])
-
 
 def parse_args(args):
     if len(args) != 3:

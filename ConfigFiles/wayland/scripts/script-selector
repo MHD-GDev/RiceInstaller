@@ -9,8 +9,6 @@ THEME_PATH="$HOME/.config/wayland/scripts/rofi-themes/script-selector.rasi"
 
 # Scripts to ignore (add script names here)
 IGNORE_SCRIPTS=(
-    "mpvt"
-    "mpv-tuiv1"
     "cheatsheet-selector"
     "mako-logging"
     "todo"
@@ -24,6 +22,9 @@ IGNORE_SCRIPTS=(
     "create_rice"
     "mpv-tui"
     "Updates"
+    "comica"
+    "mpvt"
+    "mpv-tuiv1"
     # Add more scripts to ignore here
 )
 

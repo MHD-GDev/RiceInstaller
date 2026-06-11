@@ -10,13 +10,13 @@
             "custom/launcher-border2",
             "custom/launcher-border",
             "hyprland/workspaces",
-            "tray"
+            "tray",
+            "wireplumber",
         ],
         "modules-center": [
             "hyprland/window"
         ],
         "modules-right": [
-            "wireplumber",
             "cpu",
             "memory",
             "disk",

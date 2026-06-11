@@ -1,0 +1,38 @@
+{
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+    "layer": "top",
+    "position": "top",
+    "margin-left": -10,
+    "margin-right": -10,
+    "height": 48,
+    "spacing": 8,
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/workspaces",
+        "network",
+        "tray"
+    ],
+    "modules-center": [
+        "hyprland/window"
+    ],
+    "modules-right": [
+        "wireplumber",
+        "disk",
+        "disk#games",
+        "cpu",
+        "memory",
+        "battery",
+        "clock",
+        "custom/logout"
+    ],
+    "disk": {
+        "format": "Root:{free}",
+        "path": "/",
+        "tooltip": false
+    },
+    "disk#games": {
+        "format": "Games:{free}",
+        "path": "/home/mhd/Games",
+        "tooltip": false
+    }
+}
