@@ -126,12 +126,11 @@ alias grub-update="sudo grub-mkconfig -o /boot/grub/grub.cfg"
 alias cat="bat --theme=base16"
 alias ls='eza --icons=always --color=always -a -s type'
 alias vi='nvim'
-alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'
+alias fastfetch='fastfetch -c ~/.config/wayland/fastfetch/config.jsonc'   
+alias 3dfetch='~/.config/wayland/fastfetch/3dfetch/fetch --shading-chars ▒▓█ --infinite --no-info'
 alias tmux='tmux -f ~/.config/wayland/tmux/tmux.conf'
 alias reflector='sudo reflector --protocol https --latest 5 --sort rate --country Japan --save /etc/pacman.d/mirrorlist'
-alias update="~/.config/wayland/scripts/Updates"
 alias todo="~/.config/wayland/scripts/todo"
-alias programmer='sh ~/.config/wayland/scripts/programmer-info'
 alias icat='kitten icat'
 alias comica='python ~/.config/wayland/scripts/comica'
 
