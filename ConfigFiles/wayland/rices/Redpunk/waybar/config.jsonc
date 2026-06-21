@@ -75,7 +75,7 @@
                     ""
                 ]
             },
-            "format-muted": "Muted",
+            "format-muted": "",
             "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
             "tooltip": false
         },

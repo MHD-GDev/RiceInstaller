@@ -1,0 +1,12 @@
+* {
+    bg-col:         #5264ad;
+    bg-col-light:   #dbab58;
+    border-col:     #5264ad;
+    selected-col:   #414E86;
+    blue:           #5264ad;
+    fg-col:         #414E86;
+    fg-col2:        #dbab58;
+    grey:           #5264ad;
+    width:          600;
+    font:           "Meslo LG M 14";
+}

@@ -1,0 +1,90 @@
+{
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+    "layer": "top",
+    "position": "left",
+    "margin-top": 10,
+    "margin-left": 4,
+    "spacing": 50,
+    "modules-left": [
+        "custom/launcher"
+    ],
+    "modules-center": [
+        "hyprland/workspaces"
+    ],
+    "modules-right": [
+        "tray",
+        "wireplumber",
+        "battery",
+        "custom/logout"
+    ],
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "on-click": "activate",
+        "format-icons": {
+            "1": "種",
+            "2": "芽",
+            "3": "育",
+            "4": "花",
+            "5": "実",
+            "6": "響"
+        },
+        "sort-by-number": true,
+        "all-outputs": false,
+        "active-only": false, // Keep this as false
+        "persistent-workspaces": {
+            "*": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ]
+        },
+        "tooltip": false
+    },
+    "wireplumber": {
+        "format": "{icon}",
+        "format-icons": {
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "format-muted": "",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip": false
+    },
+    "battery": {
+        "tooltip": false,
+        "states": {
+            "warning": 20,
+            "critical": 10
+        },
+        "format": "{icon}",
+        "format-time": "{H} hr {M} min",
+        "format-icons": [
+            "󰂎",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
+        "format-charging": "󰉁",
+        "min-length": 7,
+        "max-length": 7,
+        "tooltip-format": "Discharging: {time}",
+        "tooltip-format-charging": "Charging: {time}",
+        "events": {
+            "on-discharging-warning": "notify-send 'Low Battery' '20% battery remaining'",
+            "on-discharging-critical": "notify-send 'Low Battery' '10% battery remaining' -u critical",
+            "on-charging-95": "notify-send 'Battery full' 'Battery is at 95%'"
+        }
+    }
+}
