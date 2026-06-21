@@ -2,6 +2,7 @@
     "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
     "layer": "top",
     "position": "bottom",
+    "mode": "dock",
     "margin-left": -15,
     "margin-right": -16,
     "height": 0,
@@ -12,7 +13,6 @@
         "hyprland/window"
     ],
     "modules-right": [
-        "custom/traycircle",
         "tray",
         "wireplumber",
         "battery",

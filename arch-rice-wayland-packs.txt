@@ -80,6 +80,7 @@ tlp
 timeshift
 telegram-desktop
 tmux
+ttf-zen-kakugothic-new
 ttf-meslo-nerd
 ttf-noto-emoji-monochrome
 unrar

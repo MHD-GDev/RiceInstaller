@@ -5,7 +5,7 @@
         "position": "top",
         "name": "topbar",
         "mode": "dock",
-        "height": 30,
+        "height": 32,
         "modules-right": [
             "custom/spacer1",
             "wireplumber",
@@ -52,7 +52,7 @@
         "position": "bottom",
         "name": "bottombar",
         "mode": "dock",
-        "height": 30,
+        "height": 32,
         "modules-left": [
             "custom/launcher",
             "custom/spacer2",
