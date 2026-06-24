@@ -75,6 +75,7 @@ sshfs
 starship
 swaybg
 socat
+scrcpy
 transmission-cli
 tlp
 timeshift

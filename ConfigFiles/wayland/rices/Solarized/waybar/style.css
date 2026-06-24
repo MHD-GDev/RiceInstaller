@@ -27,13 +27,24 @@
 
 /* Module colors */
 #cpu,
-#memory,
+#memory {
+    color: #268bd2;
+    /* Blue */
+    background: #002b36;
+    /* color8 */
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
 #disk {
     color: #268bd2;
     /* Blue */
     background: #002b36;
     /* color8 */
+    padding-left: 26px;
+    padding-right: 6px;
 }
+
 
 #wireplumber {
     color: #cb4b16;
@@ -76,6 +87,10 @@
     /* Magenta */
     background: #073642;
     /* color0 */
+}
+
+tooltip {
+    background: #073642;
 }
 
 /* Workspaces */

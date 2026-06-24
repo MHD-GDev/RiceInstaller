@@ -67,6 +67,9 @@
     color: #c0c0c0;
 }
 
+tooltip {
+    background-color: #232733;
+}
 
 #window {
     background-color: #ffe066;

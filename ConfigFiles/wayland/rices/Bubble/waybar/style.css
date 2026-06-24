@@ -11,6 +11,18 @@ window#waybar {
     font-weight: bold;
 }
 
+tooltip {
+    background: #232330;
+    margin-right: 22px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+    margin-top: 10px;
+}
+
 #workspaces {
     margin-top: 10px;
     margin-right: 10px;

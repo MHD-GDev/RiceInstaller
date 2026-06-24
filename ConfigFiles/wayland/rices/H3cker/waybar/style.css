@@ -15,6 +15,12 @@
     border-bottom: 4px solid #41ec55;
 }
 
+tooltip {
+    background: #000000;
+    border: 4px solid #41ec55;
+}
+
+#network,
 #wireplumber,
 #disk,
 #tray,

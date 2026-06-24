@@ -16,6 +16,13 @@ window#waybar {
     border-radius: 24px;
 }
 
+tooltip {
+    border: 3px solid #7AA2F7;
+    background: #858585;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 24px;
+}
+
 #custom-launcher {
     background: linear-gradient(45deg, #7AA2F7, #A9C3F7);
     border: 1px solid rgba(122, 162, 247, 0.3);

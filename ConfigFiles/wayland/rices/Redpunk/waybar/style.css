@@ -50,6 +50,12 @@ window#waybar {
     font-size: 16px;
 }
 
+tooltip {
+    background: transparent;
+    font-weight: bolder;
+    font-size: 16px;
+}
+
 #window {
     margin-top: 10px;
 }

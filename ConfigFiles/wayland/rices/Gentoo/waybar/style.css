@@ -11,6 +11,12 @@ window#waybar {
     box-shadow: 0 0 8px #c9bfff;
 }
 
+tooltip {
+    background: rgba(110, 91, 170, 0.5);
+    color: #eee9ff;
+    border: 2px solid #c9bfff;
+}
+
 #workspaces {
     margin-left: 12px;
 }

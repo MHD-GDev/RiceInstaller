@@ -10,7 +10,12 @@
 window#waybar {
     background: rgba(0, 0, 0, 0.5);
     color: #fcc000;
-    border : 3px solid #c4a000;
+    border: 3px solid #c4a000;
+}
+
+tooltip {
+    background: rgba(0, 0, 0, 0.5);
+    border: 3px solid #c4a000;
 }
 
 #workspaces button {
@@ -29,12 +34,13 @@ window#waybar {
     margin-bottom: 10px;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        0 0 10px rgba(252, 192, 0, 0.8); /* glow in theme color */
+        0 0 10px rgba(252, 192, 0, 0.8);
+    /* glow in theme color */
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
 }
 
 #workspaces button:hover {
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     margin-top: 5px;
     margin-bottom: 5px;
     border: 1px solid #c4a000;
@@ -43,12 +49,13 @@ window#waybar {
 #workspaces button.empty {
     color: #ffd11a;
 }
+
 #custom-launcher {
     margin-left: 5px;
     font-size: 30px;
 }
 
 #battery,
-#custom-logout{
+#custom-logout {
     margin-right: 5px;
 }
