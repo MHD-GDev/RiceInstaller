@@ -65,6 +65,7 @@ python-pillow
 python-gobject
 pacman-contrib
 poppler
+qbittorrent
 rofi
 rsync
 rtkit
@@ -76,7 +77,6 @@ starship
 swaybg
 socat
 scrcpy
-transmission-cli
 tlp
 timeshift
 telegram-desktop
