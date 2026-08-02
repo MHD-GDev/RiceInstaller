@@ -184,7 +184,7 @@ apply_rice() {
     ln -sf "$rice_path/mako/config.ini" "$HOME/.config/wayland/mako/config.ini"
     ln -sf "$rice_path/waybar" "$HOME/.config/wayland"
     ln -sf "$rice_path/rofi/shared-colors.rasi" "$HOME/.config/wayland/scripts/rofi-themes/shared-colors.rasi"
-    ln -sf "$rice_path/hypr/borders.conf" "$HOME/.config/wayland/hypr/borders.conf"
+    ln -sf "$rice_path/hypr/borders.lua" "$HOME/.config/wayland/hypr/borders.lua"
 
     killall -SIGUSR1 kitty 2>/dev/null
     hyprctl reload

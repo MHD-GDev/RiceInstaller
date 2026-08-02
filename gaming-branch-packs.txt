@@ -25,7 +25,10 @@ sc-controller
 xpad
 joycond-git
 pcsx2
+duckstation-qt-bin
 rpcs3-bin
+flycast-bin
+xenia-edge-bin
 dolphin-emu
 citra
 ppsspp
