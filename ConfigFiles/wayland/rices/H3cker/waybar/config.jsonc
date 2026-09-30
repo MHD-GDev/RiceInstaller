@@ -1,0 +1,77 @@
+[
+    {
+        "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "name": "topbar",
+        "layer": "top",
+        "position": "top",
+        "mode": "dock",
+        "height": 45,
+        "margin-right": 7,
+        "margin-left": 7,
+        "margin-bottom": -4,
+        "modules-left": [
+            "custom/separator-left",
+            "custom/stats",
+            "battery",
+            "memory",
+            "disk",
+            "cpu",
+            "tray",
+            "custom/separator"
+        ],
+        "modules-center": [
+            "custom/separator",
+            "hyprland/workspaces",
+            "custom/separator"
+        ],
+        "modules-right": [
+            "custom/separator",
+            "custom/skills",
+            "network",
+            "wireplumber",
+            "clock",
+            "custom/logout",
+            "custom/separator-right"
+        ],
+        "custom/separator": {
+            "format": "|"
+        },
+        "custom/separator-right": {
+            "format": "|"
+        },
+        "custom/separator-left": {
+            "format": "|"
+        },
+        "custom/stats": {
+            "format": "STATS  ",
+            "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+            "tooltip": false
+        },
+        "custom/skills": {
+            "format": "SKILLS",
+            "tooltip": false
+        }
+    },
+    {
+        "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+        "name": "bottombar",
+        "position": "bottom",
+        "margin-right": 7,
+        "margin-left": 7,
+        "modules-left": [
+            "custom/separator-left"
+        ],
+        "modules-center": [
+            "hyprland/window"
+        ],
+        "modules-right": [
+            "custom/separator-right"
+        ],
+        "custom/separator-right": {
+            "format": "|"
+        },
+        "custom/separator-left": {
+            "format": "|"
+        }
+    }
+]

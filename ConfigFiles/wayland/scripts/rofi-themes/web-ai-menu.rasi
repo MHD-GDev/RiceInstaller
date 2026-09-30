@@ -1,0 +1,129 @@
+/*****----- Web AI site picker -----*****/
+
+/*
+ * Used by web-ai-selector. Single column so up and down are unambiguous;
+ * `dynamic: true` shrinks the window to the number of sites so there are no
+ * empty rows.
+ */
+
+@import "shared-colors.rasi"
+
+configuration {
+    show-icons:                 false;
+    display-drun:               "";
+    drun-display-format:        "{name}";
+}
+
+/*****----- Window -----*****/
+window {
+    enabled:                     true;
+    transparency:                "real";
+    location:                    center;
+    anchor:                      center;
+    fullscreen:                  false;
+    width:                       420px;
+    x-offset:                    0px;
+    y-offset:                    0px;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      0px;
+    border-radius:               20px;
+    border-color:                @border-col;
+    background-color:            @bg-col;
+    cursor:                      "default";
+}
+
+/*****----- Main box -----*****/
+mainbox {
+    enabled:                     true;
+    spacing:                     0px;
+    margin:                      0px;
+    padding:                     10px;
+    border:                      0px;
+    border-radius:               20px;
+    border-color:                @border-col;
+    background-color:            @bg-col;
+    children:                    [ "listview" ];
+}
+
+/*****----- List -----*****/
+listview {
+    enabled:                     true;
+    columns:                     1;
+    lines:                       7;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    fixed-height:                false;
+    fixed-columns:               false;
+    spacing:                     2px;
+    margin:                      0px;
+    padding:                     0px;
+    border:                      0px;
+    border-radius:               0px;
+    border-color:                @border-col;
+    background-color:            transparent;
+    text-color:                  @fg-col;
+    cursor:                      "default";
+}
+
+scrollbar {
+    handle-width:                5px;
+    handle-color:                @blue;
+    border-radius:               0px;
+    background-color:            @bg-col-light;
+}
+
+/*****----- A row -----*****/
+element {
+    enabled:                     true;
+    spacing:                     10px;
+    margin:                      0px;
+    padding:                     12px 14px;
+    border:                      0px;
+    border-radius:               12px;
+    border-color:                @border-col;
+    background-color:            transparent;
+    text-color:                  @fg-col;
+    orientation:                 horizontal;
+    cursor:                      pointer;
+}
+
+element normal.normal {
+    background-color:            transparent;
+    text-color:                  @fg-col;
+}
+
+element selected.normal {
+    background-color:            @selected-col;
+    text-color:                  @fg-col2;
+}
+
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        22px;
+    cursor:                      inherit;
+}
+
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    highlight:                   inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+    cursor:                      inherit;
+}
+
+textbox {
+    background-color:            @bg-col-light;
+    text-color:                  @fg-col;
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+    padding:                     12px 14px;
+    margin:                      0px;
+    border-radius:               12px;
+    highlight:                   none;
+}

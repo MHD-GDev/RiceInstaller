@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# ┌─ WALLPAPER SELECTOR ─┐
+#
+# AUTHOR: MHD
+#
+# Wallpaper selector using rofi + swaybg
+
+set -euo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+# --- Dependencies ---
+require_cmd magick rofi swaybg
+
+# --- Rice state ---
+current_rice=$(current_rice)
+
+wall_dir="$WAYLAND_DIR/rices/$current_rice/walls"
+cache_dir="$HOME/.cache/$USER/$current_rice"
+
+mkdir -p "$wall_dir" "$cache_dir"
+
+# --- Convert webp to png in-place ---
+find "$wall_dir" -maxdepth 1 -type f -iname '*.webp' -exec mogrify -format png {} \; -delete
+
+# --- Rofi icon size ---
+# Was a `xrandr | awk ...` chain that hard-failed when xrandr was missing, and
+# picked up the wrong field on outputs whose flags precede the geometry.
+rofi_override="$(rofi_theme_override "$(rofi_icon_size)")"
+
+# --- Wallpaper functions ---
+set_wallpaper() {
+    stop_service swaybg
+    swaybg -i "$1" -m fill >/dev/null 2>&1 &
+    write_line "$WALLPAPER_STATE_FILE" "$1"
+
+    if [[ -z "${RANDOM_WALLPAPER_MODE:-}" ]]; then
+        notify "Wallpaper Changed" "Applied: $(basename "$1")"
+    fi
+}
+
+set_random_wallpaper() {
+    wallpaper=$(find "$wall_dir" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -print0 | shuf -z -n1 | xargs -0)
+    [[ -n $wallpaper ]] && set_wallpaper "$wallpaper"
+}
+
+# --- CLI args ---
+case "${1:-menu}" in
+random)
+    set_random_wallpaper
+    exit 0
+    ;;
+menu | "") ;; # continue
+*)
+    echo "Usage: $0 {menu|random}"
+    exit 1
+    ;;
+esac
+
+# --- Rofi menu with lazy thumbnail generation ---
+wall_selection=$(
+    find "$wall_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) | while read -r img; do
+        base=$(basename "$img")
+        cache_file="$cache_dir/$base"
+
+        # Lazy thumbnail generation: only create if missing
+        if [[ ! -f $cache_file ]]; then
+            magick "$img" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
+        fi
+
+        echo -e "$base\0icon\x1f${cache_file:-$img}"
+    done | rofi -dmenu \
+        -p "Select Wallpaper for $current_rice:" \
+        -theme "$WAYLAND_THEMES_DIR/rice_wall_selector.rasi" -theme-str "$rofi_override" \
+        -no-custom
+)
+
+[[ -n $wall_selection ]] && set_wallpaper "$wall_dir/$wall_selection"

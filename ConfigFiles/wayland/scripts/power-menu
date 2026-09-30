@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# ┌─ POWER MENU ─┐
+#
+# AUTHOR: MHD
+
+set -uo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+# Detect init system
+pid1=$(ps -p 1 -o comm= 2>/dev/null || true)
+init=${pid1##*/}
+
+# Path to current wallpaper file
+current_wallpaper_file="$WALLPAPER_STATE_FILE"
+
+# swaylock needs the wallpaper as separate argv entries, so build an array
+# instead of the command string that used to be passed to `eval`.
+swaylock_cmd() {
+    if [[ -s $current_wallpaper_file ]]; then
+        local wp
+        IFS= read -r wp <"$current_wallpaper_file"
+        LOCK_CMD=(swaylock -i "$wp" --effect-blur 8x8)
+    else
+        LOCK_CMD=(swaylock --effect-blur 10x10)
+    fi
+}
+
+case "$init" in
+    systemd)
+    poweroff=(systemctl poweroff)
+    reboot=(systemctl reboot)
+    logout=(hyprctl dispatch exit)
+
+    if command -v hyprlock >/dev/null 2>&1; then
+        # hyprlock is optional: it is not in the package list, but if the
+        # user installed it themselves this uses it.
+        LOCK_CMD=(hyprlock)
+    elif command -v swaylock >/dev/null 2>&1; then
+        swaylock_cmd
+    else
+        LOCK_CMD=(loginctl lock-session)
+    fi
+    ;;
+    openrc | runit | sysvinit)
+    poweroff=(shutdown -h now)
+    reboot=(shutdown -r now)
+    logout=(loginctl terminate-user "$USER")
+
+    if command -v swaylock >/dev/null 2>&1; then
+        swaylock_cmd
+    else
+        LOCK_CMD=(loginctl lock-session)
+    fi
+    ;;
+    rc | init | bsd*)
+    poweroff=(halt)
+    reboot=(reboot)
+    logout=(loginctl terminate-user "$USER")
+
+    if command -v swaylock >/dev/null 2>&1; then
+        swaylock_cmd
+    else
+        LOCK_CMD=(lock)
+    fi
+    ;;
+    *)
+    notify "Unknown init system: $init"
+    exit 1
+    ;;
+esac
+
+# Menu options with Nerd Font icons
+options=$'\uf023 Lock\n\uf08b Logout\n\uf01e Reboot\n\uf011 Shutdown'
+
+# Launch Rofi as dmenu with horizontal layout theme
+choice=$(printf '%s\n' "$options" | rofi -dmenu -theme "$WAYLAND_THEMES_DIR/power-menu.rasi" -p "Power Menu")
+
+# Match only the label (strip icon)
+label=${choice#* }
+[[ -z $label ]] && label=$choice
+
+# Execute selected action
+case "$label" in
+Lock) "${LOCK_CMD[@]}" ;;
+Logout) "${logout[@]}" ;;
+Reboot) "${reboot[@]}" ;;
+Shutdown) "${poweroff[@]}" ;;
+*) exit 0 ;;
+esac

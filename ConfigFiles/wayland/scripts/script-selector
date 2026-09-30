@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+# ┌─ SCRIPT SELECTOR ─┐
+#
+# AUTHOR: MHD
+
+set -uo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+SCRIPTS_DIR="${SCRIPTS_DIR:-$WAYLAND_SCRIPTS_DIR}"
+THEME_PATH="$SCRIPTS_DIR/rofi-themes/script-selector.rasi"
+
+# Scripts to ignore (add script names here)
+IGNORE_SCRIPTS=(
+    "cheatsheet-selector"
+    "mako-logging"
+    "todo"
+    "programmer-info"
+    "script-selector"
+    "minimize-toggle"
+    "rice-init"
+    "rice-selector"
+    "wallpaper-selector"
+    "random-wallpaper"
+    "create_rice"
+    "mpv-tui"
+    "Updates"
+    "comica"
+    "mpvt"
+    "mpv-tuiv1"
+    # Add more scripts to ignore here
+)
+
+# Membership test for the ignore list, so filtering costs no forks.
+declare -A ignored=()
+for name in "${IGNORE_SCRIPTS[@]}"; do
+    ignored["$name"]=1
+done
+
+# The menu icon that used to be prefixed to every row. Nothing adds it now, but
+# a row can still carry it when rofi hands the selection back, so strip it.
+MENU_ICON=$'\xf3\xb1\x9c\xa7'
+
+# Check if scripts directory exists
+if [[ ! -d $SCRIPTS_DIR ]]; then
+    rofi_error "Scripts directory not found: $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Check if theme file exists
+if [[ ! -f $THEME_PATH ]]; then
+    rofi_error "Theme file not found: $THEME_PATH"
+    exit 1
+fi
+
+# Collect every script, in the same order `find | sort` produced: the glob is
+# already sorted with the same collation. Directories (cheatsheets, configs,
+# rofi-themes, lib) and .rasi themes are left out.
+declare -a candidates=()
+for script_path in "$SCRIPTS_DIR"/*; do
+    [[ -f $script_path && $script_path == *.rasi ]] && continue
+    [[ -f $script_path ]] || continue
+    script=${script_path##*/}
+    [[ -n ${ignored[$script]+set} ]] && continue
+    candidates+=("$script")
+done
+
+# Check if any scripts were found
+if ((${#candidates[@]} == 0)); then
+    rofi_error "No scripts found in $SCRIPTS_DIR"
+    exit 1
+fi
+
+# Only the executable ones can actually be launched, so only they are listed.
+# Building the rows in one printf keeps filenames with spaces intact and drops
+# the per-row subshell.
+menu=""
+for script in "${candidates[@]}"; do
+    if [[ -x $SCRIPTS_DIR/$script ]]; then
+        menu+="$script"$'\n'
+    fi
+done
+
+# Show rofi menu and get user selection
+# rofi exits 1 when the user cancels, which is not an error here.
+selected=$(printf '%s' "$menu" | rofi -dmenu -i -theme "$THEME_PATH" -markup) || true
+
+# Process selection
+if [[ -n $selected ]]; then
+    # Remove the icon prefix to get the actual script name
+    if [[ $selected == "$MENU_ICON "* ]]; then
+        selected=${selected#"$MENU_ICON" }
+    fi
+    script_name=$selected
+    script_path="$SCRIPTS_DIR/$script_name"
+
+    if [[ -x $script_path ]]; then
+        # Execute the script directly if it's executable
+        "$script_path" &
+    elif [[ -f $script_path ]]; then
+
+        # Get the MIME type of the file
+        MIME_TYPE=$(file -b --mime-type "$script_path")
+
+        case "$MIME_TYPE" in
+        # Shell scripts (e.g., bash, sh)
+        "text/x-shellscript")
+            bash "$script_path" &
+            ;;
+        # Python scripts
+        "text/x-python")
+            python3 "$script_path" &
+            ;;
+        *)
+            rofi_error "Script is not executable and file type ($MIME_TYPE) is unknown. Please make it executable with: chmod +x $script_name"
+            ;;
+        esac
+    else
+        rofi_error "Script not found: $script_name"
+    fi
+fi

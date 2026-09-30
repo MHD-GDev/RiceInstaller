@@ -1,0 +1,143 @@
+{
+    "hyprland/workspaces": {
+        "format": "{icon}",
+        "on-click": "activate",
+        "format-icons": {
+            "1": "I",
+            "2": "II",
+            "3": "III",
+            "4": "IV",
+            "5": "V",
+            "6": "VI"
+        },
+        "sort-by-number": true,
+        "all-outputs": false,
+        "active-only": false, // Keep this as false
+        "persistent-workspaces": {
+            "*": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+            ]
+        },
+        "tooltip": false
+    },
+    "hyprland/window": {
+        "format": "{title}",
+        "max-length": 48,
+        "tooltip": false,
+        "icon": true,
+        "icon-size": 18
+    },
+    "clock": {
+        "format": " {:%I:%M %p}",
+        "format-alt": " {:%Y/%m/%d}",
+        "tooltip": false
+    },
+    "battery": {
+        "states": {
+            "warning": 20,
+            "critical": 10
+        },
+        "format": "{icon} {capacity}%",
+        "format-time": "{H} hr {M} min",
+        "format-icons": [
+            "󰂎",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
+        "format-charging": "󰉁 {capacity}%",
+        "min-length": 7,
+        "max-length": 7,
+        "tooltip-format": "Discharging: {time}",
+        "tooltip-format-charging": "Charging: {time}",
+        "events": {
+            "on-discharging-warning": "notify-send 'Low Battery' '20% battery remaining'",
+            "on-discharging-critical": "notify-send 'Low Battery' '10% battery remaining' -u critical",
+            "on-charging-95": "notify-send 'Battery full' 'Battery is at 95%'"
+        }
+    },
+    "cpu": {
+        "format": "CPU {usage}% ",
+        "format-warning": " {usage}%",
+        "format-critical": " {usage}%",
+        "states": {
+            "warning": 75,
+            "critical": 90
+        },
+        "interval": 10,
+        "tooltip": false
+    },
+    "custom/launcher": {
+        //"format": " 󰣨 ",
+        // "format": " 󰣇 ",
+        // "format": "  ",
+        // "format": "  "
+        "format": "  ",
+        "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+        "tooltip": false
+    },
+    "memory": {
+        "format": " MEM {used:0.1f}GB",
+        "format-warning": " {percentage}%",
+        "format-critical": " {percentage}%",
+        "states": {
+            "warning": 75,
+            "critical": 90
+        },
+        "interval": 10,
+        "tooltip-format": "Memory Used: {used:0.1f} GB / {total:0.1f} GB"
+    },
+    "disk": {
+        "format": " :{free}",
+        "path": "/",
+        "tooltip": false
+    },
+    "network": {
+        "format-wifi": "{essid} ({signalStrength}%) ",
+        "format-ethernet": " Ethernet-connected ",
+        "format-disconnected": "Disconnected ⚠",
+        "tooltip": false
+    },
+    "tray": {
+        "spacing": 10,
+        "icon-size": 24,
+        "tooltip": false
+    },
+    "wireplumber": {
+        "format": "{icon} {volume}%",
+        "format-icons": {
+            "default": [
+                "",
+                "",
+                ""
+            ]
+        },
+        "format-muted": "  Muted",
+        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "tooltip": false
+    },
+    "custom/logout": {
+        "format": "  ",
+        "on-click": "~/.config/wayland/scripts/power-menu",
+        "tooltip": false
+    },
+    "custom/separator": {
+        "format": "|",
+        "tooltip": false
+    },
+    "custom/separator2": {
+        "format": "/",
+        "tooltip": false
+    }
+}

@@ -1,0 +1,349 @@
+#!/usr/bin/env bash
+
+# ┌─ CREATE RICE ─┐
+#
+#   AUTHOR: MHD
+
+set -euo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+RICE_DIR="$WAYLAND_DIR/rices"
+
+create_new_rice() {
+    local rice_name="$1"
+    local rice_path="$RICE_DIR/$rice_name"
+
+    # Check for invalid rice names
+    if [[ "$rice_name" =~ ^[~.]|^-|/|\\$|^(cache|local|ai|config|script|CACHE|LOCAL|AI|CONFIG|SCRIPT)$ ]]; then
+        echo "Invalid rice name. Names cannot start with '~', '.', '-' or contain '/' or '\', 'cache', 'local', 'ai', 'config', 'script', 'CACHE', 'LOCAL', 'AI', 'CONFIG', or 'SCRIPT'."
+        return 1
+    fi
+
+    if [[ -d "$rice_path" ]]; then
+        echo "Rice '$rice_name' already exists!"
+        return 1
+    fi
+
+    # Create directory structure
+    mkdir -p "$rice_path"/{hypr,kitty,mako,rofi,walls,waybar}
+
+    # Create template configs
+    cat >"$rice_path/kitty/kitty.conf" <<'EOF'
+# Example Rice - Kitty Configuration
+font_family      Meslo LG M
+font_size        14
+
+# Example rice Theme
+foreground       #d8dee9
+background       #2e3440
+cursor           #93a1a1
+
+# Black
+color0           #3b4252
+color8           #4c566a
+
+# Red
+color1           #bf616a
+color9           #bf616a
+
+# Green
+color2           #a3be8c
+color10          #a3be8c
+
+# Yellow
+color3           #ebcb8b
+color11          #ebcb8b
+
+# Blue
+color4           #81a1c1
+color12          #81a1c1
+
+# Magenta
+color5           #eeade8
+color13          #eeade8
+
+# Cyan
+color6           #88c0d0
+color14          #8fbcbb
+
+# White
+color7           #e5e9f0
+color15          #eceff4
+
+# Window settings
+window_padding_width 10
+confirm_os_window_close 0
+
+# opacity
+background_opacity 0.6
+EOF
+
+    cat >"$rice_path/mako/config.ini" <<'EOF'
+
+# [ Global Config ]
+# max no of notification in buffer
+max-history=5
+
+# arrange notification ( +/- time or +/- priority )
+sort=+time
+
+# [ BINDING OPTIONS ]
+# Supported values: none, dismiss, dismiss-all, 
+# dismiss-group, invoke-default-action & exec <command>
+
+on-button-left=invoke-default-action
+on-button-middle=dismiss-group
+on-button-right=dismiss
+on-touch=invoke-default-action
+on-notify=exec mpv /usr/share/sounds/freedesktop/stereo/message.oga
+
+# [ STYLE OPTIONS ]
+font= Meslo LG M 12
+
+# background color of notification( #RRGGBB | #RRGGBBAA )
+background-color=#2b303bcc
+
+# Text color inside the notification( #RRGGBB | #RRGGBBAA )
+text-color=#fdf6e3
+
+# Set width of notification popup.( value in px )
+width=299
+
+# maximum height of notification( value in px )
+height=99
+
+# margin of notification which is margin for the list of notification block( value in px ).
+outer-margin=1
+# Margin of each individual notification
+margin=10
+
+# Set padding on each side to the size specified by directional( value in px )
+padding=10
+
+#Set popup border size to px pixels.(value in px )
+border-size=2
+
+# color of border of each notification( #RRGGBB | #RRGGBBAA )
+border-color=#ffb7c5cc
+
+# bordear radious of each notification(value in px )
+border-radius=14
+
+# Set popup progress indicator color to color.( value [over|source] ( #RRGGBB | #RRGGBBAA ))
+progress-color=over #ffb7c5
+
+# Show icons in notifications.( value: -1 | 1 )
+icons=1
+
+#  Set maximum icon size to px pixels.(value in px)
+max-icon-size=34
+
+# Paths to search for icons when a notification specifies a name instead of a full path.(value path[:path...] )
+
+#  Position of the icon relative to the displayed text.(value: left | right | top | bottom )
+icon-location=left
+
+# enable pango - format notification( value 0|1 )
+# markup=1
+
+#  Applications may request an action( value 0|1 )
+actions=0
+
+# mako will save notifications that have reached their timeout into the history buffer in‐
+# stead of immediately deleting them.
+history=1
+
+#  Set notification text alignment.( value: left|right|center )
+text-alignment=center
+
+# Set the default timeout to timeout in milliseconds.
+default-timeout=3500
+
+# Set maximum number of visible notifications 
+max-visible=5
+
+# Arrange mako at the specified layer, relative to normal windows.(value: background, bottom, top, overlay )
+layer=top
+
+# Show notifications at the specified position on the output.
+anchor=top-right
+
+EOF
+
+    cat >"$rice_path/waybar/config.jsonc" <<'EOF'
+{
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+    "layer": "top", 
+    "position": "top", 
+    "margin-left": -15,
+    "margin-right": -16,
+    "height": 60,  
+    "spacing": -5, 
+
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/workspaces",
+        "custom/music",
+        "tray"
+    ],
+
+    "modules-center": [
+        "hyprland/window"
+    ],
+
+    "modules-right": [
+        "wireplumber", 
+        "cpu",
+        "memory",
+        "battery",
+        "clock",
+        "custom/logout"
+    ]
+}
+EOF
+
+    cat >"$rice_path/waybar/style.css" <<'EOF'
+* {
+    font-family: "Meslo LG M";
+    font-size: 16px;
+}
+
+window#waybar {
+    background-color: transparent;
+}
+
+#window label {
+    font-weight: bold;
+}
+
+#workspaces {
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 15px;
+}
+
+#workspaces button {
+    color: #ebcb8b;
+    background: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+}
+
+#workspaces button.active {
+    background: #ebcb8b;
+    color: #232330;
+    margin-right: 10px;
+    border-radius: 15px;
+}
+
+#workspaces button.empty{
+    color: #828dc7;
+}
+
+#window,
+#tray,
+#cpu,
+#memory,
+#wireplumber,
+#clock,
+#custom-music,
+#custom-launcher,
+#custom-logout,
+#battery {
+    color: #89b4fa;
+    background: #232330;
+    margin-right: 22px;
+    border-radius: 15px;
+    box-shadow: rgba(0, 0, 0, 0.116) 2px 2px 5px 2px;
+    padding: 20px;
+    padding-top: 4px;
+    padding-bottom: 2px;
+    font-weight: bolder;
+    margin-top: 10px;
+}
+
+#clock {
+    margin-right: 25px;
+}
+
+#custom-launcher {
+    background: radial-gradient(circle, #eeade8 0%, #bf616a 12%, #ebcb8b 19%, #81a1c1 20%, #bf616a 24%, #ebcb8b 36%, #81a1c1 37%, #eeade8 48%, #eeade8 52%, #81a1c1 52%, #ebcb8b 66%, #81a1c1 67%, #eeade8 68%, #eeade8 77%, #81a1c1 78%, #eeade8 83%, #bf616a 90%, #81a1c1 100%);
+    background-size: 200% 500%;
+    color: #2e3440;
+    margin-top: 10px;
+    margin-right: 10px;
+    margin-left: 25px;
+    font-size: 31px;
+}
+EOF
+
+    cat >"$rice_path/rofi/shared-colors.rasi" <<'EOF'
+* {
+    bg-col:         #2E3440;
+    bg-col-light:   #3B4252;
+    border-col:     #88C0D0;
+    selected-col:   #3B4252;
+    blue:           #88C0D0;
+    fg-col:         #D8DEE9;
+    fg-col2:        #BF616A;
+    grey:           #4C566A;
+    width:          600;
+    font:           "JetBrainsMono Nerd Font 14";
+}
+EOF
+
+    # Hyprland borders.
+    #
+    # This has to be borders.lua, because that is the file
+    # ~/.config/wayland/hypr/borders.lua points at, and it is the file
+    # rice-selector links into the active rice. A borders.conf here was simply
+    # never read, so every new rice inherited the previous rice's borders.
+    #
+    # It uses the same hl.config() shape as the existing rices, and every value
+    # is yours to change: border_size, gaps, rounding and the two border colors.
+    cat >"$rice_path/hypr/borders.lua" <<'EOF'
+---@module 'hl'
+
+-- Window borders for this rice.
+-- Values below are the starting point - edit them to taste, or copy the
+-- borders.lua from another rice in ~/.config/wayland/rices/ as a reference.
+
+hl.config({
+    general = {
+        layout = "dwindle",
+        border_size = 4,
+        gaps_in = 4,
+        gaps_out = 11,
+        allow_tearing = true,
+        col = {
+            inactive_border = "0xff434C5E", -- Nordic inactive
+            active_border = "0xfff9d9a6",   -- Light yellow active
+        },
+    },
+})
+
+hl.config({
+    decoration = {
+        rounding = 15,
+    },
+})
+EOF
+
+    echo "Rice '$rice_name' created successfully at $rice_path"
+    echo "Don't forget to add wallpapers to $rice_path/walls/"
+}
+
+if [[ -n "$1" ]]; then
+    create_new_rice "$1"
+else
+    echo "Usage: $0 <rice_name>"
+    echo "Example: $0 MyCustomRice"
+fi

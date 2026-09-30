@@ -1,0 +1,131 @@
+/*****----- Rice-aware wallpaper & rice picker -----*****/
+
+/*
+ * Used by both rice-selector and wallpaper-selector.
+ *
+ * This used to hardcode its own Catppuccin colours, so the picker looked the
+ * same no matter which rice was active. It now imports shared-colors.rasi
+ * (a symlink into the active rice) like every other menu, so the tiles follow
+ * the rice exactly like kitty, waybar and mako do.
+ *
+ * Layout: a tile grid. Each tile is the preview image with its name
+ * underneath, so you can recognise a wallpaper by picture and by name.
+ * rice-selector passes -fixed-num-lines true, which makes rofi derive the
+ * column count from `lines`; with lines: 2 that lays all 14 rices out in a
+ * 7x2 grid with no scrolling.
+ *
+ * Row/column note: the tiles are laid out on a row-major grid, so the natural
+ * axis is left/right. There is no key-nav block, so navigation is rofi's
+ * default: the four arrows move the selection, Return accepts, Escape cancels.
+ */
+
+@import "shared-colors.rasi"
+
+configuration {
+    display-drun:               "";
+    drun-display-format:        "{name}";
+    show-icons:                 true;
+    /* font comes from shared-colors.rasi, so it follows the rice */
+}
+
+/*****----- Window -----*****/
+window {
+    enabled:                     true;
+    fullscreen:                  false;
+    width:                       100%;
+    transparency:                "real";
+    cursor:                      "default";
+    spacing:                     0px;
+    padding:                     0px;
+    margin:                      0px;
+    border:                      0px;
+    border-radius:               0px;
+    border-color:                transparent;
+    background-color:            transparent;
+}
+
+/*****----- Main box -----*****/
+mainbox {
+    enabled:                     true;
+    children:                    [ "listview" ];
+    spacing:                     12px;
+    margin:                      28px;
+    padding:                     18px;
+    border:                      0px;
+    border-radius:               20px;
+    border-color:                @border-col;
+    background-color:            @bg-col;
+    cursor:                      "default";
+}
+
+/*****----- Tile grid -----*****/
+listview {
+    enabled:                     true;
+    columns:                     6;
+    lines:                       2;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    spacing:                     10px;
+    padding:                     0px;
+    margin:                      0px;
+    border:                      0px;
+    border-radius:               0px;
+    border-color:                transparent;
+    background-color:            transparent;
+    text-color:                  @fg-col;
+    cursor:                      "default";
+}
+
+/*****----- A single tile -----*****/
+element {
+    enabled:                     true;
+    orientation:                 vertical;
+    spacing:                     6px;
+    padding:                     8px;
+    margin:                      0px;
+    width:                       150px;
+    border:                      2px;
+    border-radius:               14px;
+    border-color:                transparent;
+    background-color:            transparent;
+    text-color:                  @fg-col;
+    cursor:                      pointer;
+}
+
+element normal.normal {
+    background-color:            transparent;
+    border-color:                transparent;
+    text-color:                  @fg-col;
+}
+
+element selected.normal {
+    background-color:            @selected-col;
+    border-color:                @selected-col;
+    text-color:                  @fg-col2;
+}
+
+/*****----- Preview image -----*****/
+element-icon {
+    background-color:            transparent;
+    text-color:                  inherit;
+    size:                        96px;
+    border-radius:               10px;
+    cursor:                      inherit;
+    margin:                      0px;
+}
+
+/*****----- Name under the image -----*****/
+element-text {
+    background-color:            transparent;
+    text-color:                  inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.5;
+    padding:                     0px;
+    margin:                      0px;
+    cursor:                      inherit;
+}

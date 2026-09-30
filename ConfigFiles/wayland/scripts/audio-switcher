@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+# ┌─ AUDIO SWITCHER ─┐
+#
+# AUTHOR: MHD
+
+set -uo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+THEME="$WAYLAND_THEMES_DIR/audio-output.rasi"
+
+# Build the sink list in a single awk pass.
+#
+# The previous version piped wpctl status through six filter processes and then
+# ran a two-sed plus xargs pipeline per sink, in a subshell. It also stripped
+# the leading `*` before the loop looked for it, so the default sink was never
+# marked, and it stripped the indent before removing the `*`, which left the
+# digit/dot separator unparsed and printed rows like "45.: Built-in Audio".
+sinks=$(wpctl status | awk '
+    # Sinks: opens the section, Sources: closes it. Real wpctl output repeats
+    # "Sinks:" once per card, so this is a toggle rather than a one-shot.
+    /Sinks:/ { in_sinks = 1; next }
+    /Sources:/ { in_sinks = 0; next }
+
+    in_sinks && !/^[[:space:]]*$/ {
+        line = $0
+
+        # wpctl marks the default sink with a leading asterisk.
+        is_default = (line ~ /^[[:space:]]*[*]/) ? 1 : 0
+
+        # Drop the box drawing characters wpctl uses for the tree.
+        gsub(/[│├─└┬]/, "", line)
+
+        sub(/^[[:space:]]*[*]?[[:space:]]*/, "", line)
+        if (line == "") next
+
+        # "47. USB Audio Device" or "47: USB Audio Device". The id is taken with
+        # its own match, so the description is whatever follows the separator;
+        # RLENGTH from a capturing match would cover the whole line.
+        if (match(line, /^[0-9]+/) == 0) next
+        id = substr(line, 1, RLENGTH) + 0
+        desc = substr(line, RLENGTH + 1)
+        sub(/^[.:][[:space:]]+/, "", desc)
+
+        # The first matching rule wins: each one replaces the whole
+        # description, so anything an earlier rule rewrote can no longer match
+        # a later one.
+        if (desc ~ /HDMI/) desc = "HDMI Output"
+        else if (desc ~ /DP/) desc = "DisplayPort Output"
+        else if (desc ~ /Analog Stereo/) desc = "Built-in Audio"
+        else if (desc ~ /Digital Stereo/) desc = "Digital Output"
+        else if (desc ~ /Controller/) desc = ""
+
+        sub(/\[.*\]/, "", desc)
+
+        # Collapse runs of whitespace. Done with gsub rather than xargs, which
+        # also ate apostrophes and backslashes in device names.
+        gsub(/[[:space:]]+/, " ", desc)
+        sub(/^ /, "", desc)
+        sub(/ $/, "", desc)
+
+        print id ": " (is_default ? "★ " : "") desc
+}')
+
+# Let user select a sink
+# rofi exits 1 when the user cancels, which is not an error here.
+selected_sink=$(printf '%s' "$sinks" | rofi -theme "$THEME" -dmenu -p "Select Audio Output:" \
+    -no-show-icons) || true
+
+if [[ -n $selected_sink ]]; then
+    # Extract just the numeric sink ID
+    sink_id=${selected_sink%%:*}
+    sink_id=${sink_id//[[:space:]]/}
+
+    # Verify it's a number
+    if [[ $sink_id =~ ^[0-9]+$ ]]; then
+        wpctl set-default "$sink_id"
+        # Get the simplified name without the star for notification
+        sink_name=${selected_sink#*:}
+        sink_name=${sink_name//[[:space:]]+/ }
+        sink_name=${sink_name# }
+        sink_name=${sink_name% }
+        sink_name=${sink_name#★ }
+        notify "Audio Output Changed" "Set default to: $sink_name"
+    else
+        notify "Error" "Invalid sink ID: $sink_id"
+    fi
+else
+    notify "Info" "No sink selected"
+fi

@@ -1,0 +1,25 @@
+{
+    "include": "~/.config/wayland/scripts/configs/waybar-modules.jsonc",
+    "layer": "top",
+    "position": "bottom",
+    "mode": "dock",
+    "margin-left": -15,
+    "margin-right": -16,
+    "height": 0,
+    "spacing": -5,
+    "modules-left": [
+        "custom/launcher",
+        "hyprland/window"
+    ],
+    "modules-right": [
+        "tray",
+        "wireplumber",
+        "battery",
+        "clock"
+    ],
+    "custom/launcher": {
+        "format": " ",
+        "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
+        "tooltip": false
+    }
+}

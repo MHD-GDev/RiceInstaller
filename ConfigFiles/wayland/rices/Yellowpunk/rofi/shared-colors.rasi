@@ -1,0 +1,12 @@
+* {
+    bg-col:         #ccb232;
+    bg-col-light:   #997300;
+    border-col:     #b38f00;
+    selected-col:   #997300;
+    blue:           #f1c16d;
+    fg-col:         #ffffff;
+    fg-col2:        #f1c16d;
+    grey:           #ffffff;
+    width:          600;
+    font:           "MesloLGL Nerd Font Mono 14";
+}

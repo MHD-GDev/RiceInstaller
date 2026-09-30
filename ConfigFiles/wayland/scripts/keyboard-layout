@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# ┌─ KEYBOARD LAYOUT ─┐
+#
+# AUTHOR: MHD
+
+set -uo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+ROFI_THEME="$WAYLAND_THEMES_DIR/keyboard-layout.rasi"
+
+# Ordered list of codes
+ORDER=(us ir jp cn ru es)
+
+# Map codes to fcitx5 engines
+declare -A ENGINES=(
+    [us]="keyboard-us"
+    [ir]="keyboard-ir"
+    [ru]="keyboard-ru"
+    [es]="keyboard-es"
+    [jp]="mozc"
+    [cn]="pinyin"
+)
+
+# Map codes to display names
+declare -A NAMES=(
+    [us]="English"
+    [ir]="Persian"
+    [ru]="Russian"
+    [es]="Espanish"
+    [jp]="Japanese"
+    [cn]="Chinese"
+)
+
+# Build menu in the specified order
+menu=""
+for code in "${ORDER[@]}"; do
+    menu+="${NAMES[$code]} ($code)"$'\n'
+done
+
+chosen=$(printf '%s' "$menu" | rofi -dmenu -i -p "Keyboard Layout" -theme "$ROFI_THEME")
+
+if [[ -n $chosen ]]; then
+    # pull the code out of "Name (code)" without awk/tr
+    inner=${chosen#*\(}
+    code=${inner%%\)*}
+    code=${code,,}
+    engine="${ENGINES[$code]-}"
+
+    if [[ -n $engine ]]; then
+        fcitx5-remote -s "$engine"
+
+        notify "Keyboard Layout" "Switched to: ${NAMES[$code]} ($code)"
+    fi
+fi

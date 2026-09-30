@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# ┌─ RICE INIT ─┐
+#
+# AUTHOR: MHD
+
+set -euo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+# Log file for debugging
+LOG_FILE="$HOME/.cache/rice-init.log"
+mkdir -p -- "$(dirname -- "$LOG_FILE")" 2>/dev/null || true
+
+# printf %()T is a bash builtin, so timestamping costs no fork
+log() {
+    printf '%(%F %T)T %s\n' -1 "$*" >>"$LOG_FILE" 2>/dev/null || true
+}
+
+# Keep the debug log from growing without bound
+trim_log() {
+    local lines
+    lines=$(wc -l <"$LOG_FILE" 2>/dev/null || echo 0)
+    ((lines > 200)) || return 0
+    tail -n 100 -- "$LOG_FILE" >"$LOG_FILE.trim" 2>/dev/null &&
+        mv -f -- "$LOG_FILE.trim" "$LOG_FILE" || rm -f -- "$LOG_FILE.trim"
+}
+
+# Wait for essential services
+wait_for_service() {
+    local service="$1"
+    local timeout=10
+    local count=0
+
+    log "Waiting for $service..."
+
+    while ! pgrep -x "$service" >/dev/null && ((count < timeout)); do
+        sleep 1
+        # assignment, not ((count++)): an arithmetic statement evaluating to 0
+        # returns 1 and would abort under `set -e`
+        count=$((count + 1))
+    done
+
+    if ((count == timeout)); then
+        log "Timeout waiting for $service"
+        return 1
+    fi
+    log "$service is running"
+    return 0
+}
+
+log "Rice init started"
+
+# Wait for Hyprland and essential services
+wait_for_service "Hyprland" || true
+wait_for_service "pipewire" || true
+
+# Additional wait for compositor to stabilize
+sleep 2
+
+# Initialize rice system
+RICE_SCRIPT="$_lib/rice-selector"
+[[ -x $RICE_SCRIPT ]] || RICE_SCRIPT="$WAYLAND_SCRIPTS_DIR/rice-selector"
+[[ -x $RICE_SCRIPT ]] || RICE_SCRIPT="$WAYLAND_DIR/scripts/rice-selector"
+log "Checking rice selector at $RICE_SCRIPT"
+
+if [[ -x $RICE_SCRIPT ]]; then
+    # Get the current rice that will be initialized
+    CURRENT_RICE=$("$RICE_SCRIPT" current 2>/dev/null || true)
+    log "Initializing rice: $CURRENT_RICE"
+
+    "$RICE_SCRIPT" init >/dev/null 2>&1 || true
+    log "Rice selector init completed for: $CURRENT_RICE"
+else
+    log "Rice selector script not found or not executable"
+    notify "Rice Init Error" "Rice selector script not found or not executable"
+fi
+
+trim_log

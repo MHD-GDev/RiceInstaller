@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# ┌─ WEB AI SELECTOR ─┐
+#
+# AUTHOR: MHD
+
+set -uo pipefail
+
+_lib=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+# shellcheck source=lib/common.sh
+. "$_lib/lib/common.sh"
+
+# Define AI applications and URLs
+AI_APPS=(
+    "Microsoft Copilot|https://copilot.microsoft.com"
+    "DuckDuckgo AI|https://duck.ai"
+    "Brave AI|https://search.brave.com/ask"
+    "Gemini|https://gemini.google.com/chat"
+)
+
+# Function to find first available browser
+find_browser() {
+    local browsers=("portable-firefox-launcher" "qutebrowser" "zen-browser" "firefox" "chromium" "vivaldi-stable" "google-chrome" "brave-browser" "epiphany" "libre-wolf")
+    local browser
+    for browser in "${browsers[@]}"; do
+        if command -v "$browser" >/dev/null 2>&1; then
+            BROWSER_CMD="$browser"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# rofi is case sensitive here, so compare the selection the same way the old
+# `xargs` round-trip did: trimmed at both ends.
+trim() {
+    local s="$1"
+    s="${s#"${s%%[![:space:]]*}"}"
+    s="${s%"${s##*[![:space:]]}"}"
+    printf '%s' "$s"
+}
+
+# --- Robust List Generation and Rofi Call ---
+names_only=()
+for app in "${AI_APPS[@]}"; do
+    names_only+=("${app%%|*}")
+done
+
+# Show Rofi menu and capture selection
+selected_name=$(printf '%s\n' "${names_only[@]}" | rofi -dmenu -theme "$WAYLAND_THEMES_DIR/web-ai-menu.rasi" -p "Select AI Site")
+
+# Exit if no selection
+[[ -z $selected_name ]] && exit 0
+
+# --- URL Mapping and Execution ---
+selected_trimmed=$(trim "$selected_name")
+URL=""
+entry=""
+entry_name=""
+entry_trimmed=""
+for entry in "${AI_APPS[@]}"; do
+    entry_name=${entry%%|*}
+    entry_trimmed=$(trim "$entry_name")
+    if [[ $entry_trimmed == "$selected_trimmed" ]]; then
+        URL=${entry#*|}
+        break
+    fi
+done
+
+# Execute if URL found
+if [[ -n $URL ]]; then
+    BROWSER_CMD=""
+    if find_browser; then
+        # Launch browser in background
+        "$BROWSER_CMD" "$URL" &
+    else
+        # Error message if no browser found
+        rofi_error "No suitable web browser found to open the URL."
+        exit 1
+    fi
+fi

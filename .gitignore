@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# Runtime state and machine-specific files.
+#
+# Everything the rice creates on a live machine has to stay out of git: the
+# installer copies this tree into ~/.config, and the scripts then repoint
+# symlinks, regenerate caches and write state files inside it.
+# ---------------------------------------------------------------------------
+
+# zsh: completion dump and history are rebuilt per machine.
+ConfigFiles/wayland/zsh/zcompdump
+ConfigFiles/wayland/zsh/zcompdump.*
+ConfigFiles/wayland/zsh/.histfile*
+
+# Neovim: lazy-lock.json is per machine and pin-stalls plugin updates for
+# everyone who clones the repo.
+IDE/nvim/lazy-lock.json
+
+# Note: ConfigFiles/wayland/.current_rice is deliberately NOT ignored. It is
+# tracked on purpose: it names the rice a fresh install boots into (Rainbow),
+# so the first login has a sane theme before anything is selected by hand.
+# rice-selector rewrites it only in the installed copy under ~/.config.
+
+# ---------------------------------------------------------------------------
+# Clones the installer makes next to itself
+# ---------------------------------------------------------------------------
+/paru/
+/where-is-my-sddm-theme/
+/llama.cpp/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+
+# ---------------------------------------------------------------------------
+# Odds and ends
+# ---------------------------------------------------------------------------
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
