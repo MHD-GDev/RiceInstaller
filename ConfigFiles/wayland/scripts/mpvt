@@ -84,6 +84,26 @@ def get_mpv_property(socket_path, prop):
     return None
 
 
+def get_mpv_properties(socket_path, *props):
+    """Fetch multiple properties in a single socat call to reduce IPC overhead."""
+    if not props:
+        return {}
+    command = ["get_property"] + list(props)
+    response = send_mpv_command(socket_path, command)
+    if response:
+        try:
+            data = json.loads(response)
+            if isinstance(data, dict) and "data" in data:
+                # Single property response
+                return {props[0]: data["data"]}
+            elif isinstance(data, list):
+                # Batch response: list of objects with "data"
+                return {prop: item.get("data") for prop, item in zip(props, data)}
+        except Exception:
+            pass
+    return {prop: None for prop in props}
+
+
 def load_visualizer_mode():
     try:
         with open(CONFIG_FILE, "r") as f:
@@ -103,7 +123,12 @@ def save_visualizer_mode(mode):
 def main(stdscr, directory):
     curses.curs_set(0)
     stdscr.keypad(True)
-    stdscr.timeout(16)
+    stdscr.timeout(0)
+    try:
+        stdscr.idlok(1)
+        stdscr.idcok(1)
+    except Exception:
+        pass
     curses.start_color()
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_RED, -1)
@@ -143,9 +168,15 @@ def main(stdscr, directory):
             pass
 
     try:
+        last_height = height = 0
+        last_width = width = 0
         while True:
-            stdscr.clear()
-            height, width = stdscr.getmaxyx()
+            h, w = stdscr.getmaxyx()
+            if h != last_height or w != last_width:
+                last_height = h
+                last_width = w
+            height, width = h, w
+            stdscr.erase()
             content_width = width - 2
 
             # Update visualizer ONLY when playing and not paused
@@ -166,14 +197,16 @@ def main(stdscr, directory):
             stdscr.addstr(0, 0, "┌", curses.color_pair(1))
             stdscr.addstr(0, width - 1, "┐", curses.color_pair(1))
             stdscr.addstr(height - 1, 0, "└", curses.color_pair(1))
+            try:
+                stdscr.addstr(height - 1, width - 1, "┘", curses.color_pair(1))
+            except curses.error:
+                pass
             for i in range(1, width - 1):
                 stdscr.addstr(0, i, "─", curses.color_pair(1))
-                if i < width - 2:
-                    stdscr.addstr(height - 1, i, "─", curses.color_pair(1))
+                stdscr.addstr(height - 1, i, "─", curses.color_pair(1))
             for i in range(1, height - 1):
                 stdscr.addstr(i, 0, "│", curses.color_pair(1))
-                if i < height - 2:
-                    stdscr.addstr(i, width - 1, "│", curses.color_pair(1))
+                stdscr.addstr(i, width - 1, "│", curses.color_pair(1))
             content_width = width - 2
             content_height = height - 2
 
@@ -348,9 +381,12 @@ def main(stdscr, directory):
                         stdscr.addstr(height - 5, bar_x, bar_line, curses.color_pair(2))
                     if status_message and height - 6 >= 1:
                         msg_x = max(1, (content_width - len(status_message)) // 2 + 1)
-                        stdscr.addstr(
-                            height - 6, msg_x, status_message, curses.color_pair(1)
-                        )
+                        try:
+                            stdscr.addstr(
+                                height - 6, msg_x, status_message, curses.color_pair(1)
+                            )
+                        except curses.error:
+                            pass
                     time_line = f"Time: {int(pos)}s / {int(dur)}s {'(Paused)' if paused else ''} Loop: {'On' if loop_enabled else 'Off'}"
                     time_x = max(1, (content_width - len(time_line)) // 2 + 1)
                     if height - 4 >= 1:
@@ -385,7 +421,10 @@ def main(stdscr, directory):
                 if search_mode:
                     stdscr.addstr(height - 2, 1, f"/{search_query}")
 
-            stdscr.refresh()
+            try:
+                stdscr.refresh()
+            except curses.error:
+                pass
 
             if message_timer > 0:
                 message_timer -= 1
@@ -479,7 +518,7 @@ def main(stdscr, directory):
                 elif key == ord("g"):
                     stdscr.timeout(1000)
                     next_key = stdscr.getch()
-                    stdscr.timeout(500)
+                    stdscr.timeout(0)
                     if next_key == ord("g"):
                         current_index = 0
                 elif key == ord("G"):
@@ -516,12 +555,15 @@ def main(stdscr, directory):
                         current_song = selected_file
                         status_message = ""
                     except FileNotFoundError:
-                        stdscr.addstr(
-                            height - 1,
-                            0,
-                            "mpv or socat not found. Please install mpv and socat.",
-                        )
-                        stdscr.getch()
+                        try:
+                            stdscr.addstr(
+                                height - 1,
+                                0,
+                                "mpv or socat not found.",
+                            )
+                            stdscr.getch()
+                        except Exception:
+                            pass
 
     finally:
         # Cleanup on any exit

@@ -1,711 +1,713 @@
 #!/bin/bash
 
-# ┌─ MPV TUIV1 ─┐
+# ─ mpv tui ─
 #
+# A minimal terminal frontend for mpv.
+#
+# Design: one frame, three regions — a header bar, a list, a footer hint.
+# Structural changes repaint the whole frame once; navigation repaints only
+# the rows that changed; playback status updates a single fixed row without
+# ever clearing the screen or redrawing the cover art.
+
 # AUTHOR: MHD
 
-# TUI interface for mpv
+readonly _esc=$'\e'
 
-# --- Colors and styles ---
-readonly RED=$(tput setaf 1)
-readonly GREEN=$(tput setaf 2)
-readonly YELLOW=$(tput setaf 3)
-readonly BLUE=$(tput setaf 4)
-readonly MAGENTA=$(tput setaf 5)
-readonly WHITE=$(tput setaf 7)
-readonly BOLD=$(tput bold)
-readonly DIM=$(tput dim)
-# REVERSE and GREEN are used further down but were never defined, so those
-# messages and the selected row rendered with the attribute silently missing.
-readonly REVERSE=$(tput rev)
-readonly RESET=$(tput sgr0)
-
-# Address a 0-based row and clear it to end of line.
-cup_row() {
-    if ((CUP_FAST)); then
-        printf '%s%d;1H%s' "$CUP_LEAD" "$(($1 + 1))" "$CUP_EL"
-    else
-        tput cup "$1" 0
-        tput el
-    fi
+# ── Palette ───────────────────────────────────────────────────────────────
+# colour is reserved for meaning: accent = selection, green/amber = state,
+# red = errors. Everything else stays neutral so the screen reads quiet.
+DIM='' BOLD='' ACCENT='' GOOD='' WARN='' ERR='' RESET=''
+init_style() {
+    BOLD=$(tput bold)
+    DIM=$(tput dim)
+    ACCENT=$(tput setaf 5)
+    GOOD=$(tput setaf 2)
+    WARN=$(tput setaf 3)
+    ERR=$(tput setaf 1)
+    RESET=$(tput sgr0)
 }
 
-# --- Screen addressing ---
-# The draw loop used to run `tput cup` and `tput el` for every line it
-# repainted, which is two processes per line. The sequences terminfo produces
-# are read once here and the loop then builds them with a builtin printf.
-# A terminal whose `cup` is relative, padded, or otherwise unusual keeps using
-# the tput calls, so the output is identical either way.
-readonly _esc=$'\e'
-CUP_LEAD=''
-CUP_FAST=0
-if _cup0=$(tput cup 0 0 2>/dev/null) && [[ $_cup0 == "${_esc}["*';'*'H' ]]; then
+# ── Terminal addressing ──────────────────────────────────────────────────
+# Build absolute cursor sequences with printf instead of tput per row. A
+# terminal whose cup is unusual falls back to tput; output is identical.
+CUP_LEAD='' CUP_FAST=0 EL=''
+if _cup0=$(tput cup 0 0 2>/dev/null) && [[ $_cup0 == "${_esc}["*'H'* ]]; then
     CUP_LEAD="${_esc}["
     CUP_FAST=1
 fi
-CUP_EL=$(tput el 2>/dev/null)
-readonly CUP_LEAD CUP_FAST CUP_EL
-unset _cup0
+EL=$(tput el 2>/dev/null)
 
-# Bash refreshes LINES/COLUMNS on every window change with this on, so the
-# terminal size no longer costs a `tput cols` + `tput lines` per redraw.
-shopt -s checkwinsize
-
-# --- Globals ---
-TERM_WIDTH=${COLUMNS:-80}
-TERM_HEIGHT=${LINES:-24}
-SHOW_FOOTER=0
-declare -a LAST_DRAWN_LINES=()
-REDRAW_INTERVAL_MS="${REDRAW_INTERVAL_MS:-16}" # ~60fps
-LAST_REDRAW_TIME=0
-
-now_ms() {
-    # EPOCHREALTIME is "<seconds>.<microseconds>"; dropping the point turns it
-    # into an integer count of microseconds that bash can compare directly.
-    local t=${EPOCHREALTIME/./}
-    LAST_REDRAW_TIME=$t
+# Move to a 0-based row, column 1.
+row_at() {
+    if ((CUP_FAST)); then
+        printf '%s%d;1H' "$CUP_LEAD" "$((1 + $1))"
+    else
+        tput cup "$1" 0
+    fi
 }
 
+# Bash refreshes COLUMNS/LINES on window changes once checkwinsize is on —
+# no `tput cols` fork per repaint.
+shopt -s checkwinsize
+refresh_size() {
+    W=${COLUMNS:-80}
+    H=${LINES:-24}
+}
+
+centre_var() {
+    local __name="$1" text="$2" width="${3:-$W}"
+    # Measure visible width only: tput mixes SGR \e[...m and charset \e(B
+    # escapes, which must not count as columns. Glob-strip equivalents
+    # backtracked greedily and swallowed text (the "m" in "mp3"), so this is
+    # a plain scan instead.
+    local i len=${#text} ch visible='' state=0
+    for ((i = 0; i < len; i++)); do
+        ch=${text:i:1}
+        case $state in
+        0) if [[ $ch == "$_esc" ]]; then state=1; else visible+=$ch; fi ;;
+        1) case $ch in
+           '[') state=2 ;;
+           '(') state=3 ;;
+           *) state=0 ;;
+           esac ;;
+        2) [[ $ch == 'm' ]] && state=0 ;;
+        3) [[ $ch == 'B' ]] && state=0 ;;
+        esac
+    done
+    local text_len=${#visible}
+    ((width < text_len)) && width=$text_len
+    local pad=$(((width - text_len) / 2))
+    printf -v "$__name" '%*s%s%*s' "$pad" '' "$text" "$((width - text_len - pad))" ''
+}
+
+# Centred line that also wipes whatever was on that row before it.
+centre_print() {
+    local line
+    centre_var line "$1" "$W"
+    printf '%s%s' "$EL" "$line"
+}
+
+# ── State ────────────────────────────────────────────────────────────────
+W=80 H=24
+declare -a MEDIA_FILES=() LAST_ROWS=()
+index=0 offset=0 window=10
+LIST_TOP=1
+CURRENT_TITLE='' MEDIA_COVER_PATH='' VIEWER=''
+PAUSED=0 LOOPING=0 MPV_PID=''
+FFMPEG_BIN='' FFPROBE_BIN=''
+
+now_ms() { LAST_REDRAW_TIME=${EPOCHREALTIME/./} ; }
 should_redraw() {
-    # Used to fork `date` and `awk` on every keypress just to compare two
-    # timestamps.
     (( ${EPOCHREALTIME/./} - LAST_REDRAW_TIME >= REDRAW_INTERVAL_MS * 1000 ))
 }
+REDRAW_INTERVAL_MS="${REDRAW_INTERVAL_MS:-16}"
+LAST_REDRAW_TIME=0
 
-# --- Layout helpers ---
-draw_line() {
-    local char="${1:--}"
-    local width="${2:-$TERM_WIDTH}"
-    ((width > 0)) || width=1
-    printf -v line "%*s" "$width" ""
-    echo "${line// /$char}"
-    echo
+# ── Frame: header / list / footer ────────────────────────────────────────
+paint_header() {
+    local total=${#MEDIA_FILES[@]}
+    local right="${total} tracks"
+    local gap=$((W - 7 - ${#right}))
+    ((gap < 1)) && gap=1
+    printf '%s%*s%s%s' \
+        "${BOLD}mpv${RESET} ${DIM}tui${RESET}" \
+        "$gap" "" \
+        "${DIM}${right}${RESET}" \
+        "$EL"
 }
 
-repeat_var() {
-    local __name="$1" count="$2" char="$3"
-    local pad
-    printf -v pad '%*s' "$count" ''
-    printf -v "$__name" '%s' "${pad// /$char}"
+paint_footer() {
+    row_at $((H - 1))
+    centre_print "${DIM}j/k move · enter play · / find · c cleanup covers · L loop · q quit${RESET}"
 }
 
-repeat() {
-    local count="$1"
-    local char="$2"
-    # Was `printf | tr`, i.e. a subshell plus a process per box.
-    local pad
-    printf -v pad '%*s' "$count" ''
-    printf '%s' "${pad// /$char}"
-}
-
-# Centred text into a variable, so callers that collect lines do not need a
-# command substitution (one subshell per row) per call.
-center_text_var() {
-    local __name="$1" text="$2"
-    local width="${3:-$TERM_WIDTH}"
-    local text_len=${#text}
-    ((width < text_len)) && width=$text_len
-    local padding=$(((width - text_len) / 2))
-    local right=$((width - text_len - padding))
-    printf -v "$__name" '%*s%s%*s' "$padding" "" "$text" "$right" ""
-}
-
-center_text() {
-    local text="$1"
-    local width="${2:-$TERM_WIDTH}"
-    local line
-    center_text_var line "$text" "$width"
-    printf '%s\n' "$line"
-}
-
-draw_box() {
-    local text="$1"
-    local color="${2:-$MAGENTA}"
-    local text_length=${#text}
-    local box_width=$((text_length + 4))
-
-    local padding=$(((TERM_WIDTH - box_width) / 2))
-    ((padding < 0)) && padding=0
-
-    # Built once instead of via `$(repeat ...)` three times, which forked a
-    # subshell per border.
-    local rule
-    repeat_var rule $((box_width - 2)) -
-
-    printf "%*s" "$padding" ""
-    echo "${color}╭${rule}╮${RESET}"
-
-    printf "%*s" "$padding" ""
-    echo "${color}│${RESET} ${BOLD}$text${RESET} ${color}│${RESET}"
-
-    printf "%*s" "$padding" ""
-    echo "${color}╰${rule}╯${RESET}"
-}
-
-# --- Header ---
-show_header() {
-    TERM_WIDTH=${COLUMNS:-80}
-    TERM_HEIGHT=${LINES:-24}
-
-    clear
-    LAST_DRAWN_LINES=()
-    echo "${BOLD}${YELLOW}"
-    draw_box "MPV TUI" "$YELLOW"
-    echo "${RESET}"
-    printf '\n'
-
-    if [[ $MEDIA_COVER_PATH && -f $MEDIA_COVER_PATH ]]; then
-        display_cover "$MEDIA_COVER_PATH"
-        printf '\n'
-    fi
-
-    if [[ $CURRENT_TITLE ]]; then
-        center_text "${BOLD}${MAGENTA}$CURRENT_TITLE${RESET}"
-        printf '\n'
-    fi
-}
-
-# --- Data helpers ---
-collect_media_files() {
-    local dir="$1"
-    mapfile -t MEDIA_FILES < <(find "$dir" -maxdepth 1 -type f \
-        \( -iname "*.mp3" -o -iname "*.flac" -o -iname "*.wav" -o -iname "*.ogg" -o -iname "*.m4a" \) 2>/dev/null)
-}
-
-# --- Unified window draw (fixes duplication) ---
-draw_window() {
-    TERM_WIDTH=${COLUMNS:-80}
-    TERM_HEIGHT=${LINES:-24}
-
-    local end=$((offset + window_size - 1))
+# Repaint the visible window, readdressing only rows whose content changed.
+paint_list() {
+    local total=${#MEDIA_FILES[@]}
+    local end=$((offset + window - 1))
     ((end >= total)) && end=$((total - 1))
 
-    local new_lines=()
-    local line
-
-    # Each row used to be built with $(center_text ...), i.e. a subshell per
-    # row on every single redraw.
-    for ((i = offset; i <= end; i++)); do
+    local new=() line i
+    for ((i = offset; i <= end && i < total; i++)); do
         local base=${MEDIA_FILES[i]##*/}
         if ((i == index)); then
-            center_text_var line " ${REVERSE}${BOLD}> $base${RESET}"
+            centre_var line "${ACCENT}▸${RESET} ${BOLD}${base}${RESET}"
         else
-            center_text_var line "   $base"
+            centre_var line "$base"
         fi
-        new_lines+=("$line")
+        new+=("$line")
+    done
+    for ((i = ${#new[@]}; i < window; i++)); do
+        centre_var line ''
+        new+=("$line")
     done
 
-    for ((i = end + 1; i < offset + window_size; i++)); do
-        center_text_var line ""
-        new_lines+=("$line")
+    for ((i = 0; i < window; i++)); do
+        [[ ${LAST_ROWS[i]-} == "${new[i]}" ]] && continue
+        row_at $((LIST_TOP + i))
+        printf '%s' "${new[i]}"
     done
-
-    # Compare and redraw only changed lines
-    for ((i = 0; i < ${#new_lines[@]}; i++)); do
-        if [[ "${new_lines[i]}" != "${LAST_DRAWN_LINES[i]}" ]]; then
-            cup_row $((5 + i))
-            # printf, not echo -e: a music filename containing a backslash was
-            # being eaten by echo's escape handling.
-            printf '%s' "${new_lines[i]}"
-        fi
-    done
-
-    LAST_DRAWN_LINES=("${new_lines[@]}")
-
-    # Footer (always redraw)
-    if ((SHOW_FOOTER)); then
-        cup_row $((5 + window_size + 1))
-        echo "${DIM}${YELLOW}Total: $total${RESET}"
-        echo "${BOLD}${BLUE}Usage:${RESET} j/k=nav, Enter=play, /=search, u=update covers, r=rename, c=cleanup, s=search&play, q=quit"
-    fi
+    LAST_ROWS=("${new[@]}")
 }
 
-# --- Search and play ---
-search_and_play() {
-    echo -n "${MAGENTA}Search query: ${RESET}"
-    read -r query
-
-    local q="${query,,}"
-    if [[ -z $q ]]; then
-        echo "${RED}Empty query!${RESET}"
-        sleep 1
-        clear
-        return
-    fi
-
-    local matches=()
-    for file in "${MEDIA_FILES[@]}"; do
-        local base="${file##*/}"
-        [[ "${base,,}" == *"$q"* ]] && matches+=("$file")
-    done
-
-    case ${#matches[@]} in
-    0)
-        echo "${RED}No matches found for '$query'${RESET}"
-        sleep 2
-        clear
-        ;;
-    1)
-        play_file "${matches[0]}"
-        ;;
-    *)
-        echo "${YELLOW}Multiple matches found:${RESET}"
-        for i in "${!matches[@]}"; do
-            printf "  ${BLUE}[%d]${RESET} %s\n" $((i + 1)) "${matches[i]##*/}"
-        done
-        echo -n "${MAGENTA}Choose number: ${RESET}"
-        read -r choice
-        if [[ $choice =~ ^[0-9]+$ ]] && ((choice >= 1 && choice <= ${#matches[@]})); then
-            play_file "${matches[choice - 1]}"
-        else
-            echo "${RED}Invalid selection!${RESET}"
-            sleep 2
-            clear
-        fi
-        ;;
-    esac
+# Full repaint — used on entry, after playback/cleanup, and on resize.
+paint_browse() {
+    refresh_size
+    window=$((H - 3))
+    ((window < 1)) && window=1
+    clear
+    row_at 0
+    paint_header
+    LAST_ROWS=()
+    paint_list
+    paint_footer
 }
 
-# --- Filename normalization ---
-normalize_music_filenames() {
-    local current_dir="$HOME/Downloads/Telegram Desktop"
-    echo "${BLUE}Normalizing music filenames...${RESET}"
+# ── Search ───────────────────────────────────────────────────────────────
+# The footer row doubles as the prompt; query stays local to the screen.
+run_search() {
+    row_at $((H - 1))
+    printf '%s' "${ACCENT}/${RESET} ${DIM}(enter to jump, empty to cancel)${RESET}"
+    tput cnorm
+    local query=''
+    IFS= read -r query
+    tput civis
+    paint_footer
+    [[ -z $query ]] && return
 
-    declare -A stopwords=(
-        [medium]=1 [audio]=1 [music]=1 [track]=1 [song]=1
-        [stereo]=1 [mono]=1 [official]=1 [video]=1 [only]=1
-    )
-
-    shopt -s nullglob
-    for file in "$current_dir"/*.{mp3,flac,wav,ogg,m4a}; do
-        [[ -e $file ]] || continue
-
-        local dir=${file%/*}
-        local base=${file##*/}
-        local ext=${base##*.}
-        local name=${base%.*}
-
-        local newname
-        newname=$(sed -E 's/[[:upper:]]/\L&/g; s/[0-9]//g; s/[^a-z]+/_/g; s/_+/_/g; s/^_|_$//g' <<<"$name")
-
-        local filtered=""
-        for token in ${newname//_/ }; do
-            if ((${#token} <= 2)) || [[ ${stopwords[$token]} ]]; then
-                continue
-            fi
-            filtered+="${token}_"
-        done
-
-        filtered=${filtered%_}
-        [[ -z $filtered ]] && filtered=$newname
-
-        local newfile="$dir/$filtered.$ext"
-        if [[ $file != "$newfile" ]]; then
-            echo "Renaming: $base → ${newfile##*/}"
-            mv -n -- "$file" "$newfile"
+    local q=${query,,} i base
+    for ((i = 0; i < ${#MEDIA_FILES[@]}; i++)); do
+        base=${MEDIA_FILES[i]##*/}
+        if [[ ${base,,} == *"$q"* ]]; then
+            index=$i
+            offset=$(((i < window / 2) ? 0 : i - window / 2))
+            ((offset < 0)) && offset=0
+            paint_list
+            return
         fi
     done
-    shopt -u nullglob
+    row_at $((H - 1))
+    centre_print "${ERR}no match: ${query}${RESET}"
+    sleep 1
+    paint_footer
 }
 
-# --- Cover maintenance ---
-cleanup_orphan_covers() {
-    local cover_dir="$HOME/Pictures/CoverArts"
-    echo "${BLUE}Cleaning up orphaned cover arts...${RESET}"
+# ── Cover art ──────────────────────────────────────────────────────────
+# Sources, ordered by how well they match the *actual* cover (all keyless
+# public services — no signups, no tokens, stays seamless):
+#   1. cache in $COVER_DIR from an earlier run
+#   2. artwork embedded in the music file itself — the true cover
+#   3. iTunes Search API: album-term lookup, verified against the file's
+#      artist tag so a name collision can't hand back unrelated art
+#   4. Deezer API: *track* search — a single song resolves to the song's
+#      real album art instead of merch/AI covers trading its name
+#   5. MusicBrainz + Cover Art Archive: community-verified art
+# A .nocover sidecar records "nothing found online", but embedded art
+# outranks it — there is no lookup to fail, so a stale marker can never
+# hide a cover the file actually carries.
 
-    mkdir -p "$cover_dir"
+COVER_DIR="${COVER_DIR:-$HOME/Pictures/CoverArts}"
+MB_UA="mpv-tui cover fetcher (local script)"
 
-    declare -A valid=()
-    for file in "${MEDIA_FILES[@]}"; do
-        local name="${file##*/}"
-        name="${name%.*}"
-        valid["$name"]=1
-    done
-
-    shopt -s nullglob
-    for img in "$cover_dir"/*.{jpg,png,svg,jpeg}; do
-        local name="${img##*/}"
-        name="${name%.*}"
-        if ! [[ -v valid[$name] ]]; then
-            echo "Deleting orphan cover: ${img##*/}"
-            rm -f -- "$img"
-        fi
-    done
-    shopt -u nullglob
-}
-
-show_covers() {
-    local covers_dir="$HOME/Pictures/CoverArts"
-    local lock_file="$covers_dir/.lock"
-
-    if [[ ! -d $covers_dir ]]; then
-        if ! mkdir -p "$covers_dir"; then
-            echo "${RED}Error: Unable to create directory $covers_dir!${RESET}"
-            return 1
-        fi
-    fi
-
-    if [[ -f $lock_file ]]; then
-        echo "${YELLOW}Cover art downloading is already in progress, skipping...${RESET}"
-        return
-    fi
-
-    if ! touch "$lock_file"; then
-        echo "${RED}Error: Unable to create lock file $lock_file!${RESET}"
-        return 1
-    fi
-    rm -f "$lock_file"
-
-    local covers=()
-    shopt -s nullglob
-    for img in "$covers_dir"/*.{jpg,png}; do
-        covers+=("$img")
-    done
-    shopt -u nullglob
-
-    if ((${#covers[@]} == 0)); then
-        echo "${YELLOW}No cover arts found in $covers_dir${RESET}"
-        return
-    fi
-
-    for cover in "${covers[@]}"; do
-        display_cover "$cover"
-        printf '\n'
-    done
-}
-
-
-
-download_cover() {
-    local file="$1"
-    local music_name=${file##*/}
-    local base_name="${music_name%.*}"
-    local cover_dir="$HOME/Pictures/CoverArts"
-    local cover_path="$cover_dir/${base_name}.jpg"
-    local nocover_path="$cover_dir/${base_name}.nocover"
-
-    mkdir -p "$cover_dir" || {
-        echo "${RED}Error: Unable to create $cover_dir${RESET}"
+# Lift the artwork stream out of the file itself (ffmpeg re-encodes any
+# picture codec into MJPEG). Files without art simply fail here.
+extract_embedded_cover() {
+    local file="$1" base="$2" tmp
+    [[ -n $FFMPEG_BIN ]] || return 1
+    tmp="$COVER_DIR/.tmp-$base.jpg"
+    "$FFMPEG_BIN" -hide_banner -loglevel error -y \
+        -i "$file" -map 0:v:0 -frames:v 1 \
+        -vcodec mjpeg -qscale:v 2 "$tmp" 2>/dev/null || {
+        rm -f -- "$tmp"
         return 1
     }
-
-    if [[ -f $nocover_path ]]; then
-        echo "${YELLOW}Skipping $music_name (previously marked as no cover)${RESET}"
+    # Tiny files are conversions gone wrong, not art.
+    if [[ $(stat -c%s "$tmp" 2>/dev/null || echo 0) -lt 1000 ]]; then
+        rm -f -- "$tmp"
         return 1
     fi
+    mv -f -- "$tmp" "$COVER_DIR/$base.jpg"
+    MEDIA_COVER_PATH="$COVER_DIR/$base.jpg"
+    return 0
+}
 
+# Fill TAG_ARTIST / TAG_ALBUM / TAG_TITLE from the file's metadata.
+read_media_tags() {
+    local file="$1" line
+    TAG_ARTIST='' TAG_ALBUM='' TAG_TITLE=''
+    [[ -n $FFPROBE_BIN ]] || return 1
+    while IFS= read -r line; do
+        case $line in
+        album_artist=*) TAG_ALBUM_ARTIST=${line#*=} ;;
+        artist=*) TAG_ARTIST=${line#*=} ;;
+        album=*) TAG_ALBUM=${line#*=} ;;
+        title=*) TAG_TITLE=${line#*=} ;;
+        esac
+    done < <("$FFPROBE_BIN" -v error \
+        -show_entries format_tags=album_artist,artist,album,title \
+        -of default=noprint_wrappers=1 "$file" 2>/dev/null)
+    return 0
+}
+
+# Filename → usable search text. YouTube-style rips carry marketing junk
+# that drags back unrelated/AI covers, or nothing at all.
+clean_query() {
+    local s=$1 ch i out='' depth=0
+    s=${s##*/}
+    s=${s%.*}
+    # Drop every bracketed section (YouTube-style junk lives there). A
+    # simple depth counter avoids bracket-class regexes, whose `]`-classes
+    # are not portable between bash, sed and grep.
+    local len=${#s}
+    for ((i = 0; i < len; i++)); do
+        ch=${s:i:1}
+        case $ch in
+        '(' | '[' | '{') ((depth++)) ;;
+        ')' | ']' | '}') ((depth > 0)) && ((depth--)) ;;
+        *) ((depth == 0)) && out+=$ch ;;
+        esac
+    done
+    s=$out
+    s=$(sed -E '
+        s/\b(official|video|audio|lyrics?|visuali[sz]er|preview|teaser|snippet|hd|hq|4k|full|free|download|version|remix(ed)?|extended|stereo|mono|prod(uced)?|featuring|feat|cover|art)\b/ /Ig;
+        s/[^[:alnum:]& ]+/ /g;
+        s/ +/ /g;
+        s/^ +//; s/ +$//
+    ' <<<"$s")
+    printf '%s' "$s"
+}
+
+# Loose artist comparison: alphanumerics only, substring either way. An
+# empty wanted tag means "no opinion" — accept the candidate.
+artist_matches() {
+    local want=${1,,} have=${2,,}
+    want=${want//[^a-z0-9]/}
+    have=${have//[^a-z0-9]/}
+    [[ -z $want ]] && return 0
+    [[ -n $have && ( $have == *$want* || $want == *$have* ) ]]
+}
+
+# Iterate an iTunes/Deezer result list until a candidate matches the
+# artist tag (or the tag is absent). Prints an artwork URL on success.
+# Result rows for both APIs are `<artist>\t<image url>`, so one loop fits
+# both: iTunes artworkUrl100 (upgraded to 600x600) and Deezer cover_xl.
+rows_to_art() {
+    local artist="$1" have url
+    while IFS=$'\t' read -r have url; do
+        [[ -z $url ]] && continue
+        if artist_matches "$artist" "$have"; then
+            printf '%s' "${url/100x100bb/600x600bb}"
+            return 0
+        fi
+    done
+    return 1
+}
+
+itunes_art() {
+    # $1 entity (song|album), $2 term, $3 artist tag, $4 optional attribute
+    local entity="$1" term="$2" artist="$3"
+    local -a args=(--data-urlencode "term=$term" -d entity="$entity" -d limit=5)
+    [[ -n $4 ]] && args+=(-d attribute="$4")
+    local body
+    body=$(curl -fsSG --max-time 8 'https://itunes.apple.com/search' \
+        "${args[@]}" 2>/dev/null) || return 1
+    jq -r '.results[] | select((.artworkUrl100 // "") != "") | [(.artistName // ""), .artworkUrl100] | @tsv' \
+        <<<"$body" 2>/dev/null | rows_to_art "$artist"
+}
+
+deezer_art() {
+    # $1 kind (song→track | album), $2 term, $3 artist tag
+    local kind="$1" term="$2" artist="$3"
+    if [[ $kind == song ]]; then
+        kind=track
+    fi
+    local body rows
+    body=$(curl -fsSG --max-time 8 "https://api.deezer.com/search/$kind" \
+        --data-urlencode "q=$term" 2>/dev/null) || return 1
+    if [[ $kind == track ]]; then
+        rows=$(jq -r '[.data[] | select((.album.cover_xl // "") != "") | [(.artist.name // ""), .album.cover_xl]][] | @tsv' \
+            <<<"$body" 2>/dev/null)
+    else
+        rows=$(jq -r '[.data[] | select((.cover_xl // "") != "") | [(.artist.name // ""), .cover_xl]][] | @tsv' \
+            <<<"$body" 2>/dev/null)
+    fi
+    printf '%s\n' "$rows" | rows_to_art "$artist"
+}
+
+# MusicBrainz locates the exact release, the Cover Art Archive serves its
+# front image. Both keyless; MB only asks for ≤1 query/second.
+caa_art() {
+    local artist="$1" album="$2" mbid
+    mbid=$(curl -fsSG --max-time 8 -A "$MB_UA" \
+        'https://musicbrainz.org/ws/2/release' \
+        --data-urlencode "query=artist:\"$artist\" AND release:\"$album\"" \
+        -d fmt=json -d limit=1 2>/dev/null | \
+        jq -r '.releases[0].id // empty' 2>/dev/null) || return 1
+    [[ -n $mbid ]] || return 1
+    sleep 1
+    printf 'https://coverartarchive.org/release/%s/front-500' "$mbid"
+}
+
+download_cover() {
+    local file="$1" music_name base_name cover_path nocover_path url
+
+    music_name=${file##*/}
+    base_name="${music_name%.*}"
+    cover_path="$COVER_DIR/$base_name.jpg"
+    nocover_path="$COVER_DIR/$base_name.nocover"
+
+    mkdir -p "$COVER_DIR" || return 1
+
+    # 1. Cached art from an earlier run.
     if [[ -f $cover_path ]]; then
         MEDIA_COVER_PATH="$cover_path"
         return 0
-    elif [[ -f $cover_dir/${base_name}.png ]]; then
-        MEDIA_COVER_PATH="$cover_dir/${base_name}.png"
+    elif [[ -f $COVER_DIR/$base_name.png ]]; then
+        MEDIA_COVER_PATH="$COVER_DIR/$base_name.png"
         return 0
     fi
 
-    local query="$base_name"
-    local cover_url=""
+    # 2. Embedded artwork — the real thing, no lookup. This also rescues
+    # files previously marked .nocover.
+    if extract_embedded_cover "$file" "$base_name"; then
+        return 0
+    fi
 
-    echo "${YELLOW}Searching cover art for: $query${RESET}"
+    # 3+. Online lookup (skipped when a previous run found nothing).
+    if [[ -f $nocover_path ]]; then
+        return 1
+    fi
 
-    cover_url=$(curl -fsS "https://itunes.apple.com/search?term=${query// /+}&entity=album&limit=1" |
-        jq -r '.results[0].artworkUrl100' 2>/dev/null |
-        sed 's/100x100bb/600x600bb/')
+    read_media_tags "$file"
+    local artist=${TAG_ARTIST:-$TAG_ALBUM_ARTIST}
+    local album=$TAG_ALBUM
+    local fallback
+    fallback=$(clean_query "$music_name")
 
-    if [[ -z $cover_url || $cover_url == "null" ]]; then
-        cover_url=$(curl -fsS "https://api.deezer.com/search/album?q=${query// /%20}" |
-            jq -r '.data[0].cover_xl' 2>/dev/null)
-        if [[ -n $cover_url && $cover_url != "null" ]]; then
-            cover_url=$(sed 's/[0-9]\+x[0-9]\+/600x600/g' <<<"$cover_url")
+    local url=''
+    if [[ -n $album ]]; then
+        # Real album lookups: verified against the artist tag.
+        url=$(itunes_art album "$album" "$artist" albumTerm)
+        if [[ -z $url ]]; then
+            url=$(deezer_art album "$album" "$artist")
+        fi
+        if [[ -z $url && -n $artist ]]; then
+            url=$(caa_art "$artist" "$album")
         fi
     fi
 
-    if [[ -z $cover_url || $cover_url == "null" ]]; then
-        echo "${RED}No cover art found online for $music_name.${RESET}"
-        echo -e "Please add it manually as ${cover_dir}/${base_name}.{jpg/png}\nNote: cover art should be 600x600px"
+    # Single songs rarely cross an album search: hit the track databases,
+    # whose result covers are the song's actual album art.
+    local song_query="${artist:+$artist }${title:+$title}"
+    [[ -z $song_query ]] && song_query=$fallback
+    if [[ -z $url ]]; then
+        url=$(itunes_art song "$song_query" "$artist")
+    fi
+    if [[ -z $url ]]; then
+        url=$(deezer_art track "$song_query" "$artist")
+    fi
+
+    # Last resort: the cleaned filename.
+    if [[ -z $url && $song_query != "$fallback" ]]; then
+        url=$(itunes_art song "$fallback" '')
+    fi
+    if [[ -z $url && $song_query != "$fallback" ]]; then
+        url=$(deezer_art track "$fallback" '')
+    fi
+
+    if [[ -z $url ]]; then
         : >"$nocover_path"
         return 1
     fi
 
-    echo "${GREEN}Downloading cover art...${RESET}"
-    if ! curl -fsSL "$cover_url" -o "$cover_path"; then
-        echo "${RED}Failed to download cover art from $cover_url${RESET}"
+    if ! curl -fsSL --max-time 15 "$url" -o "$cover_path"; then
+        rm -f -- "$cover_path"
         : >"$nocover_path"
         return 1
     fi
 
     MEDIA_COVER_PATH="$cover_path"
-    [[ -f $nocover_path ]] && rm -f "$nocover_path"
+    return 0
 }
 
-
-
-
-
-update_covers() {
-    local cover_dir="$HOME/Pictures/CoverArts"
-    mkdir -p "$cover_dir"
-
-    echo "${BLUE}Updating cover arts...${RESET}"
-    local total=${#MEDIA_FILES[@]}
-
-    for file in "${MEDIA_FILES[@]}"; do
-        local music_name=${file##*/}
-        local base_name="${music_name%.*}"
-        local cover_jpg="$cover_dir/${base_name}.jpg"
-        local cover_png="$cover_dir/${base_name}.png"
-
-        if [[ -f $cover_jpg || -f $cover_png ]]; then
-            echo "${GREEN}Cover already exists for $music_name${RESET}"
-        else
-            echo "${YELLOW}No cover for $music_name, downloading...${RESET}"
-            if ! download_cover "$file"; then
-                echo "${RED}Failed to get cover for $music_name${RESET}"
-            fi
-        fi
-    done
-
-    echo
-    echo "${GREEN}Cover art update complete.${RESET}"
-    echo "${DIM}Press any key to continue...${RESET}"
-    read -r -n 1 -s
-    clear
-}
-
-# --- Cover display ---
-display_cover() {
-    local cover="$1"
-    [[ -f $cover ]] || {
-        echo "${RED}Cover not found: $cover${RESET}"
-        return 1
-    }
-
-    local viewer=""
-    if [[ $TERM == "xterm-kitty" || -n $KITTY_WINDOW_ID ]] && command -v kitty &>/dev/null; then
-        viewer="kitty"
+detect_viewer() {
+    if [[ $TERM == xterm-kitty || -n $KITTY_WINDOW_ID ]] && command -v kitty &>/dev/null; then
+        VIEWER=kitty
     elif command -v chafa &>/dev/null; then
-        viewer="chafa"
-    elif command -v ascii-image-converter &>/dev/null; then
-        viewer="ascii-image-converter"
+        VIEWER=chafa
     elif command -v viu &>/dev/null; then
-        viewer="viu"
+        VIEWER=viu
+    elif command -v ascii-image-converter &>/dev/null; then
+        VIEWER=ascii-image-converter
     fi
+}
 
-    if [[ $viewer == "kitty" ]]; then
-        kitty +kitten icat --align center "$cover"
-    else
-        local output
-        output=$($viewer "$cover" 2>/dev/null)
+# Draw the poster centred inside the play screen's poster region. Output is
+# bounded so it can never push the fixed status/controls rows around.
+draw_poster() {
+    local cover="$1"
+    [[ -f $cover ]] || return 1
+    if [[ -z $VIEWER ]]; then
+        set_status "${WARN}no image viewer (chafa/viu/kitty)"
+        sleep 1.2
+        return 1
+    fi
+    local avail=$((H - 7))
+    ((avail < 3)) && avail=3
+
+    case $VIEWER in
+    kitty)
+        # icat sizes the image to the window itself; --align centres it into
+        # the remaining columns. Error text would mar the frame, so stderr is
+        # suppressed and a failed display is reported through the status row.
+        kitty +kitten icat --align center "$cover" 2>/dev/null || {
+            set_status "${ERR}cover display failed"
+            sleep 1.2
+            return 1
+        }
+        ;;
+    chafa)
+        chafa -s "${W}x${avail}" "$cover"
+        ;;
+    *)
+        local output n=0 line
+        if [[ $VIEWER == viu ]]; then
+            output=$(viu -w "$W" "$cover" 2>/dev/null)
+        else
+            output=$($VIEWER "$cover" 2>/dev/null)
+        fi
         while IFS= read -r line; do
-            center_text "$line"
+            ((n++ >= avail)) && break
+            centre_print "$line"
         done <<<"$output"
-    fi
+        ;;
+    esac
 }
 
-# --- MPV IPC (reserved for future persistence) ---
-open_mpv_ipc() {
-    local socket="/tmp/mpv-socket"
-    exec {MPV_FD}<> >(socat - "$socket")
+# ── Playback screen ──────────────────────────────────────────────────────
+# Layout is fixed: row 0 header, row 2 title, row 3 status, row 4 controls,
+# rows 5.. poster. Only the status row ever changes while music plays.
+PLAY_STATUS_ROW=3
+
+set_status() {
+    row_at "$PLAY_STATUS_ROW"
+    centre_print "$1"
 }
 
-close_mpv_ipc() {
-    exec {MPV_FD}>&-
+paint_play_screen() {
+    refresh_size
+    PLAY_STATUS_ROW=3
+    clear
+    row_at 0
+    paint_header
+    row_at 2
+    centre_print "${BOLD}${CURRENT_TITLE}${RESET}"
+    row_at 4
+    centre_print "${DIM}p pause · h −10s · l +10s · L loop · q stop${RESET}"
 }
-
-mpv_cmd() {
-    local cmd="$1"
-    printf '%s\n' "$cmd" >&$MPV_FD
-}
-
-# --- Playback ---
 
 play_file() {
     local file="$1"
     local socket="/tmp/mpv-socket"
 
-    [ -e "$socket" ] && rm -f "$socket"
+    CURRENT_TITLE=${file##*/}
+    PAUSED=0
+    LOOPING=0
+    MEDIA_COVER_PATH=''
+    rm -f -- "$socket"
 
-    download_cover "$file"
-    CURRENT_TITLE="${file##*/}"
-    show_header
+    paint_play_screen
+    set_status "${WARN}◌  fetching art…"
+    if download_cover "$file" >/dev/null 2>&1 && [[ -f $MEDIA_COVER_PATH ]]; then
+        row_at 5
+        draw_poster "$MEDIA_COVER_PATH"
+    else
+        MEDIA_COVER_PATH=''
+        set_status "${WARN}no cover art"
+    fi
 
     mpv --quiet --no-terminal --osd-level=0 \
         --no-video --audio-display=no \
         --input-ipc-server="$socket" \
         "$file" &
-    local mpv_pid=$!
+    MPV_PID=$!
 
-    sleep 0.2
-    if ! kill -0 "$mpv_pid" 2>/dev/null; then
-        echo "${RED}Error: mpv failed to start for $file${RESET}"
+    sleep 0.3
+    if ! kill -0 "$MPV_PID" 2>/dev/null; then
+        set_status "${ERR}mpv failed to start"
+        MPV_PID=''
+        sleep 1.2
         return 1
     fi
+    set_status "${GOOD}▶  playing"
 
-    echo
-    echo "${BOLD}${YELLOW}Controls:${RESET}"
-    echo "  ${BLUE}[p]${RESET} pause/resume"
-    echo "  ${BLUE}[l]${RESET} fast forward 10s"
-    echo "  ${BLUE}[h]${RESET} backward 10s"
-    echo "  ${BLUE}[L]${RESET} toggle loop"
-    echo "  ${BLUE}[q]${RESET} stop and return to menu"
-
-    while kill -0 "$mpv_pid" 2>/dev/null; do
-        read -rsn1 key
+    # Poll instead of blocking forever on read: `kill -0` succeeds on a
+    # zombie child, so mpv finishing the song would go unnoticed until the
+    # next keypress. A short read timeout re-checks aliveness regularly; `ps
+    # -o stat=` distinguishes a live process from a dead/zombie one.
+    local key stat rc
+    while :; do
+        stat=$(ps -o stat= -p "$MPV_PID" 2>/dev/null)
+        [[ -z $stat || $stat == Z* ]] && break
+        IFS= read -rsn1 -t 0.25 key
+        rc=$?
+        ((rc > 128)) && continue # read timed out → loop back to the check
+        if ((rc != 0)); then
+            break # stdin closed: leave playback
+        fi
         while read -rsn1 -t 0.001 extra; do :; done
-        case "$key" in
+        case $key in
         p)
-            printf '{ "command": ["cycle", "pause"] }\n' | socat - "$socket" >/dev/null
-            state=$(printf '{ "command": ["get_property", "pause"] }\n' | socat - "$socket" | jq -r '.data')
-            show_header
-            if [[ $state == "true" ]]; then
-                echo "${YELLOW}Paused${RESET}"
+            PAUSED=$((1 - PAUSED))
+            printf '{"command":["cycle","pause"]}\n' | socat - "$socket" &>/dev/null
+            if ((PAUSED)); then
+                set_status "${WARN}⏸  paused"
             else
-                echo "${GREEN}Playing${RESET}"
+                set_status "${GOOD}▶  playing"
             fi
             ;;
         h)
-            printf '{ "command": ["seek", -10] }\n' | socat - "$socket" >/dev/null
-            show_header
-            echo "${BLUE}<< Skipped back 10s${RESET}"
+            printf '{"command":["seek",-10]}\n' | socat - "$socket" &>/dev/null
+            set_status "${DIM}◂  −10s"
             ;;
         l)
-            printf '{ "command": ["seek", 10] }\n' | socat - "$socket" >/dev/null
-            show_header
-            echo "${BLUE}>> Skipped forward 10s${RESET}"
+            printf '{"command":["seek",10]}\n' | socat - "$socket" &>/dev/null
+            set_status "${DIM}▸  +10s"
             ;;
         L)
-            current=$(printf '{ "command": ["get_property", "loop-file"] }\n' | socat - "$socket" | jq -r '.data // "no"')
-            if [[ $current == "inf" || $current == "yes" || $current == "true" ]]; then
-                printf '{ "command": ["set_property", "loop-file", "no"] }\n' | socat - "$socket" >/dev/null
-                show_header
-                echo "${YELLOW}Loop: Disabled${RESET}"
+            LOOPING=$((1 - LOOPING))
+            if ((LOOPING)); then
+                printf '{"command":["set_property","loop-file","inf"]}\n' | socat - "$socket" &>/dev/null
+                set_status "${GOOD}⟲  loop on"
             else
-                printf '{ "command": ["set_property", "loop-file", "inf"] }\n' | socat - "$socket" >/dev/null
-                show_header
-                echo "${GREEN}Loop: Inf${RESET}"
+                printf '{"command":["set_property","loop-file","no"]}\n' | socat - "$socket" &>/dev/null
+                set_status "${WARN}⟲  loop off"
             fi
             ;;
         q)
-            printf '{ "command": ["quit"] }\n' | socat - "$socket" >/dev/null
-            MEDIA_COVER_PATH=""
+            printf '{"command":["quit"]}\n' | socat - "$socket" &>/dev/null
             break
             ;;
         esac
     done
 
-    MEDIA_COVER_PATH=""
-    wait "$mpv_pid" 2>/dev/null
-    echo "${DIM}Returning to menu...${RESET}"
-    sleep 0.4
+    MPV_PID=''
+    rm -f -- "$socket"
+    wait 2>/dev/null
 }
 
+# ── Maintenance ──────────────────────────────────────────────────────────
+# Full-screen side task: clear, run, wait for a key, return to the frame.
+run_task() {
+    tput cnorm
+    clear
+    local rc=0
+    "$@" || rc=$?
+    printf '%s\n' ''
+    printf '%s' "${DIM}press any key to return${RESET}"
+    IFS= read -rsn1
+    tput civis
+    paint_browse
+    return $rc
+}
 
-# --- Browser ---
+cleanup_orphan_covers() {
+    local cover_dir="$HOME/Pictures/CoverArts"
+
+    mkdir -p "$cover_dir"
+
+    local -A valid=()
+    local file name
+    for file in "${MEDIA_FILES[@]}"; do
+        name=${file##*/}
+        name=${name%.*}
+        valid["$name"]=1
+    done
+
+    local img removed=0
+    shopt -s nullglob
+    for img in "$cover_dir"/*.{jpg,png,svg,jpeg}; do
+        name=${img##*/}
+        name=${name%.*}
+        if ! [[ -v valid[$name] ]]; then
+            printf '%s\n' "${WARN}removing orphan cover:${RESET} ${name}"
+            rm -f -- "$img"
+            removed=$((removed + 1))
+        fi
+    done
+    shopt -u nullglob
+
+    if ((removed == 0)); then
+        printf '%s\n' "${GOOD}no orphan covers${RESET}"
+    fi
+}
+
+# ── Loop keys ────────────────────────────────────────────────────────────
+
 browse_files() {
-    local current_dir="${1:-$HOME/Downloads/Telegram Desktop}"
-
-    collect_media_files "$current_dir"
     local total=${#MEDIA_FILES[@]}
-    ((total == 0)) && {
-        echo "${RED}No media files found${RESET}"
+    if ((total == 0)); then
+        clear
+        centre_print "${ERR}no audio files in the directory${RESET}"
         sleep 2
         return
-    }
+    fi
 
     index=0
-    window_size=$((TERM_HEIGHT - 12))
-    ((window_size < 5)) && window_size=5
     offset=0
-    local last_key=""
-
     tput civis
-    tput clear
-    show_header
-    printf '\n'
+    paint_browse
 
-    SHOW_FOOTER=1
-    draw_window
-
+    local last_key='' key
     while true; do
-        IFS= read -rsn1 key
+        IFS= read -rsn1 key || break
         while read -rsn1 -t 0.001 extra; do :; done
-        case "$key" in
+        case $key in
         j)
-            ((index < total - 1)) && ((index++))
-            ((index >= offset + window_size)) && ((offset++))
+            ((index < total - 1)) || continue
+            ((index++))
+            ((index >= offset + window)) && ((offset++))
             if should_redraw; then
-                draw_window
+                paint_list
                 now_ms
             fi
             ;;
         k)
-            ((index > 0)) && ((index--))
+            ((index > 0)) || continue
+            ((index--))
             ((index < offset)) && ((offset--))
             if should_redraw; then
-                draw_window
+                paint_list
                 now_ms
             fi
             ;;
         g)
-            if [[ $last_key == "g" ]]; then
+            if [[ $last_key == 'g' ]]; then
                 index=0
                 offset=0
-                draw_window
-                last_key=""
+                paint_list
+                last_key=''
                 continue
             fi
             ;;
         G)
             index=$((total - 1))
-            offset=$((total > window_size ? total - window_size : 0))
-            draw_window
+            offset=$((total > window ? total - window : 0))
+            paint_list
             ;;
         /)
-            tput cnorm
-            tput cup $((TERM_HEIGHT - 2)) 0
-            echo -n "${MAGENTA}/ ${RESET}"
-            read -r query
-            tput civis
-            if [[ -n $query ]]; then
-                local q="${query,,}"
-                for ((i = 0; i < total; i++)); do
-                    local base=${MEDIA_FILES[i]##*/}
-                    if [[ ${base,,} == *"$q"* ]]; then
-                        index=$i
-                        offset=$((i < window_size ? 0 : i - window_size / 2))
-                        ((offset < 0)) && offset=0
-                        draw_window
-                        break
-                    fi
-                done
-            fi
-            ;;
-        "")
-            play_file "${MEDIA_FILES[index]}"
-            clear
-            show_header
-            draw_window
-            ;;
-        u)
-            update_covers
-            show_header
-            draw_window
-            ;;
-        r)
-            normalize_music_filenames
-            show_header
-            draw_window
+            run_search
             ;;
         c)
-            cleanup_orphan_covers
-            show_header
-            draw_window
+            run_task cleanup_orphan_covers
             ;;
-        s)
-            search_and_play
-            show_header
-            draw_window
+        '')
+            play_file "${MEDIA_FILES[index]}"
+            paint_browse
             ;;
-        q) break ;;
+        q)
+            break
+            ;;
         esac
         last_key="$key"
     done
@@ -714,80 +716,99 @@ browse_files() {
     clear
 }
 
-# --- Main ---
+# ── Main ─────────────────────────────────────────────────────────────────
+collect_media_files() {
+    local dir="$1"
+    mapfile -t MEDIA_FILES < <(find "$dir" -maxdepth 1 -type f \
+        \( -iname '*.mp3' -o -iname '*.flac' -o -iname '*.wav' -o -iname '*.ogg' -o -iname '*.m4a' \) 2>/dev/null | sort -f)
+}
+
+help_text() {
+    cat <<'EOF'
+mpv tui — minimal terminal frontend for mpv
+
+Usage: mpv-tuiv1 [options]
+
+Options:
+  -h, --help        Show this help and exit
+  -d, --dir <path>  Music directory (default: ~/Downloads/Telegram Desktop)
+
+Keys in the browser:
+  j/k       Move down/up
+  gg / G    Jump to top/bottom
+  /         Search (enter to jump, empty to cancel)
+  Enter     Play selected file
+  c         Remove orphan cover art
+  q         Quit
+
+Keys while playing:
+  p         Pause / resume
+  h / l     Seek −10s / +10s
+  L         Loop track
+  q         Stop, back to the browser
+EOF
+}
+
 main() {
     local music_dir="$HOME/Downloads/Telegram Desktop"
 
     while [[ $# -gt 0 ]]; do
-        case "$1" in
+        case $1 in
         -h | --help)
-            echo "MPV TUI Player"
-            echo
-            echo "Usage: $0 [options]"
-            echo
-            echo "Options:"
-            echo "  -h, --help        Show this help message and exit"
-            echo "  -d, --dir <path>  Set music directory (default: $music_dir)"
-            echo
-            echo "Keybindings inside browser:"
-            echo "  j/k       Move down/up"
-            echo "  gg / G    Jump to top/bottom"
-            echo "  /         Search"
-            echo "  Enter     Play selected file"
-            echo "  p/h/l/L   Playback controls (pause, seek, loop)"
-            echo "  q         Quit playback or exit"
-            exit 0
+            help_text
+            return 0
             ;;
         -d | --dir)
             shift
-            if [[ -n $1 ]]; then
-                music_dir="$1"
-            else
-                echo "${RED}Error: --dir requires a path${RESET}"
+            [[ -n $1 ]] || {
+                printf '%s\n' "${ERR}--dir requires a path${RESET}"
                 exit 1
-            fi
+            }
+            music_dir=$1
             ;;
         *)
-            echo "${RED}Unknown option: $1${RESET}"
-            echo "Try '$0 --help' for usage."
+            printf '%s\n' "${ERR}unknown option: $1${RESET}" "try $0 --help"
             exit 1
             ;;
         esac
         shift
     done
 
+    init_style
+
     local -a required=(mpv jq socat)
-    local missing=()
+    local -a missing=()
+    local dep
     for dep in "${required[@]}"; do
         command -v "$dep" &>/dev/null || missing+=("$dep")
     done
     if ((${#missing[@]} > 0)); then
-        echo "${RED}Error: Missing required dependencies: ${missing[*]}${RESET}"
+        printf '%s\n' "${ERR}missing dependencies: ${missing[*]}${RESET}"
         exit 1
     fi
 
-    local -a optional=(chafa ascii-image-converter kitty viu)
-    local found_opt=()
-    for dep in "${optional[@]}"; do
-        command -v "$dep" &>/dev/null && found_opt+=("$dep")
-    done
-    if ((${#found_opt[@]} == 0)); then
-        echo "${YELLOW}Note: No terminal image viewer found.${RESET}"
-        echo "${YELLOW}Consider installing one of these: chafa, ascii-image-converter, viu.${RESET}"
-    fi
+    detect_viewer
 
-    browse_files "$music_dir"
+    # Optional, keyless metadata tools: they let the app lift the real
+    # embedded cover and read artist/album tags out of each file.
+    FFMPEG_BIN=$(command -v ffmpeg 2>/dev/null)
+    FFPROBE_BIN=$(command -v ffprobe 2>/dev/null)
+
+    collect_media_files "$music_dir"
+    browse_files
 }
 
-# --- Cleanup & traps ---
 cleanup() {
     tput cnorm 2>/dev/null
-    rm -f /tmp/mpv-socket
+    [[ -n $MPV_PID ]] && kill "$MPV_PID" 2>/dev/null
+    rm -f -- /tmp/mpv-socket
     clear
-    echo -e "\n${YELLOW}Goodbye!${RESET}"
-    pkill -f "mpv --quiet" 2>/dev/null
+    printf '%s\n' "${DIM}bye${RESET}"
     exit 0
 }
 trap cleanup INT TERM
 
-main "$@"
+# Run only when executed directly — sourcing lets tests drive the pieces.
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+    main "$@"
+fi
