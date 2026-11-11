@@ -11,10 +11,6 @@ ConfigFiles/wayland/zsh/zcompdump
 ConfigFiles/wayland/zsh/zcompdump.*
 ConfigFiles/wayland/zsh/.histfile*
 
-# Neovim: lazy-lock.json is per machine and pin-stalls plugin updates for
-# everyone who clones the repo.
-IDE/nvim/lazy-lock.json
-
 # Note: ConfigFiles/wayland/.current_rice is deliberately NOT ignored. It is
 # tracked on purpose: it names the rice a fresh install boots into (Rainbow),
 # so the first login has a sane theme before anything is selected by hand.
@@ -38,6 +34,3 @@ __pycache__/
 # ---------------------------------------------------------------------------
 *.bak
 *.swp
-*.swo
-*~
-.DS_Store
