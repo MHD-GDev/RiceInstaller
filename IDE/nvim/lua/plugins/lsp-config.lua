@@ -1,38 +1,99 @@
 return {
+	-- Mason package manager
 	{
 		"williamboman/mason.nvim",
 		cmd = "Mason",
-		config = function()
-			require("mason").setup()
-		end,
+		opts = {},
 	},
-	{
-		"williamboman/mason-lspconfig.nvim",
-		event = { "BufReadPre", "BufNewFile" },
-		opts = {
-			ensure_installed = {},
-			auto_install = true,
-		},
-	},
+
+	-- Native Neovim LSP configuration
 	{
 		"neovim/nvim-lspconfig",
 		event = { "BufReadPre", "BufNewFile" },
+
+		dependencies = {
+			"hrsh7th/cmp-nvim-lsp",
+		},
+
 		config = function()
-			local capabilities = require("cmp_nvim_lsp").default_capabilities()
+			local capabilities =
+				require("cmp_nvim_lsp").default_capabilities()
 
-			-- new API
-			vim.lsp.config("bashls", { capabilities = capabilities })
-			vim.lsp.config("cssls", { capabilities = capabilities })
-			vim.lsp.config("lua_ls", { capabilities = capabilities })
-			vim.lsp.config("clangd", { capabilities = capabilities })
-			vim.lsp.config("marksman", { capabilities = capabilities })
-			vim.lsp.config("gdscript", { capabilities = capabilities })
+			-- Only enable servers whose executables are available.
+			local servers = {
+				bashls = "bash-language-server",
+				cssls = "vscode-css-language-server",
+				lua_ls = "lua-language-server",
+				clangd = "clangd",
+				marksman = "marksman",
+			}
 
-			-- keymaps
-			vim.keymap.set("n", "K", vim.lsp.buf.hover, {})
-			vim.keymap.set("n", "<leader>cd", vim.lsp.buf.definition, { desc = "Code Definitions" })
-			vim.keymap.set("n", "<leader>cr", vim.lsp.buf.references, { desc = "Code References" })
-			vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code action" })
+			for server, executable in pairs(servers) do
+				if vim.fn.executable(executable) == 1 then
+					local config = {
+						capabilities = capabilities,
+					}
+
+					if server == "clangd" then
+						config.filetypes = {
+							"c",
+							"cpp",
+							"objc",
+							"objcpp",
+							"cuda",
+						}
+					end
+
+					vim.lsp.config(server, config)
+					vim.lsp.enable(server)
+				end
+			end
+
+			-- Godot
+			vim.lsp.config("gdscript", {
+				capabilities = capabilities,
+			})
+			vim.lsp.enable("gdscript")
+
+			-- Buffer-local LSP keymaps
+			local group = vim.api.nvim_create_augroup(
+				"UserLspKeymaps",
+				{ clear = true }
+			)
+
+			vim.api.nvim_create_autocmd("LspAttach", {
+				group = group,
+
+				callback = function(event)
+					local buf = event.buf
+
+					vim.keymap.set("n", "K", vim.lsp.buf.hover, {
+						buffer = buf,
+						desc = "LSP: Hover documentation",
+					})
+
+					vim.keymap.set("n", "<leader>cd",
+						vim.lsp.buf.definition, {
+							buffer = buf,
+							desc = "LSP: Go to definition",
+						}
+					)
+
+					vim.keymap.set("n", "<leader>cr",
+						vim.lsp.buf.references, {
+							buffer = buf,
+							desc = "LSP: Find references",
+						}
+					)
+
+					vim.keymap.set("n", "<leader>ca",
+						vim.lsp.buf.code_action, {
+							buffer = buf,
+							desc = "LSP: Code action",
+						}
+					)
+				end,
+			})
 		end,
 	},
 }

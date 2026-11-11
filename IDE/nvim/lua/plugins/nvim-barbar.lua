@@ -1,20 +1,33 @@
 return {
-	"romgrk/barbar.nvim",
+	{
+		"romgrk/barbar.nvim",
+		event = "VeryLazy",
 
-	config = function()
-		require("barbar").setup({
+		init = function()
+			vim.g.barbar_auto_setup = false
+		end,
+
+		opts = {
 			animation = false,
 			auto_hide = 0,
+
 			sidebar_filetypes = {
-				NvimTree = true,
-				["neo-tree"] = { event = "BufWipeout" },
+				["neo-tree"] = {
+					event = "BufWipeout",
+				},
 			},
+
 			icons = {
 				filetype = {
-					custom_icons = false,
+					custom_colors = false,
+					enabled = true,
 				},
-				pinned = { button = "", filename = true },
+
+				pinned = {
+					button = "",
+					filename = true,
+				},
 			},
-		})
-	end,
+		},
+	},
 }

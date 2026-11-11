@@ -1,64 +1,105 @@
--- terminal.lua
--- Minimal floating terminal at bottom quarter of screen with <C-/> toggle
-
 local M = {}
 
--- Helper: start a terminal job
-local function jobstart(cmd, opts)
-	opts = opts or {}
-	local fn = vim.fn.jobstart
-	if vim.fn.termopen then
-		opts.term = nil
-		fn = vim.fn.termopen
-	end
-	return fn(cmd, vim.tbl_isempty(opts) and vim.empty_dict() or opts)
-end
+local terminal_buf = nil
+local terminal_win = nil
 
--- Open a terminal window
-function M.open(cmd)
-	local buf = vim.api.nvim_create_buf(false, true)
+local function get_terminal_size()
+	local width = math.max(1, vim.o.columns - 4)
+	local height = math.max(1, math.floor((vim.o.lines - vim.o.cmdheight - 4) / 4))
 
-	-- bottom quarter floating terminal
-	local width = vim.o.columns
-	local height = math.floor(vim.o.lines / 4)
-	local row = vim.o.lines - height
-	local col = 0
-
-	local win = vim.api.nvim_open_win(buf, true, {
+	return {
 		relative = "editor",
 		width = width,
 		height = height,
-		row = row,
-		col = col,
+		row = math.max(0, vim.o.lines - height - vim.o.cmdheight - 3),
+		col = 2,
 		style = "minimal",
 		border = "single",
-	})
+	}
+end
 
-	vim.api.nvim_buf_set_option(buf, "filetype", "simple_terminal")
+local function create_terminal()
+	terminal_buf = vim.api.nvim_create_buf(false, true)
+	vim.bo[terminal_buf].bufhidden = "hide"
+	vim.bo[terminal_buf].filetype = "simple_terminal"
 
-	-- start terminal job
-	vim.api.nvim_buf_call(buf, function()
-		jobstart(cmd or vim.o.shell, { term = true })
+	local ok, job = pcall(vim.api.nvim_buf_call, terminal_buf, function()
+		return vim.fn.termopen(vim.o.shell)
 	end)
+
+	if not ok or job <= 0 then
+		vim.api.nvim_buf_delete(terminal_buf, { force = true })
+		terminal_buf = nil
+
+		vim.notify("Could not start terminal", vim.log.levels.ERROR)
+		return false
+	end
+
+	return true
+end
+
+function M.open()
+	if terminal_buf and not vim.api.nvim_buf_is_valid(terminal_buf) then
+		terminal_buf = nil
+	end
+
+	if not terminal_buf and not create_terminal() then
+		return
+	end
+
+	if terminal_win and vim.api.nvim_win_is_valid(terminal_win) then
+		return
+	end
+
+	terminal_win = vim.api.nvim_open_win(
+		terminal_buf,
+		true,
+		get_terminal_size()
+	)
 
 	vim.cmd("startinsert")
 end
 
--- Toggle: if terminal exists, close it; otherwise open
-function M.toggle(cmd)
-	for _, w in ipairs(vim.api.nvim_list_wins()) do
-		local b = vim.api.nvim_win_get_buf(w)
-		if vim.bo[b].filetype == "simple_terminal" then
-			vim.api.nvim_win_close(w, true)
-			return
-		end
+function M.close()
+	if terminal_win and vim.api.nvim_win_is_valid(terminal_win) then
+		vim.api.nvim_win_close(terminal_win, true)
 	end
-	M.open(cmd)
+
+	terminal_win = nil
 end
 
--- Keybinding: Ctrl+/ toggles the terminal
-vim.keymap.set("n", "<C-/>", function()
+function M.toggle()
+	if terminal_win and vim.api.nvim_win_is_valid(terminal_win) then
+		M.close()
+	else
+		M.open()
+	end
+end
+
+function M.resize()
+	if terminal_win and vim.api.nvim_win_is_valid(terminal_win) then
+		vim.api.nvim_win_set_config(terminal_win, get_terminal_size())
+	end
+end
+
+vim.keymap.set("n", "<C-/>", M.toggle, {
+	desc = "Toggle floating terminal",
+})
+
+vim.keymap.set("t", "<C-/>", function()
+	vim.cmd("stopinsert")
 	M.toggle()
-end, { desc = "Toggle bottom-quarter terminal" })
+end, {
+	desc = "Toggle floating terminal",
+})
+
+local group = vim.api.nvim_create_augroup("FloatingTerminal", {
+	clear = true,
+})
+
+vim.api.nvim_create_autocmd("VimResized", {
+	group = group,
+	callback = M.resize,
+})
 
 return M

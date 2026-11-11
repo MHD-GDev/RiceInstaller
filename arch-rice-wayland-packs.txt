@@ -41,7 +41,6 @@ kwayland
 kwayland-integration
 lame
 libnotify
-lazygit
 maim
 mako
 mpv

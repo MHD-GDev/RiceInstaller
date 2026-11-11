@@ -4,23 +4,27 @@ return {
 		event = "VeryLazy",
 		priority = 1000,
 
-		config = function()
-			vim.diagnostic.config({ virtual_text = false })
+		opts = {
+			preset = "modern",
 
-			require("tiny-inline-diagnostic").setup({
-				preset = "modern",
+			signs = {
+				left = "",
+				right = "",
+			},
 
-				signs = {
-					left = "",
-					right = "",
+			options = {
+				multilines = {
+					enabled = true,
+					always_show = false,
 				},
+			},
+		},
 
-				options = {
-					multilines = {
-						enabled = true,
-						always_show = false,
-					},
-				},
+		config = function(_, opts)
+			require("tiny-inline-diagnostic").setup(opts)
+
+			vim.diagnostic.config({
+				virtual_text = false,
 			})
 		end,
 	},
