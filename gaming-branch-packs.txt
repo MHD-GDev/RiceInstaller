@@ -1,4 +1,5 @@
 steam-native-runtime
+hyprshade
 protonup-qt
 protontricks
 wine

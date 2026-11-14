@@ -82,9 +82,9 @@ cursor = {
 			-- min refresh rate for cursor movement for VRR in games
 			inactive_timeout = 0,
 			-- hide cursor when it's inactive (in seconds)
-			
+
 			-- default_monitor = "DP-1", -- Add your monitor
-			
+
 			-- the name of the monitor for cursor to show up at startup
 			enable_hyprcursor = true,
 			-- enables hyprcursor
@@ -134,14 +134,6 @@ hl.config({
 			vibrancy = 0.15,
 			-- Adds a subtle glow (optional)
 			ignore_opacity = true,
-		},
-		-- Shadow settings 
-		shadow = {
-			enabled = true,
-			range = 10,
-			render_power = 4,
-			color = "rgba(1a1a1aee)",
-			offset = "4 4",
 		},
 	},
 })

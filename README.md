@@ -54,6 +54,7 @@ Three additional themes are included without preview recordings:
 - H3cker
 - Gentoo
 - mhd_rice
+- Arasaka
 
 They can also be selected through `rice-selector`.
 

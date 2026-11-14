@@ -1,0 +1,236 @@
+/* ==========================================
+   ARASAKA CORPORATION
+   Frosted Glass / Arctic Capsules
+
+   Frosted glass needs two layers:
+   1. this stylesheet: translucent tint, hairline rim, inner highlight,
+      soft drop shadow;
+   2. the compositor: the actual background blur.
+      In Hyprland:
+          layerrule = blur, waybar
+          layerrule = ignorealpha 0.29, waybar
+      GTK3 has no backdrop-filter, so the blur can only come from there.
+   ========================================== */
+
+* {
+    font-family: "Meslo LG M";
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    min-height: 0;
+}
+
+/* Main Waybar */
+window#waybar {
+    background: transparent;
+    color: #ECF3FA;
+}
+
+/* ==========================================
+   ONE GLASS MATERIAL, FLOATING CAPSULES
+   ========================================== */
+
+#window,
+#custom-launcher,
+#workspaces,
+#tray,
+#cpu,
+#memory,
+#disk,
+#wireplumber,
+#battery,
+#custom-logout {
+    background: linear-gradient(
+        180deg,
+        rgba(244, 250, 255, 0.14),
+        rgba(120, 160, 200, 0.05)
+    );
+
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgba(255, 255, 255, 0.36);
+
+    border-radius: 20px;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+        0 6px 18px rgba(3, 10, 20, 0.32);
+
+    margin: 8px 0;
+    padding: 0 14px;
+}
+
+/* ==========================================
+   WINDOW TITLE
+   ========================================== */
+
+#window {
+    color: #D8E6F3;
+
+    /* Icon-only module: the capsule hugs the app logo */
+    min-width: 20px;
+    padding: 0 14px;
+
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.40);
+}
+
+#window label {
+    font-weight: bold;
+}
+
+/* ==========================================
+   LAUNCHER
+   ========================================== */
+
+#custom-launcher {
+    color: #CFE4F7;
+    font-size: 22px;
+
+    /* Bar renders 56px tall (modules force it above the 48px request);
+       8px top/bottom margin leaves 40px. 38px content + 1px border = 40x40. */
+    min-width: 40px;
+    min-height: 40px;
+
+    padding: 0;
+    margin: 8px 8px 8px 0;
+
+    border-radius: 13px;
+}
+
+#custom-launcher label {
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+}
+
+#custom-launcher:hover {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.30),
+        rgba(168, 206, 240, 0.14)
+    );
+    color: #FFFFFF;
+}
+
+/* ==========================================
+   WORKSPACES
+   ========================================== */
+
+#workspaces {
+    padding: 3px 7px;
+    background: linear-gradient(
+        180deg,
+        rgba(244, 250, 255, 0.09),
+        rgba(120, 160, 200, 0.03)
+    );
+}
+
+#workspaces button {
+    background: transparent;
+    color: #93AFC9;
+
+    padding: 0 11px;
+    margin: 3px;
+
+    border-radius: 999px;
+
+    transition: all 0.2s ease;
+}
+
+#workspaces button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ECF3FA;
+}
+
+#workspaces button.active {
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.26),
+        rgba(160, 200, 240, 0.08)
+    );
+
+    color: #FFFFFF;
+
+    /* Ice accent underline, drawn as a shadow so the bar cannot grow */
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+        inset 0 -2px 0 rgba(150, 198, 238, 0.80);
+}
+
+#workspaces button.urgent {
+    color: #EBC7A9;
+    box-shadow: inset 0 -2px 0 rgba(235, 199, 169, 0.70);
+}
+
+#workspaces button.empty {
+    color: #6A87A2;
+}
+
+/* ==========================================
+   SYSTEM MODULES
+   ========================================== */
+
+#tray,
+#cpu,
+#memory,
+#disk,
+#wireplumber,
+#battery,
+#custom-logout {
+    color: #C7D9E9;
+    padding: 0 14px;
+}
+
+/* Tray */
+#tray {
+    margin-left: 8px;
+    padding: 0 12px;
+}
+
+/* Individual module accents: a single ice hue, stepped in brightness */
+#wireplumber {
+    color: #B4D2EC;
+}
+
+#cpu {
+    color: #BFCFE1;
+}
+
+#memory {
+    color: #C7D9E9;
+}
+
+#disk {
+    color: #A4C1DA;
+}
+
+#battery {
+    color: #DCE9F5;
+}
+
+#battery.charging {
+    color: #A8CEF0;
+}
+
+#battery.warning,
+#battery.critical {
+    color: #E3C6AC;
+}
+
+/* ==========================================
+   LOGOUT
+   ========================================== */
+
+#custom-logout {
+    color: #B4D2EC;
+
+    border-top-color: rgba(255, 255, 255, 0.40);
+
+    margin-left: 8px;
+    padding: 0 16px;
+}
+
+#custom-logout:hover {
+    background: rgba(255, 255, 255, 0.24);
+    color: #FFFFFF;
+}
