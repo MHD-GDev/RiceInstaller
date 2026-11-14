@@ -1,7 +1,6 @@
 {
     "hyprland/workspaces": {
         "format": "{icon}",
-        "on-click": "activate",
         "format-icons": {
             "1": "I",
             "2": "II",
@@ -26,11 +25,10 @@
         "tooltip": false
     },
     "hyprland/window": {
-        "format": "{title}",
-        "max-length": 48,
+        "format": "",
         "tooltip": false,
         "icon": true,
-        "icon-size": 18
+        "icon-size": 22
     },
     "clock": {
         "format": " {:%I:%M %p}",
@@ -82,8 +80,9 @@
         //"format": " 󰣨 ",
         // "format": " 󰣇 ",
         // "format": "  ",
-        // "format": "  "
-        "format": "  ",
+        // "format": "  ",
+        // "format": "󰘳",
+        "format": "  ",
         "on-click": "rofi -show drun -theme ~/.config/wayland/scripts/rofi-themes/dmenu.rasi",
         "tooltip": false
     },
