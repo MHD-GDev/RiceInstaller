@@ -24,7 +24,6 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP > /dev/null 2>&1")
 	hl.exec_cmd("~/.config/wayland/scripts/rice-init > /dev/null 2>&1")
 	hl.exec_cmd("fcitx5 > /dev/null 2>&1")
-	hl.exec_cmd("hyprctl setcursor Bibata-Modern-Ice 30 > /dev/null 2>&1")
 end)
 
 -- Variables
