@@ -319,18 +319,20 @@ install_packages() {
     install_packs arch-rice-wayland-packs.txt
     sleep 1
     screen_clear
-
-    install_gpu_packages
-    install_branch_packages
-    sleep 1
-    screen_clear
 }
 
 install_gpu_packages() {
-    info "Selecting your GPU..."
-    printf '1) Nvidia\n2) Intel\n3) AMD\n4) Hybrid (AMD & Nvidia)\n5) Skip\n' >&2
-    ask 'Enter choice [1-5]: '
-    case "$ANSWER" in
+    local choice="${GPU_CHOICE:-}"
+    if [[ -z $choice ]]; then
+        info "Selecting your GPU..."
+        printf '1) Nvidia\n2) Intel\n3) AMD\n4) Hybrid (AMD & Nvidia)\n5) Skip\n' >&2
+        ask 'Enter choice [1-5]: '
+        choice="$ANSWER"
+        [[ $choice =~ ^[1-5]$ ]] || die "Invalid GPU choice."
+        GPU_CHOICE="$choice"
+        ri_save_selections
+    fi
+    case "$choice" in
     1) install_packs_list "nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda" ;;
     2)
         install_packs_list "vulkan-intel intel-oneapi-basekit"
@@ -359,11 +361,17 @@ install_packs_list() {
 }
 
 install_branch_packages() {
-    info "Selecting your branch type..."
-    printf '1) Gamedev\n2) Gaming\n3) Programmer\n4) Steam Deck\n5) None\n' >&2
-    ask 'Enter choice [1-5]: '
-    local file=""
-    case "$ANSWER" in
+    local choice="${BRANCH_CHOICE:-}" file=""
+    if [[ -z $choice ]]; then
+        info "Selecting your branch type..."
+        printf '1) Gamedev\n2) Gaming\n3) Programmer\n4) Steam Deck\n5) None\n' >&2
+        ask 'Enter choice [1-5]: '
+        choice="$ANSWER"
+        [[ $choice =~ ^[1-5]$ ]] || die "Invalid branch choice."
+        BRANCH_CHOICE="$choice"
+        ri_save_selections
+    fi
+    case "$choice" in
     1) file="gamedev-branch-packs.txt" ;;
     2) file="gaming-branch-packs.txt" ;;
     3) file="Programmer-branch-packs.txt" ;;
@@ -382,22 +390,43 @@ copy_configs() {
 
     info "Copying rice directories..."
 
-    # ~/.config does not exist at all on a minimal install, and `cp -r src/ dst/`
-    # fails with "No such file or directory" rather than creating it.
+    # Do not follow a user-level config-root symlink into an unknown tree.
+    [[ ! -L "$HOME/.config" ]] || die "~/.config is a symlink; move it aside or resolve it before installing."
+    # ~/.config does not exist at all on a minimal install.
     mkdir -p "$HOME/.config"
 
-    # Back up the current Hyprland config instead of assuming a name is free.
-    # `cp -a` preserves symlinks and permissions. The old `cp ~/.config/hypr
-    # ~/.config/hypr.bak` was missing -r (so it always failed and skipped the
-    # real copy), and on a second run it nested hypr.bak/hypr/... on top of the
-    # first backup.
-    if [[ -d "$HOME/.config/hypr" ]]; then
-        local stamp backup
-        stamp="$(date +%Y%m%d-%H%M%S)"
-        backup="$HOME/.config/hypr.bak-$stamp"
-        run_step "backing up ~/.config/hypr" cp -a "$HOME/.config/hypr" "$backup" ||
-            warn "Could not back up ~/.config/hypr, continuing anyway."
-        ok "Existing hypr config backed up to $backup"
+    # Snapshot every managed user configuration before copying anything.
+    # -a and --no-dereference preserve the exact symlink instead of following
+    # it into an unrelated target. The backup is outside ~/.config.
+    local stamp backup_root rel src dest
+    stamp="$(date +%Y%m%d-%H%M%S)-$$"
+    backup_root="$HOME/.local/share/RiceInstaller/backups/install-$stamp"
+    local -a backup_paths=(
+        ".config/hypr"
+        ".config/wayland"
+        ".config/nvim"
+        ".config/Code"
+        ".config/fcitx5"
+        ".config/AI"
+        ".config/gtk-3.0"
+        ".config/gtkrc"
+        ".local/share/fonts"
+        ".local/bin/llama-cli"
+        ".local/bin/llama-server"
+        "Templates/IMPORTANT-README.md"
+        ".zshrc"
+    )
+    local backed_up=0
+    for rel in "${backup_paths[@]}"; do
+        src="$HOME/$rel"
+        [[ -e $src || -L $src ]] || continue
+        dest="$backup_root/$rel"
+        mkdir -p "$(dirname "$dest")"
+        cp -a --no-dereference "$src" "$dest"
+        backed_up=1
+    done
+    if ((backed_up)); then
+        ok "Existing user configuration backed up to $backup_root"
     fi
 
     # Copy everything except the directory's own README.md, so it does not
@@ -410,12 +439,21 @@ copy_configs() {
     done < <(find -H "$SCRIPT_DIR/ConfigFiles" -mindepth 1 -maxdepth 1 ! -name 'README.md' -print0)
 
     ((${#items[@]} > 0)) || die "ConfigFiles is empty."
-    run_step "copying ConfigFiles to ~/.config" cp -r "${items[@]}" "$HOME/.config/" ||
+    # Detach managed destination symlinks only after the backup above captured
+    # them. This prevents cp from writing through links into unrelated folders.
+    for rel in hypr wayland gtk-3.0 gtkrc nvim Code fcitx5 AI; do
+        dest="$HOME/.config/$rel"
+        [[ -L $dest ]] && rm -f -- "$dest"
+    done
+    dest="$HOME/.local/share/fonts"
+    [[ -L $dest ]] && rm -f -- "$dest"
+
+    run_step "copying ConfigFiles to ~/.config" cp -r --remove-destination "${items[@]}" "$HOME/.config/" ||
         die "Could not copy the config files."
 
     if [[ -f "$SCRIPT_DIR/profile" ]]; then
         mkdir -p "$HOME/.config/fcitx5"
-        cp -r "$SCRIPT_DIR/profile" "$HOME/.config/fcitx5/profile"
+        cp -r --remove-destination "$SCRIPT_DIR/profile" "$HOME/.config/fcitx5/profile"
     fi
 
     ok "Config directories copied."
@@ -431,7 +469,7 @@ vscode_rice() {
     # settings.json somewhere VSCode never looks.
     mkdir -p "$HOME/.config/Code"
     if [[ -d "$SCRIPT_DIR/IDE/User" ]]; then
-        cp -r "$SCRIPT_DIR/IDE/User" "$HOME/.config/Code"
+        cp -r --remove-destination "$SCRIPT_DIR/IDE/User" "$HOME/.config/Code"
     fi
 
     if [[ -f "$SCRIPT_DIR/IDE/User/extensions.txt" ]]; then
@@ -458,7 +496,7 @@ vscode_rice() {
 nvim() {
     info "Setting up Neovim rice..."
     [[ -d "$SCRIPT_DIR/IDE/nvim" ]] || die "Missing IDE/nvim directory in $SCRIPT_DIR."
-    cp -r "$SCRIPT_DIR/IDE/nvim" "$HOME/.config/nvim"
+    cp -r --remove-destination "$SCRIPT_DIR/IDE/nvim" "$HOME/.config/nvim"
     ok "Neovim rice setup complete."
     sleep 1
     screen_clear
@@ -467,7 +505,7 @@ nvim() {
 copy_zshrc() {
     info "Copying .zshrc into your home directory..."
     [[ -f "$SCRIPT_DIR/.zshrc" ]] || die "Missing .zshrc in $SCRIPT_DIR."
-    cp "$SCRIPT_DIR/.zshrc" "$HOME/.zshrc"
+    cp --remove-destination "$SCRIPT_DIR/.zshrc" "$HOME/.zshrc"
 
     if [[ -d "$SCRIPT_DIR/plugins" ]]; then
         # .zshrc sources /usr/share/zsh/plugins/<name>/<name>.zsh, so the
@@ -481,9 +519,14 @@ copy_zshrc() {
         fi
         if [[ -d "$zsh_dir" ]]; then
             sudo install -d -m 755 "$zsh_dir/plugins"
+            if [[ -d "$zsh_dir/plugins" ]]; then
+                local plugin_backup="$HOME/.local/share/RiceInstaller/backups/install-$(date +%Y%m%d-%H%M%S)-$$/system"
+                mkdir -p "$plugin_backup"
+                sudo cp -a --no-dereference "$zsh_dir/plugins" "$plugin_backup/zsh-plugins"
+            fi
             local p
             for p in "$SCRIPT_DIR"/plugins/*/; do
-                sudo cp -r "$p" "$zsh_dir/plugins/"
+                sudo cp -r --remove-destination "$p" "$zsh_dir/plugins/"
             done
             ok "zsh plugins installed to $zsh_dir/plugins"
         fi
@@ -491,7 +534,7 @@ copy_zshrc() {
 
     if [[ -d "$SCRIPT_DIR/fonts" ]]; then
         mkdir -p "$HOME/.local/share/fonts"
-        cp -r "$SCRIPT_DIR/fonts/." "$HOME/.local/share/fonts/"
+        cp -r --remove-destination "$SCRIPT_DIR/fonts/." "$HOME/.local/share/fonts/"
         command -v fc-cache >/dev/null 2>&1 && fc-cache -f >/dev/null 2>&1 || true
     fi
 
@@ -695,6 +738,9 @@ write_notes() {
     info "Writing installation notes..."
     local notes="$HOME/Templates/IMPORTANT-README.md"
     mkdir -p "$HOME/Templates"
+    # Do not write through a user-created symlink; its original link was
+    # captured in the install backup before this step.
+    [[ ! -L $notes ]] || rm -f -- "$notes"
     # Written fresh each run. The old version appended with >> inside a retry
     # loop, so every re-run duplicated the notes and a write failure would
     # append forever.
@@ -760,28 +806,169 @@ finish_and_restart() {
     sudo reboot
 }
 
-#-----------------------#
-# RUN SCRIPT SECTIONS   #
-#-----------------------#
-refuse_root
-require_sudo
-require_repo_layout
-require_wayland_session
-show_banner
-show_notice
-choose_build_type
-create_user_dirs
-install_packages
-copy_configs
-if [[ $BUILD_TYPE == "programming" || $BUILD_TYPE == "both" ]]; then
-    vscode_rice
+# ------------------------------------------------------------------ #
+# Recovery-aware installer entry point
+# ------------------------------------------------------------------ #
+source "$SCRIPT_DIR/lib/tui.sh"
+source "$SCRIPT_DIR/lib/state.sh"
+
+INSTALL_STEPS=(
+    preflight
+    welcome
+    build_type
+    user_directories
+    packages
+    gpu_packages
+    branch_packages
+    rice_configs
+    vscode
+    neovim
+    shell_and_fonts
+    sddm
+    grub
+    llama
+    llama_ui
+    notes
+    permissions
+)
+
+step_preflight() {
+    refuse_root
+    require_sudo
+    require_repo_layout
+    require_wayland_session
+}
+step_welcome() { show_banner; show_notice; }
+step_build_type() {
+    if [[ -z ${BUILD_TYPE:-} ]]; then choose_build_type; fi
+    ri_save_selections
+}
+step_user_directories() { create_user_dirs; }
+step_packages() { install_packages; }
+step_gpu_packages() {
+    if is_arch_like; then install_gpu_packages; else info "GPU package setup skipped on non-Arch systems."; fi
+}
+step_branch_packages() {
+    if is_arch_like; then install_branch_packages; else info "Branch package setup skipped on non-Arch systems."; fi
+}
+step_rice_configs() { copy_configs; }
+step_vscode() {
+    if [[ ${BUILD_TYPE:-none} == "programming" || ${BUILD_TYPE:-none} == "both" ]]; then
+        vscode_rice
+    else
+        info "VSCode setup not selected; skipping."
+    fi
+}
+step_neovim() { nvim; }
+step_shell_and_fonts() { copy_zshrc; }
+step_sddm() { install_sddm_theme; ri_save_selections; }
+step_grub() { install_grub_theme; }
+step_llama() { build_llama; ri_save_selections; }
+step_llama_ui() { add_llama_ui; }
+step_notes() { write_notes; }
+step_permissions() { fix_permissions; }
+
+run_installation() {
+    local step
+    for step in "${INSTALL_STEPS[@]}"; do
+        if ri_step_done "$step"; then
+            ok "Already completed: $step"
+            continue
+        fi
+        RI_ACTIVE_STEP="$step"
+        printf '\n\033[1;35m── %s ──\033[0m\n' "${step//_/ }"
+        if "$SCRIPT_DIR/RiceInstaller.sh" --run-step "$step"; then
+            ri_mark_done "$step"
+            printf '%s\t%s\t%s\n' "$(date --iso-8601=seconds)" "$step" "completed" >>"$RI_HISTORY_DIR/events.log"
+            RI_ACTIVE_STEP=""
+        else
+            ri_mark_failed "$step" "Step process exited unsuccessfully"
+            RI_ACTIVE_STEP=""
+            warn "Step '$step' failed. Completed steps have been saved."
+            return 1
+        fi
+    done
+    RI_ACTIVE_STEP=""
+    printf '\n%sAll installation steps completed.%s\n' "$GREEN" "$RESET"
+    finish_and_restart
+}
+
+review_state() {
+    ri_show_progress "${INSTALL_STEPS[@]}"
+    printf '\nSelections:\n  Build type: %s\n  GPU choice: %s\n  Branch choice: %s\n  SDDM: %s\n  llama.cpp: %s\n' "${BUILD_TYPE:-not set}" "${GPU_CHOICE:-not set}" "${BRANCH_CHOICE:-not set}" "${SDDM_THEME_WANTED:-no}" "${LLAMA_BUILT:-no}"
+    ri_pause
+}
+show_history() {
+    if [[ -s $RI_HISTORY_DIR/events.log ]]; then tail -n 40 "$RI_HISTORY_DIR/events.log"; else printf 'No installation history yet.\n'; fi
+    ri_pause
+}
+retry_failed_step() {
+    local failed=() f choice
+    for f in "$RI_STEPS_DIR"/*.failed; do
+        [[ -e $f ]] && failed+=("${f##*/}")
+    done
+    if (("${#failed[@]}" == 0)); then
+        printf 'There are no recorded failed steps.\n'
+        ri_pause
+        return 0
+    fi
+    choice="$(ri_choose "Select the failed step to retry" "${failed[@]}")" || return 0
+    choice="${choice%.failed}"
+    rm -f "$RI_STEPS_DIR/$choice.failed"
+    run_installation
+}
+main_menu() {
+    local choice
+    while :; do
+        screen_clear
+        ri_banner
+        if compgen -G "$RI_STEPS_DIR/*.done" >/dev/null; then
+            printf 'Saved installation progress detected.\n\n'
+        fi
+        choice="$(ri_choose "Choose an action" "New installation (start over)" "Resume installation" "Retry a failed step" "Review selections and progress" "Installation history" "Exit")" || exit 0
+        case "$choice" in
+            "New installation (start over)")
+                if ri_confirm "Clear saved progress and start a new installation?"; then
+                    ri_clear_progress
+                    run_installation || true
+                    ri_pause
+                fi
+                ;;
+            "Resume installation")
+                run_installation || true
+                ri_pause
+                ;;
+            "Retry a failed step")
+                retry_failed_step || true
+                ri_pause
+                ;;
+            "Review selections and progress") review_state ;;
+            "Installation history") show_history ;;
+            "Exit") exit 0 ;;
+        esac
+    done
+}
+
+ri_state_init
+
+# Execute a single step in a child Bash process. This preserves normal
+# errexit behaviour inside the step functions; the parent records success or
+# failure and keeps the menu/state process alive.
+if [[ ${1:-} == "--run-step" ]]; then
+    step="${2:-}"
+    [[ -n $step ]] || die "Missing internal step name."
+    case "$step" in
+        preflight|welcome|build_type|user_directories|packages|gpu_packages|branch_packages|rice_configs|vscode|neovim|shell_and_fonts|sddm|grub|llama|llama_ui|notes|permissions) ;;
+        *) die "Unknown installer step: $step" ;;
+    esac
+    RI_ACTIVE_STEP="$step"
+    trap ri_record_exit EXIT
+    "step_$step"
+    exit 0
 fi
-nvim
-copy_zshrc
-install_sddm_theme
-install_grub_theme
-build_llama
-add_llama_ui
-write_notes
-fix_permissions
-finish_and_restart
+
+refuse_root
+exec 9>"$RI_STATE_DIR/installer.lock"
+flock -n 9 || die "Another RiceInstaller process is already running."
+trap ri_record_exit EXIT
+main_menu

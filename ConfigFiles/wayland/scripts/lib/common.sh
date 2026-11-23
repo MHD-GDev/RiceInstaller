@@ -193,14 +193,18 @@ link_config() {
         return 0
     fi
     mkdir -p -- "$(dirname -- "$dest")" || return 1
-    if [[ -e $dest && ! -L $dest ]]; then
+    if [[ -e $dest || -L $dest ]]; then
         local backup="$dest.replaced"
-        rm -rf -- "$backup"
-        if ! mv -T -- "$dest" "$backup" 2>/dev/null; then
-            rm -rf -- "$dest"
-            backup=""
+        if [[ -e $backup || -L $backup ]]; then
+            backup="$dest.replaced.$(date +%Y%m%d-%H%M%S)-$$"
         fi
-        printf '%s: moved the old %s to %s\n' "$label" "$dest" "${backup:-/dev/null}" >&2
+        # Preserve regular files, directories, and existing symlinks. If the
+        # move fails, refuse to replace the destination.
+        if ! mv -T -- "$dest" "$backup"; then
+            printf '%s: could not preserve %s; refusing to replace it\n' "$label" "$dest" >&2
+            return 1
+        fi
+        printf '%s: moved the old %s to %s\n' "$label" "$dest" "$backup" >&2
     fi
     ln -sfnT -- "$source" "$dest"
 }

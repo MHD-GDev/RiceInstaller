@@ -83,7 +83,9 @@ chmod +x RiceInstaller.sh
 
 The installer can be launched from any working directory.
 
-It is designed to be safe to run again. It retries failed steps, keeps backups rather than blindly replacing existing files, and creates timestamped backups of `~/.config/hypr` and your Bash dotfiles.
+The installer opens a recovery-aware terminal menu. It records each completed step under `~/.local/state/riceinstaller/`, so you can close it, fix a problem, launch it again, and resume without repeating successful steps. You can also review progress, retry a failed step, or start a fresh installation. The menu uses `gum` when available and has a built-in fallback, so `gum` is optional.
+
+Before replacing existing configuration, the installer keeps timestamped backups. Its shared symlink helper never deletes an older `.replaced` backup; if that name is already occupied, it creates a timestamped backup instead.
 
 ### Installation Options
 
@@ -95,6 +97,22 @@ During setup, you will be asked to choose:
 | **GPU** | Nvidia, Intel, AMD, hybrid, or skip. Selects the corresponding driver and compute packages. |
 | **Branch** | Optional package groups for gamedev, gaming, programming, or Steam Deck. |
 | **Extras** | Optional SDDM theme, GRUB theme, and a local llama.cpp build. |
+
+### Resume or Update
+
+Launch the installer again to resume an interrupted setup:
+
+```bash
+./RiceInstaller.sh
+```
+
+To update an existing checkout and migrate changed configuration files:
+
+```bash
+./RiceUpdater.sh
+```
+
+The updater requires a clean Git checkout and a reachable `origin` remote. It fetches the current branch, checks that the update is a fast-forward, and creates a timestamped backup under `~/.local/share/RiceInstaller/backups/` before migrating files. Files that still match the previous upstream version can be updated automatically. Customized files are shown individually, with a choice to keep the current version or replace it. Runtime state (such as the selected rice and wallpaper) is preserved, foreign/unmanaged entries are reported but left untouched, and upstream file deletions are not applied to the user's home directory. After the rice update, you may separately opt into a full `paru -Syu` (or `pacman -Syu`) package update; it is never run silently. If migration is interrupted, run the updater again; files already migrated to the new upstream version are detected.
 
 ### Manual Setup
 
@@ -124,6 +142,7 @@ The included scripts make common desktop tasks accessible directly from the term
 | `rice-selector` | Change the active desktop theme. |
 | `wallpaper-selector` | Choose a wallpaper for the current rice. |
 | `create_rice` | Create a new rice configuration. |
+| `./RiceUpdater.sh` | Back up and safely migrate changed rice files from upstream. |
 | `power-menu` | Lock, log out, reboot, or shut down. |
 
 ### Default Shortcuts
