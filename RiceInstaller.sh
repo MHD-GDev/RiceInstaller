@@ -33,6 +33,8 @@ ok() { printf '%s[ ok ]%s %s\n' "$GREEN" "$RESET" "$*"; }
 warn() { printf '%s[warn]%s %s\n' "$YELLOW" "$RESET" "$*" >&2; }
 err() { printf '%s[fail]%s %s\n' "$RED" "$RESET" "$*" >&2; }
 
+source "$SCRIPT_DIR/lib/packages.sh"
+
 screen_clear() {
     [[ -t 1 ]] && command -v clear >/dev/null 2>&1 && clear || true
 }
@@ -118,7 +120,9 @@ require_repo_layout() {
         "plugins" \
         "fonts" \
         "IDE" \
+        "lib/packages.sh" \
         "arch-rice-wayland-packs.txt" \
+        "arch-rice-wayland-optional-packs.txt" \
         "LlamaUI-vMHD.html"; do
         [[ -e "$SCRIPT_DIR/$f" ]] || missing+=("$f")
     done
@@ -282,235 +286,130 @@ ensure_paru() {
         run_step "cloning paru" git clone --depth 1 https://aur.archlinux.org/paru.git "$SCRIPT_DIR/paru" ||
             die "Could not clone paru."
     fi
-    run_step "installing paru" makepkg -Csi --noconfirm --dir "$SCRIPT_DIR/paru" ||
+    makepkg -Csi --dir "$SCRIPT_DIR/paru" ||
         die "Could not install paru."
     command -v paru >/dev/null 2>&1 || die "paru still not on PATH after install."
 }
 
-# Resolve conflicts conservatively and without asking the user to remove
-# anything. Installed rice components always win unless the incoming package
-# explicitly declares the old package obsolete through its Replaces metadata.
-RI_PACKAGE_FAILURES=0
-RI_PACKAGE_SKIPS=0
+# ------------------------------------------------------------------ #
+# Package installation                                                #
+# ------------------------------------------------------------------ #
 
-record_package_decision() {
-    local package="$1" source="$2" reason="$3"
-    if [[ ! -e "$HOME/missing_apps.txt" ]]; then
-        printf '# RiceInstaller package decisions (%s)\n' "$(date --iso-8601=seconds)" >"$HOME/missing_apps.txt"
-    fi
-    printf '%s\t%s\t%s\n' "$package" "$source" "$reason" >>"$HOME/missing_apps.txt"
-}
-
-package_name_from_spec() {
-    local spec="$1"
-    spec="${spec##*/}"
-    printf '%s' "${spec%%[<=>]*}"
-}
-
-# Return 0 when safe to install, 2 when an installed component should be
-# preserved and this requested package should be skipped, or 1 when metadata
-# cannot be checked. We never infer that an installed package is disposable
-# merely because pacman marks it as a dependency.
-check_package_conflicts() {
-    local package="$1" source="$2" metadata conflicts replaces spec conflict
-    local target_name reverse_conflict
-    local -a conflict_specs=() replacement_specs=()
-
-    metadata="$(LC_ALL=C paru -Si "$package" 2>/dev/null)" || {
-        warn "Cannot verify package metadata for $package; refusing to install it blindly."
-        record_package_decision "$package" "$source" "failed: package metadata unavailable; no transaction attempted"
-        return 1
-    }
-
-    conflicts="$(printf '%s\n' "$metadata" | awk -F: '$1 ~ /^Conflicts With[[:space:]]*$/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}')"
-    replaces="$(printf '%s\n' "$metadata" | awk -F: '$1 ~ /^Replaces[[:space:]]*$/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}')"
-    read -r -a conflict_specs <<<"$conflicts"
-    read -r -a replacement_specs <<<"$replaces"
-    target_name="$(package_name_from_spec "$package")"
-
-    # First inspect conflicts declared by the incoming package.
-    for spec in "${conflict_specs[@]}"; do
-        [[ -n $spec && $spec != "None" ]] || continue
-        conflict="$(package_name_from_spec "$spec")"
-        [[ -n $conflict ]] || continue
-        pacman -Qq "$conflict" >/dev/null 2>&1 || continue
-
-        warn "Preserving installed '$conflict'; '$package' declares it as a conflict."
-        warn "Skipping '$package' instead of removing a package that may belong to the current rice."
-        record_package_decision "$package" "$source" "skipped: conflicts with installed $conflict; existing package preserved"
-        RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
-        return 2
-    done
-
-    # Replacements are also treated conservatively. Even when the package
-    # maintainer marks an old package as replaceable, a rice may use it at
-    # runtime without declaring a package dependency. Keep it and skip the
-    # newcomer rather than guessing.
-    for spec in "${replacement_specs[@]}"; do
-        [[ -n $spec && $spec != "None" ]] || continue
-        conflict="$(package_name_from_spec "$spec")"
-        [[ -n $conflict ]] || continue
-        if pacman -Qq "$conflict" >/dev/null 2>&1; then
-            warn "Preserving installed '$conflict'; '$package' lists it as a replacement."
-            record_package_decision "$package" "$source" "skipped: would replace installed $conflict; existing package preserved"
-            RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
-            return 2
-        fi
-    done
-
-    # Conflict declarations are sometimes one-sided (the installed AUR
-    # package declares that it conflicts with the incoming repo package).
-    # Inspect the local package database as well, otherwise paru can still
-    # stop for a conflict that the incoming package's metadata does not list.
-    reverse_conflict="$(LC_ALL=C pacman -Qi 2>/dev/null | awk -F: -v target="$target_name" '
-        /^Name[[:space:]]*:/ {
-            installed=$2
-            sub(/^[[:space:]]+/, "", installed)
-        }
-        /^Conflicts With[[:space:]]*:/ {
-            value=$2
-            n=split(value, items, /[[:space:]]+/)
-            for (i=1; i<=n; i++) {
-                sub(/[<>=].*/, "", items[i])
-                if (items[i] == target) {
-                    print installed
-                    exit
-                }
-            }
-        }
-    ')"
-
-    if [[ -n $reverse_conflict ]]; then
-        warn "Preserving installed '$reverse_conflict'; it declares a conflict with '$package'."
-        warn "Skipping '$package' to protect the existing rice."
-        record_package_decision "$package" "$source" "skipped: installed $reverse_conflict declares conflict; existing package preserved"
-        RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
-        return 2
-    fi
-    return 0
-}
-
-install_one_package() {
-    local package="$1" source="$2" log attempt pkg_status reason check_status
-    log="$(mktemp "${TMPDIR:-/tmp}/riceinstaller-package.XXXXXX")"
-
-    if check_package_conflicts "$package" "$source"; then
-        :
-    else
-        check_status=$?
-        rm -f "$log"
-        ((check_status == 2)) && return 0
-        RI_PACKAGE_FAILURES=$((RI_PACKAGE_FAILURES + 1))
-        return 1
-    fi
-
-    for attempt in 1 2; do
-        info "Installing $package ($source), attempt $attempt/2..."
-        if paru -S --needed "$package" 2>&1 | tee "$log"; then
-            rm -f "$log"
-            ok "$package installed or already present."
-            return 0
-        else
-            pkg_status=$?
-        fi
-
-        if grep -Eiq 'conflict|conflicting files|exists in filesystem' "$log"; then
-            reason="skipped after package/file conflict; no installed package or file was removed"
-            warn "$package encountered a conflict. Preserving the current system and moving on."
-            record_package_decision "$package" "$source" "$reason"
-            {
-                printf '%s\n' 'Conflict details:'
-                tail -n 12 "$log"
-                printf '\n'
-            } >>"$HOME/missing_apps.txt"
-            rm -f "$log"
-            RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
-            return 0
-        fi
-        if ((attempt == 1)); then
-            warn "$package failed (exit $pkg_status); retrying once."
-            sleep 1
-        fi
-    done
-
-    reason="installation failed after $attempt attempt(s)"
-    record_package_decision "$package" "$source" "$reason"
-    {
-        printf '%s\n' 'Last installer output:'
-        tail -n 12 "$log"
-        printf '\n'
-    } >>"$HOME/missing_apps.txt"
-    rm -f "$log"
-    RI_PACKAGE_FAILURES=$((RI_PACKAGE_FAILURES + 1))
-    err "$package could not be installed; details saved to $HOME/missing_apps.txt"
-    return 1
-}
-
-install_package_targets() {
-    local source="$1"
-    shift
-    local package
-    for package in "$@"; do
-        [[ -n $package ]] || continue
-        install_one_package "$package" "$source" || true
-    done
-}
-
-# install_packs <file>
 install_packs() {
-    local file="$SCRIPT_DIR/$1" package before skips_before
-    [[ -f "$file" ]] || {
-        warn "Missing $1, skipping."
-        return 1
-    }
-    before="$RI_PACKAGE_FAILURES"
-    skips_before="$RI_PACKAGE_SKIPS"
-    while IFS= read -r package || [[ -n $package ]]; do
-        package="${package%%#*}"
-        package="$(printf '%s' "$package" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-        [[ -z $package ]] && continue
-        install_package_targets "$1" "$package"
-    done <"$file"
-    if ((RI_PACKAGE_FAILURES > before)); then
-        err "Some packages from $1 failed. See $HOME/missing_apps.txt for details."
-        return 1
-    fi
-    if ((RI_PACKAGE_SKIPS > skips_before)); then
-        warn "$((RI_PACKAGE_SKIPS - skips_before)) package(s) were skipped to preserve installed software. Details: $HOME/missing_apps.txt"
-    fi
-    return 0
+    local file="$1" mode="${2:-required}" label="${3:-$1}"
+    ri_package_install_file "$SCRIPT_DIR/$file" "$label" "$mode"
+}
+
+# install_packs_list <label> <required|optional> "<space separated packages>"
+install_packs_list() {
+    local label="$1" mode="$2" packages="$3"
+    ri_package_install_string "$label" "$mode" "$packages"
 }
 
 install_packages() {
     if ! is_arch_like; then
-        warn "$(os_name) is not an Arch-based distribution, so the package step is skipped."
-        warn "Install the packages yourself:"
-        warn "  paru -Syu --needed \$(cat arch-rice-wayland-packs.txt)"
-        warn "Everything else in this script still works."
+        warn "$(os_name) is not an Arch-based distribution, so automatic package installation is skipped."
+        warn "Install the packages listed in arch-rice-wayland-packs.txt with your distribution's package manager."
+        warn "Everything else in this script can still be used."
         return 0
     fi
 
-    info "Installing required packages on $(os_name)..."
+    info "Preparing the base rice package set on $(os_name)..."
     command -v pacman >/dev/null 2>&1 || die "pacman not found on an Arch-based system?"
 
-    # Start a fresh report for this base-package pass; later optional package
-    # steps append their own failures to the same report.
     rm -f "$HOME/missing_apps.txt"
-    run_step "system upgrade" sudo pacman -Syu || warn "System upgrade reported problems."
-    run_step "installing git" sudo pacman -S --needed git ||
-        die "git is required to continue."
+    ri_package_report_init
+
+    sudo pacman -Syu || {
+        err "The system upgrade did not complete. Retry this step before installing rice packages."
+        return 1
+    }
+    sudo pacman -S --needed git pacutils || {
+        err "git and pacutils are required to continue."
+        return 1
+    }
+    command -v pactrans >/dev/null 2>&1 || {
+        err "pacutils installed, but pactrans is unavailable. Refusing to use an unsafe package fallback."
+        return 1
+    }
     ensure_paru
 
-    install_packs arch-rice-wayland-packs.txt
+    install_packs arch-rice-wayland-packs.txt required "base rice packages"
+    install_audio_session_manager
+    install_fcitx5_stack ||
+        warn "The optional Fcitx5 input-method stack could not be installed; keeping the existing input method."
+    install_optional_dolphin ||
+        warn "The optional Dolphin/Poppler group could not be installed."
+    install_packs arch-rice-wayland-optional-packs.txt optional "optional rice integrations" ||
+        warn "Some optional rice integrations could not be installed; see $HOME/missing_apps.txt."
     sleep 1
     screen_clear
+}
+
+install_nvidia_gpu_packages() {
+    local label="$1" extras="${2:-}" package_string="nvidia-open nvidia-utils"
+    local kernel header_packages=""
+    local -a installed_kernels=()
+
+    for kernel in linux linux-lts linux-zen linux-hardened; do
+        if pacman -Qq "$kernel" >/dev/null 2>&1; then
+            installed_kernels+=("$kernel")
+        fi
+    done
+
+    if (("${#installed_kernels[@]}" == 0)); then
+        err "No supported Arch kernel package was detected. Install matching kernel headers or choose Skip."
+        return 1
+    elif (("${#installed_kernels[@]}" == 1)) && [[ "${installed_kernels[0]}" == linux ]]; then
+        info "Using the official NVIDIA open kernel module for the standard Arch kernel (Turing and newer GPUs)."
+    else
+        for kernel in "${installed_kernels[@]}"; do
+            header_packages+=" ${kernel}-headers"
+        done
+        package_string="nvidia-open-dkms nvidia-utils dkms${header_packages}"
+        info "Using DKMS for the installed kernel set; matching kernel headers will be installed."
+    fi
+
+    [[ -n $extras ]] && package_string+=" $extras"
+    install_packs_list "$label" required "$package_string"
+}
+
+install_audio_session_manager() {
+    if pacman -Qq wireplumber >/dev/null 2>&1; then
+        info "WirePlumber is already installed."
+        return 0
+    fi
+    if pacman -Qq pipewire-media-session >/dev/null 2>&1; then
+        warn "An existing PipeWire media session is installed. Preserving it instead of replacing it with WirePlumber."
+        ri_package_record "audio session manager" "wireplumber" "existing pipewire-media-session preserved"
+        return 0
+    fi
+    install_packs_list "PipeWire session manager" required "wireplumber"
+}
+
+install_fcitx5_stack() {
+    if pacman -Qq fcitx >/dev/null 2>&1 && ! pacman -Qq fcitx5 >/dev/null 2>&1; then
+        warn "An existing Fcitx v4 installation was detected. Keeping it and skipping the Fcitx5 stack."
+        ri_package_record "input method" "fcitx5 stack" "existing Fcitx v4 preserved; no packages removed"
+        return 0
+    fi
+    install_packs_list "Fcitx5 input method stack" optional "fcitx5 fcitx5-qt fcitx5-gtk fcitx5-mozc fcitx5-chinese-addons"
+}
+
+install_optional_dolphin() {
+    if pacman -Qq poppler-qt3 >/dev/null 2>&1 || pacman -Qq poppler-qt4 >/dev/null 2>&1; then
+        warn "Legacy Poppler Qt bindings are installed. Preserving them and skipping Dolphin/Poppler to avoid breaking older applications."
+        ri_package_record "optional file manager" "dolphin poppler" "skipped: legacy poppler-qt3/qt4 preserved"
+        return 0
+    fi
+    install_packs_list "Dolphin file manager and PDF support" optional "dolphin poppler"
 }
 
 install_gpu_packages() {
     local choice="${GPU_CHOICE:-}"
     if [[ -z $choice ]]; then
         info "Selecting your GPU..."
-        printf '1) Nvidia\n2) Intel\n3) AMD\n4) Hybrid (AMD & Nvidia)\n5) Skip\n' >&2
+        printf '1) Nvidia (Turing+)\\n2) Intel\\n3) AMD\\n4) Hybrid (AMD & Nvidia Turing+)\\n5) Skip\\n' >&2
         ask 'Enter choice [1-5]: '
         choice="$ANSWER"
         [[ $choice =~ ^[1-5]$ ]] || die "Invalid GPU choice."
@@ -518,41 +417,16 @@ install_gpu_packages() {
         ri_save_selections
     fi
     case "$choice" in
-    1) install_packs_list "nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda" ;;
-    2)
-        install_packs_list "vulkan-intel intel-oneapi-basekit"
-        if [[ -f /opt/intel/oneapi/setvars.sh ]]; then
-            # shellcheck disable=SC1091
-            source /opt/intel/oneapi/setvars.sh
-            ok "Intel oneAPI environment initialized."
-        else
-            warn "/opt/intel/oneapi/setvars.sh not found, oneAPI environment not initialized."
-        fi
-        ;;
-    3) install_packs_list "amdsmi amdvlk radeontop radeontool" ;;
-    4) install_packs_list "amdsmi amdvlk radeontop radeontool nvidia-cg-toolkit nvidia nvidia-utils cuda-tools cuda" ;;
+    1) install_nvidia_gpu_packages "NVIDIA GPU support" ;;
+    2) install_packs_list "Intel GPU support" required "vulkan-intel" ;;
+    3) install_packs_list "AMD GPU support" required "vulkan-radeon" ;;
+    4) install_nvidia_gpu_packages "Hybrid GPU support" "vulkan-radeon" ;;
     5)
         info "Skipping GPU packages."
         return 0
         ;;
     *) die "Invalid GPU choice." ;;
     esac
-}
-
-# install_packs_list "<space separated packages>"
-install_packs_list() {
-    local before="$RI_PACKAGE_FAILURES" skips_before="$RI_PACKAGE_SKIPS"
-    local -a packages=()
-    read -r -a packages <<<"$1"
-    install_package_targets "GPU selection" "${packages[@]}"
-    if ((RI_PACKAGE_FAILURES > before)); then
-        err "Some GPU packages failed. See $HOME/missing_apps.txt for details."
-        return 1
-    fi
-    if ((RI_PACKAGE_SKIPS > skips_before)); then
-        warn "$((RI_PACKAGE_SKIPS - skips_before)) GPU package(s) were skipped to preserve installed software. Details: $HOME/missing_apps.txt"
-    fi
-    return 0
 }
 
 install_branch_packages() {
@@ -577,7 +451,20 @@ install_branch_packages() {
         ;;
     *) die "Invalid branch choice." ;;
     esac
-    install_packs "$file"
+
+    if grep -Eq '^[[:space:]]*(steam|lib32-[[:alnum:]])' "$SCRIPT_DIR/$file"; then
+        ri_enable_multilib || return 1
+
+        # 32-bit Vulkan/NVIDIA userspace is needed by many Steam and Wine games.
+        case "${GPU_CHOICE:-5}" in
+        1) install_packs_list "32-bit NVIDIA support" optional "lib32-nvidia-utils" ;;
+        2) install_packs_list "32-bit Intel Vulkan support" optional "lib32-vulkan-intel" ;;
+        3) install_packs_list "32-bit AMD Vulkan support" optional "lib32-vulkan-radeon" ;;
+        4) install_packs_list "32-bit hybrid GPU support" optional "lib32-nvidia-utils lib32-vulkan-radeon" ;;
+        esac
+    fi
+
+    install_packs "$file" optional "$file"
 }
 
 copy_configs() {
@@ -659,6 +546,12 @@ copy_configs() {
 
 vscode_rice() {
     info "Setting up VSCode rice..."
+    if ! command -v code >/dev/null 2>&1; then
+        install_packs_list "Visual Studio Code" required "visual-studio-code-bin" ||
+            die "Visual Studio Code could not be installed."
+    else
+        info "An existing VS Code-compatible 'code' command was found; keeping it."
+    fi
     # VSCode reads ~/.config/Code/User/settings.json, so IDE/User has to be
     # copied into ~/.config/Code. Copying it to ~/.config/ instead would put
     # settings.json somewhere VSCode never looks.
@@ -780,6 +673,8 @@ install_sddm_theme() {
     fi
     SDDM_THEME_WANTED="yes"
 
+    install_packs_list "SDDM login manager" required "sddm" ||
+        die "SDDM could not be installed."
     command -v git >/dev/null 2>&1 || die "git is required to install the SDDM theme."
     local theme_dir="$SCRIPT_DIR/where-is-my-sddm-theme"
     if [[ ! -d "$theme_dir/.git" ]]; then
@@ -867,7 +762,7 @@ build_llama() {
         1) break ;;
         2) break ;;
         3)
-            install_packs_list "vulkan-extra-layers vulkan-tools vulkan-headers"
+            install_packs_list "llama.cpp Vulkan support" required "vulkan-extra-layers vulkan-tools vulkan-headers"
             break
             ;;
         4) break ;;

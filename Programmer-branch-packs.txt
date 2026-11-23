@@ -25,6 +25,6 @@ otf-ipafont
 docker
 docker-compose
 podman
-nix-git
+nix
 nixfmt
-nix-search-cli
+rustup

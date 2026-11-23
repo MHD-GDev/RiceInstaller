@@ -64,7 +64,7 @@ They can also be selected through `rice-selector`.
 
 ### Requirements
 
-- **Arch Linux or an Arch-based distribution** — The installer detects Arch-based systems through `/etc/os-release` and uses `paru` for package installation. On other distributions, it skips automatic package installation and reports what needs to be installed manually.
+- **Arch Linux or an Arch-based distribution** — The installer detects Arch-based systems through `/etc/os-release`. It bootstraps `paru` for AUR packages and `pacutils` for safer official-repository transactions. On other distributions, it skips automatic package installation and reports what needs to be installed manually.
 - **Hyprland with Lua configuration support** — This project uses `hyprland.lua` rather than the traditional `hyprland.conf`. Your Hyprland build must support Lua configuration.
 - **Rofi** — Required by the menus.
 - **ImageMagick** — Used by wallpaper thumbnails.
@@ -87,6 +87,12 @@ The installer opens a recovery-aware terminal menu. It records each completed st
 
 Before replacing existing configuration, the installer keeps timestamped backups. Its shared symlink helper never deletes an older `.replaced` backup; if that name is already occupied, it creates a timestamped backup instead.
 
+Package installation is planned in batches rather than one package at a time. RiceInstaller checks whether each requested package is already installed or satisfied by an installed provider, separates official repository packages from AUR and custom-repository packages, and checks conflicts from both sides of the package metadata. Official repository transactions use `pactrans` with conservative policies: a conflicting package is automatically removed only when the incoming package provides it, and official `Replaces` declarations are honored. AUR and custom-repository packages are never given blanket removal permission. Ambiguous optional packages are skipped and recorded in `~/missing_apps.txt` instead of deleting a package that may belong to the existing rice. Core packages still fail the step if an unsafe conflict prevents installation. Package transactions retain their normal approval prompt; RiceInstaller does not use blanket `--noconfirm` or `--overwrite` to force removals.
+
+The Fcitx5 input-method stack, Dolphin/Poppler, and other conflict-prone extras are handled as optional groups. An existing Fcitx v4 stack or legacy Poppler Qt bindings are preserved rather than forcibly replaced. For audio, an existing `pipewire-media-session` is preserved; WirePlumber is installed only when no PipeWire session manager is already present.
+
+The NVIDIA option uses Arch's current open kernel-module driver for Turing-and-newer GPUs. It selects the standard prebuilt module for the regular Arch kernel and DKMS plus matching headers when supported alternate Arch kernels are installed. Legacy pre-Turing NVIDIA cards need a legacy driver path and are not covered by this automatic option. CUDA and Intel oneAPI compute toolkits are not installed as graphics-driver dependencies. Gaming, gamedev, and Steam Deck branches enable Arch's `multilib` repository only when their package lists require 32-bit packages. The installer backs up `/etc/pacman.conf` before changing it and performs a full `pacman -Syu` after enabling the repository.
+
 ### Installation Options
 
 During setup, you will be asked to choose:
@@ -94,7 +100,7 @@ During setup, you will be asked to choose:
 | Option | Description |
 |---|---|
 | **Build type** | Gaming, programming, both, or neither. Controls additional packages and VSCode configuration. |
-| **GPU** | Nvidia, Intel, AMD, hybrid, or skip. Selects the corresponding driver and compute packages. |
+| **GPU** | NVIDIA (Turing+), Intel, AMD, hybrid, or skip. Selects the matching driver and later adds 32-bit userspace for gaming branches. |
 | **Branch** | Optional package groups for gamedev, gaming, programming, or Steam Deck. |
 | **Extras** | Optional SDDM theme, GRUB theme, and a local llama.cpp build. |
 
@@ -123,11 +129,18 @@ If you prefer to configure the environment yourself:
 3. Install the required packages:
 
    ```bash
-   paru -Syu --needed --noconfirm
-   paru -S --needed --noconfirm $(cat arch-rice-wayland-packs.txt)
+   sudo pacman -Syu
+   mapfile -t packages < <(grep -vE '^[[:space:]]*(#|$)' arch-rice-wayland-packs.txt)
+   paru -S --needed "${packages[@]}"
+   mapfile -t optional_packages < <(grep -vE '^[[:space:]]*(#|$)' arch-rice-wayland-optional-packs.txt)
+   paru -S --needed "${optional_packages[@]}"
+   paru -S --needed dolphin poppler
+   paru -S --needed fcitx5 fcitx5-qt fcitx5-gtk fcitx5-mozc fcitx5-chinese-addons
    ```
 
-4. Install the appropriate driver packages for your GPU.
+   If Fcitx v4 is already installed, skip the final Fcitx5 command; the installer preserves the existing input method rather than forcing a migration. If `poppler-qt3` or `poppler-qt4` is installed, skip the Dolphin/Poppler command to preserve those legacy applications.
+
+4. Install the appropriate driver packages for your GPU. If you select a gaming, gamedev, or Steam Deck package list, enable `[multilib]` in `/etc/pacman.conf` and run `sudo pacman -Syu` before installing its 32-bit packages.
 5. If you use the supplied Zsh configuration, copy the contents of `plugins/` into `/usr/share/zsh/plugins/`.
 6. Restart Hyprland or log out and back in.
 
@@ -161,6 +174,16 @@ If you choose to build llama.cpp during installation, place your models in:
 ```
 
 ---
+
+## Developer Checks
+
+Run the package-planner tests without installing, upgrading, or removing any real packages:
+
+```bash
+bash tests/package-planner.sh
+```
+
+The test suite mocks pacman, paru, and pactrans to verify provider detection, official replacements, AUR/custom conflict preservation, reverse conflicts, and unknown-package handling.
 
 ## Troubleshooting
 
