@@ -65,7 +65,8 @@ CHEATSHEET = [
     (
         "Comments",
         [
-            ("Normal/Visual: Space + c c", "Toggle comment"),
+            ("Normal: Space + c c", "Toggle comment on current line"),
+            ("Visual: Space + c c", "Toggle comment on selected lines"),
         ],
     ),
     (

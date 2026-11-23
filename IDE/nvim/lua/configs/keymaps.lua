@@ -41,8 +41,14 @@ map("n", "<leader>x", "<cmd>BufferClose<CR>", { desc = "Close buffer" })
 map("n", "<A-p>", "<cmd>BufferPin<CR>", { desc = "Pin buffer" })
 
 -- Comments
-map({ "n", "v" }, "<leader>cc", "<cmd>CommentToggle<CR>", {
+-- Normal mode: toggle the current line.
+map("n", "<leader>cc", "<cmd>CommentToggle<CR>", {
 	desc = "Toggle comment",
+})
+
+-- Visual mode: preserve and pass the selected line range to the plugin.
+map("x", "<leader>cc", ":<C-u>'<,'>CommentToggle<CR>", {
+	desc = "Toggle comment on selection",
 })
 
 -- Visual indentation
