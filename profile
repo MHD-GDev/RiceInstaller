@@ -26,11 +26,17 @@ Layout=es
 
 [Groups/0/Items/3]
 # Name
+Name=keyboard-ir
+# Layout
+Layout=ir
+
+[Groups/0/Items/4]
+# Name
 Name=mozc
 # Layout
 Layout=us
 
-[Groups/0/Items/4]
+[Groups/0/Items/5]
 # Name
 Name=pinyin
 # Layout
