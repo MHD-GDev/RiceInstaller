@@ -287,14 +287,122 @@ ensure_paru() {
     command -v paru >/dev/null 2>&1 || die "paru still not on PATH after install."
 }
 
-# Install each package in its own transaction so one conflict cannot abort
-# the rest of a list. Never silently accept removal/replacement of installed
-# packages: paru/pacman must show the transaction for the user to review.
+# Resolve conflicts conservatively and without asking the user to remove
+# anything. Installed rice components always win unless the incoming package
+# explicitly declares the old package obsolete through its Replaces metadata.
 RI_PACKAGE_FAILURES=0
+RI_PACKAGE_SKIPS=0
+
+record_package_decision() {
+    local package="$1" source="$2" reason="$3"
+    if [[ ! -e "$HOME/missing_apps.txt" ]]; then
+        printf '# RiceInstaller package decisions (%s)\n' "$(date --iso-8601=seconds)" >"$HOME/missing_apps.txt"
+    fi
+    printf '%s\t%s\t%s\n' "$package" "$source" "$reason" >>"$HOME/missing_apps.txt"
+}
+
+package_name_from_spec() {
+    local spec="$1"
+    spec="${spec##*/}"
+    printf '%s' "${spec%%[<=>]*}"
+}
+
+# Return 0 when safe to install, 2 when an installed component should be
+# preserved and this requested package should be skipped, or 1 when metadata
+# cannot be checked. We never infer that an installed package is disposable
+# merely because pacman marks it as a dependency.
+check_package_conflicts() {
+    local package="$1" source="$2" metadata conflicts replaces spec conflict
+    local target_name reverse_conflict
+    local -a conflict_specs=() replacement_specs=()
+
+    metadata="$(LC_ALL=C paru -Si "$package" 2>/dev/null)" || {
+        warn "Cannot verify package metadata for $package; refusing to install it blindly."
+        record_package_decision "$package" "$source" "failed: package metadata unavailable; no transaction attempted"
+        return 1
+    }
+
+    conflicts="$(printf '%s\n' "$metadata" | awk -F: '$1 ~ /^Conflicts With[[:space:]]*$/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}')"
+    replaces="$(printf '%s\n' "$metadata" | awk -F: '$1 ~ /^Replaces[[:space:]]*$/ {sub(/^[[:space:]]+/, "", $2); print $2; exit}')"
+    read -r -a conflict_specs <<<"$conflicts"
+    read -r -a replacement_specs <<<"$replaces"
+    target_name="$(package_name_from_spec "$package")"
+
+    # First inspect conflicts declared by the incoming package.
+    for spec in "${conflict_specs[@]}"; do
+        [[ -n $spec && $spec != "None" ]] || continue
+        conflict="$(package_name_from_spec "$spec")"
+        [[ -n $conflict ]] || continue
+        pacman -Qq "$conflict" >/dev/null 2>&1 || continue
+
+        warn "Preserving installed '$conflict'; '$package' declares it as a conflict."
+        warn "Skipping '$package' instead of removing a package that may belong to the current rice."
+        record_package_decision "$package" "$source" "skipped: conflicts with installed $conflict; existing package preserved"
+        RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
+        return 2
+    done
+
+    # Replacements are also treated conservatively. Even when the package
+    # maintainer marks an old package as replaceable, a rice may use it at
+    # runtime without declaring a package dependency. Keep it and skip the
+    # newcomer rather than guessing.
+    for spec in "${replacement_specs[@]}"; do
+        [[ -n $spec && $spec != "None" ]] || continue
+        conflict="$(package_name_from_spec "$spec")"
+        [[ -n $conflict ]] || continue
+        if pacman -Qq "$conflict" >/dev/null 2>&1; then
+            warn "Preserving installed '$conflict'; '$package' lists it as a replacement."
+            record_package_decision "$package" "$source" "skipped: would replace installed $conflict; existing package preserved"
+            RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
+            return 2
+        fi
+    done
+
+    # Conflict declarations are sometimes one-sided (the installed AUR
+    # package declares that it conflicts with the incoming repo package).
+    # Inspect the local package database as well, otherwise paru can still
+    # stop for a conflict that the incoming package's metadata does not list.
+    reverse_conflict="$(LC_ALL=C pacman -Qi 2>/dev/null | awk -F: -v target="$target_name" '
+        /^Name[[:space:]]*:/ {
+            installed=$2
+            sub(/^[[:space:]]+/, "", installed)
+        }
+        /^Conflicts With[[:space:]]*:/ {
+            value=$2
+            n=split(value, items, /[[:space:]]+/)
+            for (i=1; i<=n; i++) {
+                sub(/[<>=].*/, "", items[i])
+                if (items[i] == target) {
+                    print installed
+                    exit
+                }
+            }
+        }
+    ')"
+
+    if [[ -n $reverse_conflict ]]; then
+        warn "Preserving installed '$reverse_conflict'; it declares a conflict with '$package'."
+        warn "Skipping '$package' to protect the existing rice."
+        record_package_decision "$package" "$source" "skipped: installed $reverse_conflict declares conflict; existing package preserved"
+        RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
+        return 2
+    fi
+    return 0
+}
 
 install_one_package() {
-    local package="$1" source="$2" log attempt pkg_status reason
+    local package="$1" source="$2" log attempt pkg_status reason check_status
     log="$(mktemp "${TMPDIR:-/tmp}/riceinstaller-package.XXXXXX")"
+
+    if check_package_conflicts "$package" "$source"; then
+        :
+    else
+        check_status=$?
+        rm -f "$log"
+        ((check_status == 2)) && return 0
+        RI_PACKAGE_FAILURES=$((RI_PACKAGE_FAILURES + 1))
+        return 1
+    fi
 
     for attempt in 1 2; do
         info "Installing $package ($source), attempt $attempt/2..."
@@ -307,8 +415,17 @@ install_one_package() {
         fi
 
         if grep -Eiq 'conflict|conflicting files|exists in filesystem' "$log"; then
-            warn "$package has a package/file conflict; not retrying it automatically."
-            break
+            reason="skipped after package/file conflict; no installed package or file was removed"
+            warn "$package encountered a conflict. Preserving the current system and moving on."
+            record_package_decision "$package" "$source" "$reason"
+            {
+                printf '%s\n' 'Conflict details:'
+                tail -n 12 "$log"
+                printf '\n'
+            } >>"$HOME/missing_apps.txt"
+            rm -f "$log"
+            RI_PACKAGE_SKIPS=$((RI_PACKAGE_SKIPS + 1))
+            return 0
         fi
         if ((attempt == 1)); then
             warn "$package failed (exit $pkg_status); retrying once."
@@ -317,14 +434,8 @@ install_one_package() {
     done
 
     reason="installation failed after $attempt attempt(s)"
-    if grep -Eiq 'conflict|conflicting files|exists in filesystem' "$log"; then
-        reason="package/file conflict; review the transaction shown above"
-    fi
-    if [[ ! -e "$HOME/missing_apps.txt" ]]; then
-        printf '# RiceInstaller package failures (%s)\n' "$(date --iso-8601=seconds)" >"$HOME/missing_apps.txt"
-    fi
+    record_package_decision "$package" "$source" "$reason"
     {
-        printf '%s\t%s\t%s\n' "$package" "$source" "$reason"
         printf '%s\n' 'Last installer output:'
         tail -n 12 "$log"
         printf '\n'
@@ -347,12 +458,13 @@ install_package_targets() {
 
 # install_packs <file>
 install_packs() {
-    local file="$SCRIPT_DIR/$1" package before
+    local file="$SCRIPT_DIR/$1" package before skips_before
     [[ -f "$file" ]] || {
         warn "Missing $1, skipping."
         return 1
     }
     before="$RI_PACKAGE_FAILURES"
+    skips_before="$RI_PACKAGE_SKIPS"
     while IFS= read -r package || [[ -n $package ]]; do
         package="${package%%#*}"
         package="$(printf '%s' "$package" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
@@ -360,8 +472,11 @@ install_packs() {
         install_package_targets "$1" "$package"
     done <"$file"
     if ((RI_PACKAGE_FAILURES > before)); then
-        err "Some packages from $1 failed. See $HOME/missing_apps.txt and retry this step after resolving them."
+        err "Some packages from $1 failed. See $HOME/missing_apps.txt for details."
         return 1
+    fi
+    if ((RI_PACKAGE_SKIPS > skips_before)); then
+        warn "$((RI_PACKAGE_SKIPS - skips_before)) package(s) were skipped to preserve installed software. Details: $HOME/missing_apps.txt"
     fi
     return 0
 }
@@ -426,13 +541,16 @@ install_gpu_packages() {
 
 # install_packs_list "<space separated packages>"
 install_packs_list() {
-    local before="$RI_PACKAGE_FAILURES"
+    local before="$RI_PACKAGE_FAILURES" skips_before="$RI_PACKAGE_SKIPS"
     local -a packages=()
     read -r -a packages <<<"$1"
     install_package_targets "GPU selection" "${packages[@]}"
     if ((RI_PACKAGE_FAILURES > before)); then
-        err "Some GPU packages failed. See $HOME/missing_apps.txt and retry the GPU packages step."
+        err "Some GPU packages failed. See $HOME/missing_apps.txt for details."
         return 1
+    fi
+    if ((RI_PACKAGE_SKIPS > skips_before)); then
+        warn "$((RI_PACKAGE_SKIPS - skips_before)) GPU package(s) were skipped to preserve installed software. Details: $HOME/missing_apps.txt"
     fi
     return 0
 }
