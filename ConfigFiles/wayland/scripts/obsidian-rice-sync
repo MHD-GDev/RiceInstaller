@@ -1,0 +1,346 @@
+#!/usr/bin/env bash
+# Generate the active Obsidian vault's theme snippet from the selected rice.
+set -euo pipefail
+
+RICE_NAME="${1:-}"
+RICE_DIR="$HOME/.config/wayland/rices"
+KITTY_CONFIG="$RICE_DIR/$RICE_NAME/kitty/kitty.conf"
+
+if [[ -z "$RICE_NAME" || ! -f "$KITTY_CONFIG" ]]; then
+    printf 'Usage: %s <rice-name>\n' "$0" >&2
+    printf 'Missing Kitty palette: %s\n' "$KITTY_CONFIG" >&2
+    exit 1
+fi
+
+# Discover vaults without requiring Obsidian itself to be installed.
+# Registered vaults cover native/AppImage, Flatpak, and Snap installations.
+# MyNotes is checked too because RiceInstaller creates it as the default notes folder.
+discover_vaults() {
+    local candidate registry vault_path
+    {
+        for candidate in \
+            "$HOME/MyNotes" \
+            "$HOME/Obsidian" \
+            "$HOME/Notes" \
+            "$HOME/Documents/Obsidian Vault"; do
+            [[ -d "$candidate/.obsidian" ]] && realpath -m -- "$candidate"
+        done
+
+        for registry in \
+            "$HOME/.config/obsidian/obsidian.json" \
+            "$HOME/.var/app/md.obsidian.Obsidian/config/obsidian/obsidian.json" \
+            "$HOME/snap/obsidian/current/.config/obsidian/obsidian.json"; do
+            [[ -f "$registry" ]] || continue
+            while IFS= read -r vault_path; do
+                [[ -n "$vault_path" ]] || continue
+                [[ "$vault_path" == /* ]] || vault_path="$HOME/$vault_path"
+                vault_path="$(realpath -m -- "$vault_path")"
+                [[ -d "$vault_path/.obsidian" ]] && printf '%s\n' "$vault_path"
+            done < <(jq -r '.vaults[]? | .path // empty' "$registry" 2>/dev/null || true)
+        done
+    } | sort -u
+}
+
+mapfile -t OBSIDIAN_VAULTS < <(discover_vaults 2>/dev/null || true)
+if (("${#OBSIDIAN_VAULTS[@]}" == 0)); then
+    # No Obsidian vault yet: this is an intentional no-op, not an error.
+    exit 0
+fi
+
+read_color() {
+    local key="$1" fallback="$2" value
+    value="$(awk -v key="$key" '$1 == key { print $2; exit }' "$KITTY_CONFIG")"
+    [[ "$value" =~ ^#?[[:xdigit:]]{6}$ ]] || value="$fallback"
+    [[ "$value" == \#* ]] || value="#$value"
+    printf '%s' "$value"
+}
+
+BG="$(read_color background '#101820')"
+FG="$(read_color foreground '#dce6ef')"
+C0="$(read_color color0 '#182633')"
+C8="$(read_color color8 '#40566b')"
+C4="$(read_color color4 '#628fb9')"
+C6="$(read_color color6 '#82aed6')"
+C10="$(read_color color10 '#9bbbd8')"
+C12="$(read_color color12 '#8db9e0')"
+C14="$(read_color color14 '#a9c9e5')"
+C15="$(read_color color15 '#edf4fa')"
+C1="$(read_color color1 '#b86b78')"
+C2="$(read_color color2 '#83a98a')"
+C3="$(read_color color3 '#c5a36a')"
+C5="$(read_color color5 '#9a83b8')"
+hex_to_rgb() {
+    local h="${1#\#}"
+    printf '%d, %d, %d' "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
+}
+C12_RGB="$(hex_to_rgb "$C12")"
+C1_RGB="$(hex_to_rgb "$C1")"
+C2_RGB="$(hex_to_rgb "$C2")"
+C3_RGB="$(hex_to_rgb "$C3")"
+C4_RGB="$(hex_to_rgb "$C4")"
+C5_RGB="$(hex_to_rgb "$C5")"
+C6_RGB="$(hex_to_rgb "$C6")"
+C11_RGB="$(hex_to_rgb "$(read_color color11 '#c5a36a')")"
+
+sync_vault() {
+    local VAULT="$1"
+    local SNIPPET_DIR="$VAULT/.obsidian/snippets"
+    local SNIPPET="$SNIPPET_DIR/rice-sync.css"
+    local tmp APPEARANCE appearance_tmp
+    mkdir -p "$SNIPPET_DIR"
+    tmp="$(mktemp "$SNIPPET_DIR/.rice-sync.XXXXXX")"
+trap 'rm -f "$tmp"' EXIT
+
+cat > "$tmp" <<CSS
+/*
+ * Rice Sync — generated automatically by rice-selector.
+ * Active rice: $RICE_NAME
+ * Source palette: $KITTY_CONFIG
+ * Do not edit this generated file; edit the rice's kitty.conf instead.
+ */
+
+body.theme-dark,
+body.theme-light {
+  color-scheme: dark;
+
+  /* Solid rice-matched surfaces. */
+  --background-primary: $BG;
+  --background-primary-alt: $C0;
+  --background-secondary: $C0;
+  --background-secondary-alt: $C8;
+  --background-modifier-hover: color-mix(in srgb, $C12 13%, transparent);
+  --background-modifier-active-hover: color-mix(in srgb, $C12 22%, transparent);
+  --background-modifier-border: color-mix(in srgb, $C8 52%, transparent);
+  --background-modifier-border-hover: $C12;
+  --background-modifier-border-focus: $C14;
+  --background-modifier-form-field: $C0;
+
+  --text-normal: $FG;
+  --text-muted: color-mix(in srgb, $FG 72%, $BG);
+  --text-faint: color-mix(in srgb, $FG 48%, $BG);
+  --text-on-accent: $BG;
+  --text-accent: $C12;
+  --text-accent-hover: $C15;
+  --text-selection: color-mix(in srgb, $C4 38%, transparent);
+  --text-highlight-bg: color-mix(in srgb, $C6 30%, transparent);
+
+  --color-accent: $C12;
+  --color-accent-1: $C14;
+  --color-accent-2: $C6;
+  --interactive-normal: $C0;
+  --interactive-hover: $C8;
+  --interactive-accent: $C12;
+  --interactive-accent-hover: $C14;
+
+  --color-base-00: $BG;
+  --color-base-05: color-mix(in srgb, $BG 92%, $C0);
+  --color-base-10: color-mix(in srgb, $BG 84%, $C0);
+  --color-base-20: $C0;
+  --color-base-25: color-mix(in srgb, $C0 78%, $C8);
+  --color-base-30: $C8;
+  --color-base-35: color-mix(in srgb, $C8 78%, $FG);
+  --color-base-40: color-mix(in srgb, $C8 62%, $FG);
+  --color-base-50: color-mix(in srgb, $FG 52%, $BG);
+  --color-base-60: color-mix(in srgb, $FG 68%, $BG);
+  --color-base-70: color-mix(in srgb, $FG 82%, $BG);
+  --color-base-100: $FG;
+
+  --graph-line: color-mix(in srgb, $C8 65%, transparent);
+  --graph-node: $C14;
+  /* Canvas edge/arrow color must be a valid CSS color, not a bare RGB triplet. */
+  --canvas-color: rgb($C12_RGB);
+  --canvas-background: $BG;
+  --canvas-dot-pattern: color-mix(in srgb, $C8 72%, transparent);
+  --canvas-color-1: rgb($C1_RGB);
+  --canvas-color-2: rgb($C3_RGB);
+  --canvas-color-3: rgb($C11_RGB);
+  --canvas-color-4: rgb($C2_RGB);
+  --canvas-color-5: rgb($C6_RGB);
+  --canvas-color-6: rgb($C5_RGB);
+  --color-blue: $C12;
+  --color-cyan: $C14;
+  --color-purple: $C12;
+  --color-green: $C10;
+  --color-orange: $C10;
+  --color-yellow: $C15;
+  --color-red: $C12;
+
+  --tab-container-background: $BG;
+  --tab-background-active: $C0;
+  --tab-text-color: color-mix(in srgb, $FG 65%, $BG);
+  --tab-text-color-focused: $FG;
+  --tab-text-color-focused-active: $C15;
+  --tab-divider-color: $C8;
+  --tab-outline-color: $C12;
+  --tab-radius: 9px;
+  --tab-radius-active: 9px;
+
+  --modal-background: $C0;
+  --modal-border-color: color-mix(in srgb, $C8 70%, transparent);
+  --modal-radius: 14px;
+  --card-background: $C0;
+  --blockquote-border-color: $C12;
+  --hr-color: color-mix(in srgb, $C8 70%, transparent);
+  --code-background: $C0;
+  --code-normal: $C15;
+  --link-color: $C12;
+  --link-color-hover: $C15;
+  --tag-color: $C6;
+  --tag-background: color-mix(in srgb, $C6 14%, transparent);
+  --tag-background-hover: color-mix(in srgb, $C6 24%, transparent);
+}
+
+.workspace,
+.workspace-split,
+.workspace-tab-container,
+.workspace-leaf,
+.workspace-leaf-content {
+  background-color: transparent;
+}
+
+/* Solid rice-colored workspace surfaces. */
+.workspace-ribbon,
+.workspace-tab-header-container,
+.nav-header,
+.view-header,
+.workspace-sidedock-vault-profile,
+.status-bar,
+.titlebar,
+.workspace-drawer,
+.modal,
+.prompt,
+.menu,
+.suggestion-container,
+.popover,
+.tooltip,
+.workspace-leaf,
+.workspace-leaf-content,
+.workspace-tab-container,
+.workspace-split,
+.view-content,
+.markdown-source-view,
+.markdown-reading-view {
+  background-color: var(--background-secondary);
+  border-color: var(--background-modifier-border);
+}
+
+/* Canvas cards use the rice palette without transparency or blur. */
+.canvas-node-container {
+  background-color: var(--background-secondary) !important;
+  border-color: color-mix(in srgb, var(--text-muted) 38%, var(--background-secondary)) !important;
+}
+
+.workspace-tab-header.is-active {
+  background-color: var(--background-modifier-hover);
+}
+
+/* Obsidian 1.13+ expects --canvas-color as a CSS color value.
+   Explicitly style paths and arrowheads so they remain visible on every rice. */
+.canvas-edges path.canvas-display-path,
+.canvas-edges path.canvas-path {
+  stroke: var(--canvas-color) !important;
+  opacity: 0.92;
+}
+
+.canvas-arrow,
+.canvas-edges .canvas-arrow,
+.canvas-edges marker path {
+  fill: var(--canvas-color) !important;
+  stroke: var(--canvas-color) !important;
+}
+
+.canvas-path.is-focused,
+.canvas-path.is-selected,
+.canvas-display-path.is-focused,
+.canvas-display-path.is-selected {
+  stroke: var(--color-accent) !important;
+  opacity: 1;
+}
+
+.canvas-path.is-focused ~ .canvas-arrow,
+.canvas-path.is-selected ~ .canvas-arrow,
+.canvas-display-path.is-focused ~ .canvas-arrow,
+.canvas-display-path.is-selected ~ .canvas-arrow {
+  fill: var(--color-accent) !important;
+}
+
+.workspace-tab-header.is-active {
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+.nav-file-title.is-active,
+.nav-folder-title.is-active {
+  background: var(--background-modifier-hover);
+  border-radius: 6px;
+}
+
+.markdown-rendered h1,
+.markdown-rendered h2,
+.markdown-rendered h3,
+.markdown-rendered h4 {
+  color: var(--text-normal);
+}
+
+.markdown-rendered h1,
+.markdown-rendered h2 {
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 0.22em;
+}
+
+.markdown-rendered a,
+.cm-s-obsidian .cm-link,
+.cm-s-obsidian .cm-hmd-internal-link {
+  text-decoration-color: color-mix(in srgb, var(--text-accent) 55%, transparent);
+}
+
+input,
+textarea,
+.search-input-container,
+.prompt,
+.modal {
+  border-color: var(--background-modifier-border);
+}
+
+button.mod-cta,
+button.mod-cta:hover {
+  color: var(--text-on-accent);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--text-muted) 30%, transparent);
+  border-radius: 99px;
+}
+CSS
+
+mv -f "$tmp" "$SNIPPET"
+trap - EXIT
+
+# Obsidian ignores CSS snippets until their names are enabled in appearance.json.
+APPEARANCE="$VAULT/.obsidian/appearance.json"
+# Validate first and write atomically so malformed user settings are never lost.
+appearance_tmp="$(mktemp "$VAULT/.obsidian/.appearance.XXXXXX")"
+if [[ -f "$APPEARANCE" ]]; then
+    if ! jq -e 'type == "object" and ((.enabledCssSnippets // []) | type == "array")' \
+        "$APPEARANCE" >/dev/null; then
+        printf 'Cannot safely update malformed Obsidian settings: %s\n' "$APPEARANCE" >&2
+        rm -f "$appearance_tmp"
+        return 1
+    fi
+    if ! jq 'if ((.enabledCssSnippets // []) | index("rice-sync")) then . else .enabledCssSnippets = ((.enabledCssSnippets // []) + ["rice-sync"]) end' \
+        "$APPEARANCE" > "$appearance_tmp"; then
+        rm -f "$appearance_tmp"
+        return 1
+    fi
+    chmod --reference="$APPEARANCE" "$appearance_tmp"
+else
+    printf '{"enabledCssSnippets":["rice-sync"]}\n' > "$appearance_tmp"
+    chmod 644 "$appearance_tmp"
+fi
+mv -f "$appearance_tmp" "$APPEARANCE"
+
+printf 'Updated Obsidian palette for rice: %s (%s)\n' "$RICE_NAME" "$VAULT"
+}
+
+for vault in "${OBSIDIAN_VAULTS[@]}"; do
+    sync_vault "$vault"
+done

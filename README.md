@@ -18,12 +18,16 @@ RiceInstaller brings together a collection of desktop configurations, scripts, a
 
 - **Desktop environment** — Hyprland, Kitty, Waybar, Mako, Rofi, and Fastfetch.
 - **13 desktop themes** — Switch between different visual styles at runtime.
-- **Unified theming** — Theme colors carry through to Kitty, Rofi, Waybar, tmux, and Neovim.
+- **Unified theming** — Theme colors carry through to Kitty, Rofi, Waybar, tmux, and Neovim, with optional automatic rice-color syncing for detected Obsidian vaults.
 - **Neovim IDE** — A configured development environment with LSP support and rice-aware colors.
 - **Zsh setup** — Syntax highlighting, autosuggestions, history substring search, and Starship.
 - **Utility scripts** — Wallpaper management, audio switching, keyboard layouts, cheatsheets, and power controls.
 - **Rice creator** — Generate a new rice from the terminal using `create_rice`.
 - **Automated installation** — Set up the environment and optionally install additional themes and tools.
+
+### Optional Obsidian integration
+
+If Obsidian vaults are present, RiceInstaller automatically adds and enables a `rice-sync` CSS snippet in each detected vault. Every rice change refreshes its colors, including the workspace, text, accents, and Canvas edges. Vaults are discovered from Obsidian's registered vault list and common notes locations. Obsidian is never installed as a dependency; if no vault exists, the integration quietly does nothing. You can install Obsidian or create a vault later, and the next rice switch will pick it up.
 
 ## Desktop Gallery
 

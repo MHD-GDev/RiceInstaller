@@ -194,6 +194,14 @@ apply_rice() {
 
     ~/.config/wayland/tmux/update-colors.sh 2>/dev/null || true
 
+    # Optional Obsidian integration: sync every detected vault to this rice.
+    # The helper exits quietly when Obsidian has not created a vault yet.
+    local obsidian_sync="$HOME/.config/wayland/scripts/obsidian-rice-sync"
+    if [[ -x "$obsidian_sync" ]]; then
+        "$obsidian_sync" "$rice_name" ||
+            notify-send "Obsidian Rice Sync" "Could not update the Obsidian theme snippet."
+    fi
+
     local new_cache_dir="$HOME/.cache/$USER/$rice_name"
     if [[ -d "$new_cache_dir" ]]; then
         find "$new_cache_dir" -name "*.jpg" -o -name "*.png" -o -name "*.jpeg" | head -5 | xargs -I {} rm -f {}
