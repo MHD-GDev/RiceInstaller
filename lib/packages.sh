@@ -242,6 +242,9 @@ ri_package_install_targets() {
     installed_file="$(mktemp "${TMPDIR:-/tmp}/riceinstaller-installed.XXXXXX")"
     installed_parsed_file="$(mktemp "${TMPDIR:-/tmp}/riceinstaller-installed-parsed.XXXXXX")"
 
+    printf '\n\033[1;36m── %s (%s) ──\033[0m\n' "$label" "$mode"
+    info "Checking package availability for this group..."
+
     # One metadata query for the whole target set, not one network transaction
     # per package. paru -Si reports both repository and AUR packages.
     LC_ALL=C paru -Si "${pending[@]}" >"$metadata_file" 2>"$errors_file" || true
@@ -397,9 +400,13 @@ ri_package_install_targets() {
     custom_targets=("${filtered_custom[@]}")
     aur_targets=("${filtered_aur[@]}")
 
-    info "$label plan: ${#repo_targets[@]} official, ${#custom_targets[@]} custom-repository, ${#aur_targets[@]} AUR package(s), $skips safely skipped."
+    printf '\n'
+    info "$label package plan: ${#repo_targets[@]} official, ${#custom_targets[@]} custom-repository, ${#aur_targets[@]} AUR package(s), $skips safely skipped."
+    info "The package manager will display live download and installation progress. Review its confirmation prompt before proceeding."
     if (("${#repo_targets[@]}" > 0)); then
-        info "Installing repository packages together..."
+        printf '\n\033[1;34mOfficial Arch repository packages (%d)\033[0m\n' "${#repo_targets[@]}"
+        printf '  • %s\n' "${repo_targets[@]}"
+        info "Downloading and installing official packages..."
         if command -v pactrans >/dev/null 2>&1; then
             transaction_status=0
             if [[ -t 0 ]]; then
@@ -420,28 +427,38 @@ ri_package_install_targets() {
                 ri_package_record "$label" "$package" "repository transaction failed"
             done
             failures=$((failures + 1))
+        else
+            ok "Official repository package transaction completed."
         fi
     fi
 
     if (("${#custom_targets[@]}" > 0)); then
-        info "Installing custom-repository packages together (normal package-manager safety prompts retained)..."
+        printf '\n\033[1;34mCustom repository packages (%d)\033[0m\n' "${#custom_targets[@]}"
+        printf '  • %s\n' "${custom_targets[@]}"
+        info "Downloading and installing custom-repository packages (normal package-manager safety prompts retained)..."
         if ! sudo pacman -S --needed "${custom_targets[@]}"; then
             err "Custom-repository package transaction failed."
             for package in "${custom_targets[@]}"; do
                 ri_package_record "$label" "$package" "custom-repository transaction failed"
             done
             failures=$((failures + 1))
+        else
+            ok "Custom repository package transaction completed."
         fi
     fi
 
     if (("${#aur_targets[@]}" > 0)); then
-        info "Installing AUR packages together..."
+        printf '\n\033[1;34mAUR packages (%d)\033[0m\n' "${#aur_targets[@]}"
+        printf '  • %s\n' "${aur_targets[@]}"
+        info "Building, downloading and installing AUR packages..."
         if ! paru -S --needed "${aur_targets[@]}"; then
             err "AUR package transaction failed."
             for package in "${aur_targets[@]}"; do
                 ri_package_record "$label" "$package" "AUR transaction failed"
             done
             failures=$((failures + 1))
+        else
+            ok "AUR package transaction completed."
         fi
     fi
 

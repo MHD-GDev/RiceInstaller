@@ -409,7 +409,7 @@ install_gpu_packages() {
     local choice="${GPU_CHOICE:-}"
     if [[ -z $choice ]]; then
         info "Selecting your GPU..."
-        printf '1) Nvidia (Turing+)\\n2) Intel\\n3) AMD\\n4) Hybrid (AMD & Nvidia Turing+)\\n5) Skip\\n' >&2
+        printf '1) Nvidia (Turing+)\n2) Intel\n3) AMD\n4) Hybrid (AMD & Nvidia Turing+)\n5) Skip\n' >&2
         ask 'Enter choice [1-5]: '
         choice="$ANSWER"
         [[ $choice =~ ^[1-5]$ ]] || die "Invalid GPU choice."
@@ -430,7 +430,7 @@ install_gpu_packages() {
 }
 
 install_branch_packages() {
-    local choice="${BRANCH_CHOICE:-}" file=""
+    local choice="${BRANCH_CHOICE:-}" file="" label=""
     if [[ -z $choice ]]; then
         info "Selecting your branch type..."
         printf '1) Gamedev\n2) Gaming\n3) Programmer\n4) Steam Deck\n5) None\n' >&2
@@ -441,10 +441,10 @@ install_branch_packages() {
         ri_save_selections
     fi
     case "$choice" in
-    1) file="gamedev-branch-packs.txt" ;;
-    2) file="gaming-branch-packs.txt" ;;
-    3) file="Programmer-branch-packs.txt" ;;
-    4) file="steamdeck-branch-packs.txt" ;;
+    1) file="gamedev-branch-packs.txt"; label="Game development extras" ;;
+    2) file="gaming-branch-packs.txt"; label="Gaming extras" ;;
+    3) file="Programmer-branch-packs.txt"; label="Programming extras" ;;
+    4) file="steamdeck-branch-packs.txt"; label="Steam Deck extras" ;;
     5)
         info "Skipping additional branch packages."
         return 0
@@ -464,7 +464,9 @@ install_branch_packages() {
         esac
     fi
 
-    install_packs "$file" optional "$file"
+    printf '\n%sOptional package group: %s%s\n' "$MAGENTA" "$label" "$RESET"
+    info "These packages are additional to the base rice. Review the package-manager confirmation before installation."
+    install_packs "$file" optional "$label"
 }
 
 copy_configs() {

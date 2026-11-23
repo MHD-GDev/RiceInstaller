@@ -25,6 +25,4 @@ otf-ipafont
 docker
 docker-compose
 podman
-nix
-nixfmt
 rustup
