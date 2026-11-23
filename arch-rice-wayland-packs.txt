@@ -28,7 +28,7 @@ gstreamer
 htop
 hyprland
 hyprland-qt-support
-hyprland-qtutils
+extra/hyprland-guiutils
 hyprutils
 hyprwayland-scanner
 hyprshot

@@ -287,23 +287,90 @@ ensure_paru() {
     command -v paru >/dev/null 2>&1 || die "paru still not on PATH after install."
 }
 
+# Install each package in its own transaction so one conflict cannot abort
+# the rest of a list. Never silently accept removal/replacement of installed
+# packages: paru/pacman must show the transaction for the user to review.
+RI_PACKAGE_FAILURES=0
+
+install_one_package() {
+    local package="$1" source="$2" log attempt pkg_status reason
+    log="$(mktemp "${TMPDIR:-/tmp}/riceinstaller-package.XXXXXX")"
+
+    for attempt in 1 2; do
+        info "Installing $package ($source), attempt $attempt/2..."
+        if paru -S --needed "$package" 2>&1 | tee "$log"; then
+            rm -f "$log"
+            ok "$package installed or already present."
+            return 0
+        else
+            pkg_status=$?
+        fi
+
+        if grep -Eiq 'conflict|conflicting files|exists in filesystem' "$log"; then
+            warn "$package has a package/file conflict; not retrying it automatically."
+            break
+        fi
+        if ((attempt == 1)); then
+            warn "$package failed (exit $pkg_status); retrying once."
+            sleep 1
+        fi
+    done
+
+    reason="installation failed after $attempt attempt(s)"
+    if grep -Eiq 'conflict|conflicting files|exists in filesystem' "$log"; then
+        reason="package/file conflict; review the transaction shown above"
+    fi
+    if [[ ! -e "$HOME/missing_apps.txt" ]]; then
+        printf '# RiceInstaller package failures (%s)\n' "$(date --iso-8601=seconds)" >"$HOME/missing_apps.txt"
+    fi
+    {
+        printf '%s\t%s\t%s\n' "$package" "$source" "$reason"
+        printf '%s\n' 'Last installer output:'
+        tail -n 12 "$log"
+        printf '\n'
+    } >>"$HOME/missing_apps.txt"
+    rm -f "$log"
+    RI_PACKAGE_FAILURES=$((RI_PACKAGE_FAILURES + 1))
+    err "$package could not be installed; details saved to $HOME/missing_apps.txt"
+    return 1
+}
+
+install_package_targets() {
+    local source="$1"
+    shift
+    local package
+    for package in "$@"; do
+        [[ -n $package ]] || continue
+        install_one_package "$package" "$source" || true
+    done
+}
+
 # install_packs <file>
-# `--needed` keeps a re-run cheap and makes the script idempotent.
 install_packs() {
-    local file="$SCRIPT_DIR/$1"
+    local file="$SCRIPT_DIR/$1" package before
     [[ -f "$file" ]] || {
         warn "Missing $1, skipping."
         return 1
     }
-    # shellcheck disable=SC2046 # deliberate word splitting: one package per line
-    run_step "installing packages from $1" paru -S --needed --noconfirm $(<"$file")
+    before="$RI_PACKAGE_FAILURES"
+    while IFS= read -r package || [[ -n $package ]]; do
+        package="${package%%#*}"
+        package="$(printf '%s' "$package" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        [[ -z $package ]] && continue
+        install_package_targets "$1" "$package"
+    done <"$file"
+    if ((RI_PACKAGE_FAILURES > before)); then
+        err "Some packages from $1 failed. See $HOME/missing_apps.txt and retry this step after resolving them."
+        return 1
+    fi
+    return 0
 }
 
 install_packages() {
     if ! is_arch_like; then
         warn "$(os_name) is not an Arch-based distribution, so the package step is skipped."
         warn "Install the packages yourself:"
-        warn "  paru -Syu --needed --noconfirm \$(cat arch-rice-wayland-packs.txt)"
+        warn "  paru -Syu --needed \$(cat arch-rice-wayland-packs.txt)"
         warn "Everything else in this script still works."
         return 0
     fi
@@ -311,8 +378,11 @@ install_packages() {
     info "Installing required packages on $(os_name)..."
     command -v pacman >/dev/null 2>&1 || die "pacman not found on an Arch-based system?"
 
-    run_step "system upgrade" sudo pacman -Syu --noconfirm || warn "System upgrade reported problems."
-    run_step "installing git" sudo pacman -S --needed --noconfirm git ||
+    # Start a fresh report for this base-package pass; later optional package
+    # steps append their own failures to the same report.
+    rm -f "$HOME/missing_apps.txt"
+    run_step "system upgrade" sudo pacman -Syu || warn "System upgrade reported problems."
+    run_step "installing git" sudo pacman -S --needed git ||
         die "git is required to continue."
     ensure_paru
 
@@ -356,8 +426,15 @@ install_gpu_packages() {
 
 # install_packs_list "<space separated packages>"
 install_packs_list() {
-    # shellcheck disable=SC2086 # deliberate: $1 is a package list
-    run_step "installing GPU packages" paru -S --needed --noconfirm $1
+    local before="$RI_PACKAGE_FAILURES"
+    local -a packages=()
+    read -r -a packages <<<"$1"
+    install_package_targets "GPU selection" "${packages[@]}"
+    if ((RI_PACKAGE_FAILURES > before)); then
+        err "Some GPU packages failed. See $HOME/missing_apps.txt and retry the GPU packages step."
+        return 1
+    fi
+    return 0
 }
 
 install_branch_packages() {
