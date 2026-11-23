@@ -547,38 +547,73 @@ copy_configs() {
 }
 
 vscode_rice() {
-    info "Setting up VSCode rice..."
-    if ! command -v code >/dev/null 2>&1; then
-        install_packs_list "Visual Studio Code" required "visual-studio-code-bin" ||
-            die "Visual Studio Code could not be installed."
-    else
-        info "An existing VS Code-compatible 'code' command was found; keeping it."
+    local choice="${VSCODE_CHOICE:-}" package="" vscode_cmd="" config_dir=""
+
+    if [[ -z $choice ]]; then
+        printf '%sChoose your VS Code package:%s\n' "$YELLOW" "$RESET"
+        printf '1) Visual Studio Code (Microsoft)\n'
+        printf '2) Code - OSS (open source)\n'
+        printf '3) VSCodium\n'
+        printf '4) None - skip VS Code\n'
+        ask 'Enter choice [1-4]: '
+        choice="$ANSWER"
+        [[ $choice =~ ^[1-4]$ ]] || die "Invalid VS Code choice."
+        VSCODE_CHOICE="$choice"
+        ri_save_selections
     fi
-    # VSCode reads ~/.config/Code/User/settings.json, so IDE/User has to be
-    # copied into ~/.config/Code. Copying it to ~/.config/ instead would put
-    # settings.json somewhere VSCode never looks.
-    mkdir -p "$HOME/.config/Code"
+
+    case "$choice" in
+    1)
+        package="visual-studio-code-bin"
+        vscode_cmd="code"
+        config_dir="Code"
+        ;;
+    2)
+        package="code"
+        vscode_cmd="code"
+        config_dir="Code - OSS"
+        ;;
+    3)
+        package="vscodium-bin"
+        vscode_cmd="codium"
+        config_dir="VSCodium"
+        ;;
+    4)
+        info "VS Code installation and configuration skipped by user."
+        return 0
+        ;;
+    *) die "Invalid saved VS Code choice: $choice" ;;
+    esac
+
+    info "Setting up $config_dir..."
+    if ! command -v "$vscode_cmd" >/dev/null 2>&1; then
+        install_packs_list "$config_dir" required "$package" ||
+            die "$config_dir could not be installed."
+    else
+        info "An existing '$vscode_cmd' command was found; keeping the installed application."
+    fi
+
+    # Each distribution uses its own settings directory.
+    mkdir -p "$HOME/.config/$config_dir"
     if [[ -d "$SCRIPT_DIR/IDE/User" ]]; then
-        cp -r --remove-destination "$SCRIPT_DIR/IDE/User" "$HOME/.config/Code"
+        cp -r --remove-destination "$SCRIPT_DIR/IDE/User" "$HOME/.config/$config_dir"
     fi
 
     if [[ -f "$SCRIPT_DIR/IDE/User/extensions.txt" ]]; then
-        if command -v code >/dev/null 2>&1; then
-            # `cat | xargs` would also pass an empty argument if the file ever
-            # gained a blank line, so read the file in a loop instead.
+        if command -v "$vscode_cmd" >/dev/null 2>&1; then
             local ext
             while IFS= read -r ext; do
                 [[ -n $ext ]] || continue
-                run_step "installing extension $ext" code --install-extension "$ext"
+                run_step "installing extension $ext" "$vscode_cmd" --install-extension "$ext"
             done <"$SCRIPT_DIR/IDE/User/extensions.txt"
         else
-            warn "VSCode ('code') is not on PATH, skipping extension installation."
+            warn "$config_dir ('$vscode_cmd') is not on PATH, skipping extension installation."
             warn "Extensions to install are listed in IDE/User/extensions.txt."
         fi
     else
         info "No extensions.txt found, skipping extension installation."
     fi
-    ok "VSCode rice setup complete."
+    ok "$config_dir setup complete."
     sleep 1
     screen_clear
 }

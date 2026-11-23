@@ -24,6 +24,7 @@ ri_save_selections() {
         printf 'LLAMA_BUILT=%q\n' "${LLAMA_BUILT:-no}"
         printf 'GPU_CHOICE=%q\n' "${GPU_CHOICE:-}"
         printf 'BRANCH_CHOICE=%q\n' "${BRANCH_CHOICE:-}"
+        printf 'VSCODE_CHOICE=%q\n' "${VSCODE_CHOICE:-}"
     } >"$tmp"
     chmod 600 "$tmp"
     mv -f "$tmp" "$RI_SELECTIONS"
@@ -57,6 +58,7 @@ ri_clear_progress() {
     LLAMA_BUILT="no"
     GPU_CHOICE=""
     BRANCH_CHOICE=""
+    VSCODE_CHOICE=""
 }
 ri_show_progress() {
     local step

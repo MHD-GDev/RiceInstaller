@@ -62,6 +62,4 @@ lib32-mesa
 lib32-sdl2-compat
 lib32-glew1.10
 neovim
-visual-studio-code-bin
 otf-ipafont
-podman
