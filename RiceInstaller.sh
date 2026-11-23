@@ -995,10 +995,42 @@ step_llama_ui() { add_llama_ui; }
 step_notes() { write_notes; }
 step_permissions() { fix_permissions; }
 
-run_installation() {
-    local step
-    for step in "${INSTALL_STEPS[@]}"; do
-        if ri_step_done "$step"; then
+run_installation_from() {
+    local start_index="${1:-0}" index step
+
+    # Always repeat the non-destructive safety checks, even when the user
+    # chooses to jump directly to a later stage.
+    if ((start_index > 0)); then
+        info "Running required preflight checks before continuing at the selected stage..."
+        if "$SCRIPT_DIR/RiceInstaller.sh" --run-step preflight; then
+            ri_mark_done preflight
+            printf '%s\t%s\t%s\n' "$(date --iso-8601=seconds)" preflight "preflight-before-stage" >>"$RI_HISTORY_DIR/events.log"
+        else
+            ri_mark_failed preflight "Preflight checks failed before selected stage"
+            warn "Preflight checks failed. Nothing else was started."
+            return 1
+        fi
+    fi
+
+    # Later stages may depend on the saved build selection (for example,
+    # whether VS Code should be configured). Collect it if the user jumps
+    # past the build-type stage on a fresh installation.
+    if ((start_index > 2)) && [[ -z ${BUILD_TYPE:-} ]]; then
+        info "A build type is needed by later setup stages. Please choose it first."
+        if "$SCRIPT_DIR/RiceInstaller.sh" --run-step build_type; then
+            ri_mark_done build_type
+            printf '%s\t%s\t%s\n' "$(date --iso-8601=seconds)" build_type "selection-before-stage" >>"$RI_HISTORY_DIR/events.log"
+        else
+            ri_mark_failed build_type "Build selection failed before selected stage"
+            return 1
+        fi
+    fi
+
+    for ((index=start_index; index<${#INSTALL_STEPS[@]}; index++)); do
+        step="${INSTALL_STEPS[$index]}"
+        # The chosen stage is deliberately rerun. Subsequent completed stages
+        # remain skipped, so a jump does not repeat unrelated work.
+        if ((index > start_index)) && ri_step_done "$step"; then
             ok "Already completed: $step"
             continue
         fi
@@ -1016,9 +1048,22 @@ run_installation() {
         fi
     done
     RI_ACTIVE_STEP=""
-    printf '\n%sAll installation steps completed.%s\n' "$GREEN" "$RESET"
-    finish_and_restart
+    local all_done=1
+    for step in "${INSTALL_STEPS[@]}"; do
+        if ! ri_step_done "$step"; then
+            all_done=0
+            break
+        fi
+    done
+    if ((all_done)); then
+        printf '\n%sAll installation stages completed.%s\n' "$GREEN" "$RESET"
+        finish_and_restart
+    else
+        printf '\n%sThe selected stages are complete. Earlier unfinished stages remain available in the TUI.%s\n' "$GREEN" "$RESET"
+    fi
 }
+
+run_installation() { run_installation_from 0; }
 
 review_state() {
     ri_show_progress "${INSTALL_STEPS[@]}"
@@ -1029,6 +1074,61 @@ show_history() {
     if [[ -s $RI_HISTORY_DIR/events.log ]]; then tail -n 40 "$RI_HISTORY_DIR/events.log"; else printf 'No installation history yet.\n'; fi
     ri_pause
 }
+stage_title() {
+    case "$1" in
+        preflight) printf 'Preflight checks' ;;
+        welcome) printf 'Welcome and consent' ;;
+        build_type) printf 'Build type selection' ;;
+        user_directories) printf 'Create user directories' ;;
+        packages) printf 'Base rice packages' ;;
+        gpu_packages) printf 'GPU packages' ;;
+        branch_packages) printf 'Optional branch packages' ;;
+        rice_configs) printf 'Install rice configurations' ;;
+        vscode) printf 'VS Code setup' ;;
+        neovim) printf 'Neovim setup' ;;
+        shell_and_fonts) printf 'Shell and fonts' ;;
+        sddm) printf 'SDDM theme' ;;
+        grub) printf 'GRUB theme' ;;
+        llama) printf 'llama.cpp build' ;;
+        llama_ui) printf 'llama.cpp web UI' ;;
+        notes) printf 'Installation notes' ;;
+        permissions) printf 'Fix permissions' ;;
+        *) printf '%s' "${1//_/ }" ;;
+    esac
+}
+
+continue_from_stage() {
+    local -a stage_choices=()
+    local index choice selected_index=-1 status title step
+    for ((index=0; index<${#INSTALL_STEPS[@]}; index++)); do
+        step="${INSTALL_STEPS[$index]}"
+        title="$(stage_title "$step")"
+        if ri_step_done "$step"; then
+            status='[completed]'
+        elif [[ -f "$RI_STEPS_DIR/$step.failed" ]]; then
+            status='[failed]'
+        else
+            status='[pending]'
+        fi
+        stage_choices+=("$(printf '%02d  %-30s %s' "$((index + 1))" "$title" "$status")")
+    done
+    stage_choices+=("Return to main menu")
+
+    choice="$(ri_choose "Choose where to continue (the selected stage will run again)" "${stage_choices[@]}")" || return 0
+    [[ $choice == "Return to main menu" ]] && return 0
+
+    [[ $choice =~ ^([0-9]{2})[[:space:]] ]] || { warn "Invalid stage selection."; return 1; }
+    selected_index=$((10#${BASH_REMATCH[1]} - 1))
+    ((selected_index >= 0 && selected_index < ${#INSTALL_STEPS[@]})) || { warn "Invalid stage selection."; return 1; }
+
+    printf '\nSelected stage: %s\n' "$(stage_title "${INSTALL_STEPS[$selected_index]}")"
+    printf 'Stages before this point will not be repeated. Already-completed stages after it will be skipped.\n'
+    if ri_confirm "Continue from this stage?"; then
+        run_installation_from "$selected_index" || true
+        ri_pause
+    fi
+}
+
 retry_failed_step() {
     local failed=() f choice
     for f in "$RI_STEPS_DIR"/*.failed; do
@@ -1052,7 +1152,7 @@ main_menu() {
         if compgen -G "$RI_STEPS_DIR/*.done" >/dev/null; then
             printf 'Saved installation progress detected.\n\n'
         fi
-        choice="$(ri_choose "Choose an action" "New installation (start over)" "Resume installation" "Retry a failed step" "Review selections and progress" "Installation history" "Exit")" || exit 0
+        choice="$(ri_choose "Choose an action" "New installation (start over)" "Resume installation" "Continue from a specific stage" "Retry a failed step" "Review selections and progress" "Installation history" "Exit")" || exit 0
         case "$choice" in
             "New installation (start over)")
                 if ri_confirm "Clear saved progress and start a new installation?"; then
@@ -1065,6 +1165,7 @@ main_menu() {
                 run_installation || true
                 ri_pause
                 ;;
+            "Continue from a specific stage") continue_from_stage ;;
             "Retry a failed step")
                 retry_failed_step || true
                 ri_pause
